@@ -75,6 +75,79 @@ Test.\cite{Bacchini_2018}\cite{Bacchini_2019}
 % (What else do we expect, how will it differ?)
 % (I suppose this is like an AGN/quasar jet model.)
 
+\section*{ADM $3+1$ split}
+
+\begin{align}
+  \label{eq:ADM_line_elem}
+  ds^2=-\alpha^2dt^2+(\beta_idt+dx_i)(\beta^idt+dx^i)
+\end{align}
+or
+\begin{align}
+  g_{\mu\nu}=\begin{pmatrix} -\alpha^2+\beta^2 & \beta_i \\ \beta_j & \gamma_{ij} \end{pmatrix}
+\end{align}
+Relation to general metric:
+\begin{align}
+  \label{eq:metric_to_ADM:al}
+  \alpha^2&=\beta^2-g_{00}\\
+  \beta_i&=g_{0i}\\
+  \gamma_{ij}&=g_{ij}
+\end{align}
+
+\section*{Kerr spacetime in Boyer-Lindquist coordinates}
+
+\textit{This can almost trivially be extended to Boyer-Lindquist coordinates for a Kerr-Newman spacetime.}
+
+Let $a=J/M$ be the Kerr parameter for angular momentum $J$ and mass $M$. Defining also the usual $\Sigma$ and $\Delta$, the Kerr metric in Boyer-Lindquist coordinates is given by
+\begin{align}
+  \Sigma&=r^2+a^2\cos^2\theta\\
+  \Delta&=r(r-2M)+a^2\\
+  \label{eq:Kerr_metric}
+  ds^2&=-(dt-a\sin^2\theta d\phi)^2\Delta/\Sigma+(adt-(r^2+a^2)d\phi)^2\sin^2\theta/\Sigma+dr^2\Sigma/\Delta+\Sigma d\theta^2.
+\end{align}
+In the limit that $J,M\to0$, this reduces to
+\begin{align}
+  ds^2=-dt^2+dr^2+r^2d\Omega_2^2,
+\end{align}
+a flat spacetime with spatial slices in `spherical coordinates', this importantly gives $(r,\theta,\phi)$ their usual meaning.\\
+Comparing \eqref{eq:Kerr_metric} to \eqref{eq:ADM_line_elem}, we can read off the $3{+}1$ split, and perform some simplifications.\footnote{One can implement the solver such that $g_{\mu\nu}$ is specified and compute the $3{+}1$ split numerically, but this may be numerically unstable due to catastrophic cancellation in \eqref{eq:metric_to_ADM:al}, who knows. Simplifying seems worthwhile.}
+\begin{align}
+  \gamma_{rr}&=\Sigma/\Delta\\
+  \gamma_{\theta\theta}&=\Sigma\\
+  \gamma_{\phi\phi}&=\big((r^2+a^2)^2-\Delta a^2\sin^2\theta\big)\sin^2\theta/\Sigma\\
+  &=\sin^2\theta\big((r^2+a^2)+(2Ma^2r\sin^2\theta)/\Sigma\big)\\
+  \gamma_{r\theta}&=\gamma_{r\phi}=\gamma_{\theta\phi}=0
+\end{align}
+\begin{align}
+  \gamma^{rr}&=\Delta/\Sigma\\
+  \gamma^{\theta\theta}&=1/\Sigma\\
+  \gamma^{\phi\phi}&=1/\Big(\sin^2\theta\big((r^2+a^2)+(2Ma^2r\sin^2\theta)/\Sigma\big)\Big)\\
+  \gamma^{r\theta}&=\gamma^{r\phi}=\gamma^{\theta\phi}=0
+\end{align}
+\begin{align}
+  \beta_r&=\beta_\theta=0\\
+  2\beta_\phi&=2a\sin^2\theta\,\Delta/\Sigma-2a(r^2+a^2)\sin^2\theta/\Sigma\\
+  &=2a\sin^2\theta\,(\Delta-r^2-a^2)/\Sigma\\
+  \beta_\phi&=-2Mar\sin^2\theta/\Sigma
+\end{align}
+\begin{align}
+  \beta^r&=\beta^\theta=0\\
+  \beta^\phi&=\gamma^{\phi i}\beta_i=\gamma^{\phi\phi}\beta_\phi\\
+  &=\frac{-2Mar}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}
+\end{align}
+\begin{align}
+  \beta^2&=\beta_i\beta^i=\beta_\phi\beta^\phi\\
+  &=\frac{4M^2a^2r^2\sin^2\theta}{(r^2+a^2)\Sigma^2+2Ma^2r\Sigma\sin^2\theta}
+\end{align}
+\begin{align}
+  -\alpha^2+\beta^2&=-\Delta/\Sigma+a^2\sin^2\theta/\Sigma\\
+  \alpha^2&=\beta^2+\Delta/\Sigma-a^2\sin^2\theta/\Sigma\\
+  &=\frac{4M^2a^2r^2\sin^2\theta}{(r^2+a^2)\Sigma^2+2Ma^2r\Sigma\sin^2\theta}+\frac{\Sigma-2Mr}\Sigma\\
+  &=\frac{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta-2Mr(r^2+a^2)}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
+  &=\frac{(r^2+a^2)\Sigma-2Mr^3-2Mra^2\cos^2\theta}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
+  &=\frac{(r^2+a^2)\Sigma-2Mr\Sigma}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
+  &=\frac{\Delta\Sigma}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}
+\end{align}
+
 \printbibliography
 
 \end{document}
