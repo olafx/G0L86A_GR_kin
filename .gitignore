@@ -3,6 +3,9 @@
 .Spotlight-V100
 .Trashes
 __pycache__/
+.cache/
 
 out/
 report/out/
+*.png
+compile_commands.json
