@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{framed}
+\usepackage{xcolor}
 
 \usepackage{tensor}
 
@@ -36,6 +37,349 @@
 \section*{Introduction}
 
 Test.\cite{Bacchini_2018}\cite{Bacchini_2019}
+
+
+\section{Geodesics}
+
+The geodesic equation in general relativity is
+\begin{equation}
+\label{eq:geodesic_gr}
+    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = 0
+\end{equation}
+where $\tau$ is the proper time along the geodesic and $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols. This equation dictates the path followed by both massive and massless particles, given the spacetime metric and the initial conditions of the particles.
+
+
+\subsection{The 3+1 formalism}
+
+A helpful way to numerically simulate the trajectories of particles in general relativity is by using the Arnowitt-Deser-Misner (ADM) formalism. In this formalism, the metric is written as
+\begin{equation}
+    g_{\mu\nu} = 
+    \begin{pmatrix}
+    -\alpha^2+\beta_k\gamma^{kl}\beta_l & \beta_i\\
+    \beta_j & \gamma_{ij}
+    \end{pmatrix}
+\end{equation}
+with $\gamma^{ij}$ defined as the inverse of $\gamma_{ij}$, both of which are symmetric because $g_{\mu\nu}$ is symmetric. We will use the notation $\beta^i \equiv \gamma^{ij} \beta_j$. The inverse metric $g^{\mu\nu}$ must satisfy the simple identity $g^{\mu\nu} g_{\nu\rho} = {\delta^\mu}_\rho$. The inverse metric that satisfies this identity is
+\begin{equation}
+    g^{\mu\nu} = 
+    \begin{pmatrix}
+    -1/\alpha^2 & \beta^i/\alpha^2\\
+    \beta^j/\alpha^2 & \gamma^{ij}-\beta^i\beta^j/\alpha^2
+    \end{pmatrix}.
+\end{equation}
+This is checked in the following equation:
+\begin{equation}
+\begin{aligned}
+    g^{\mu\nu} g_{\nu\rho} &= \begin{pmatrix}
+    -1/\alpha^2 & \beta^j/\alpha^2\\
+    \beta^i/\alpha^2 & \gamma^{ij}-\beta^i\beta^j/\alpha^2
+    \end{pmatrix}
+    \begin{pmatrix}
+    -\alpha^2+\beta^l\beta_l & \beta_k\\
+    \beta_j & \gamma_{jk}
+    \end{pmatrix}\\
+    &= \begin{pmatrix}
+    1-\beta^l\beta_l/\alpha^2+\beta^j\beta_j/\alpha^2 & -\beta_k/\alpha^2+\beta^j\gamma_{jk}/\alpha^2\\
+    -\beta_i+\beta_i\beta^l\beta_l/\alpha^2+\gamma^{ij}\beta_j-\beta^i\beta^j\beta_j/\alpha^2 & \beta^i\beta_k/\alpha^2+\gamma^{ij}\gamma_{jk}-\beta^i\beta^j\gamma_{jk}/\alpha^2
+    \end{pmatrix}\\
+    &= \begin{pmatrix}
+    1 & 0\\
+    0 & {\delta^i}_k
+    \end{pmatrix}.
+\end{aligned}
+\end{equation}
+
+The task is to write the geodesic equation in the 3+1 formalism. To this end, let $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$ be the contravariant four-velocity of the particle. We also make use of the notation $t \equiv x^0$. To start, let us derive an expression for $\frac{\text{d}x^i}{\text{d}t}$:
+\begin{equation}
+\label{eq:dx/dt}
+\begin{aligned}
+    \frac{\text{d}x^i}{\text{d}t} &= \frac{\text{d}\tau}{\text{d}t} \frac{\text{d}x^i}{\text{d}\tau} = \frac{u^i}{u^0} = g^{i\mu} \frac{u_\mu}{u^0} = g^{i0} \frac{u_0}{u^0} + g^{ij} \frac{u_j}{u^0}\\
+    &= \frac{\beta^iu_0}{\alpha^2u^0} + \gamma^{ij}\frac{u_j}{u^0} - \frac{\beta^i\beta^ju_j}{\alpha^2u^0}\\
+    &= \gamma^{ij}\frac{u_j}{u^0} + \beta^i\frac{u_0-\beta^ju_j}{\alpha^2}\frac{1}{u^0}\\
+    &= \gamma^{ij}\frac{u_j}{u^0} - \beta^i\frac{u^0}{u^0}\\
+    &= \gamma^{ij}\frac{u_j}{u^0} - \beta^i.
+\end{aligned}
+\end{equation}
+It is also possible to derive an expression for $u^0$ in function of $u_i$. The proper time along the trajectory of the geodesic adheres to the integral
+\begin{equation}
+    \tau = \int \sqrt{-g_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\lambda} \frac{\text{d}x^\nu}{\text{d}\lambda}} \text{d}\lambda
+\end{equation}
+with $\lambda$ a parameter that parameterizes the geodesic. We can choose $\lambda=t$. Along a lightlike geodesic, the proper time does not increase and thus the left hand side of the equation is equal to a constant. Taking the derivative with respect to $t$, the above expression becomes
+\begin{equation}
+    \epsilon\frac{\text{d}\tau}{\text{d}t} = \sqrt{-g_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}t} \frac{\text{d}x^\nu}{\text{d}t}}.
+\end{equation}
+The parameter $\epsilon$ is equal to $1$ for massive particles, which move along timelike curves, and equal to $0$ for massless particles, which move along lightlike curves. Taking the square and using equation \eqref{eq:dx/dt}, this expression further becomes
+\begin{equation}
+\begin{aligned}
+    \epsilon\frac{1}{(u^0)^2} = \epsilon\Big(\frac{\text{d}\tau}{\text{d}t}\Big)^2 &= -g_{00} - 2g_{0i}\frac{\text{d}x^i}{\text{d}t} - g_{ij} \frac{\text{d}x^i}{\text{d}t} \frac{\text{d}x^j}{\text{d}t}\\
+    &= \alpha^2 - \beta^i\beta_i - 2\beta_i\Big(\gamma^{ij}\frac{u_j}{u^0} - \beta^i\Big) - \gamma_{ij}\Big(\gamma^{ik}\frac{u_k}{u^0} - \beta^i\Big)\Big(\gamma^{jl}\frac{u_l}{u^0} - \beta^j\Big)\\
+    &= \alpha^2 - \beta^i\beta_i - \Big(2\beta^i\frac{u_i}{u^0} - 2\beta^i\beta_i\Big) - \Big(\frac{u_j}{u^0} - \beta_j\Big)\Big(\gamma^{jl}\frac{u_l}{u^0} - \beta^j\Big)\\
+    &= \alpha^2 - \beta^i\beta_i - \Big(2\beta^i\frac{u_i}{u^0} - 2\beta^i\beta_i\Big) - \Big(\frac{u_j\gamma^{jl}u_l}{(u^0)^2} - 2\beta^j\frac{u_j}{u^0} + \beta_j\beta^j\Big)\\
+    &= \alpha^2 - \frac{u_j\gamma^{jl}u_l}{(u^0)^2}\\
+    \Rightarrow (u^0)^2 &= \frac{\epsilon + u_i\gamma^{ij}u_j}{\alpha^2}\\
+    \Rightarrow u^0 &= \frac{\sqrt{\epsilon + u_i\gamma^{ij}u_j}}{\alpha}.
+\end{aligned}
+\end{equation}
+Before equation \eqref{eq:geodesic_gr} can be expanded using the ADM formalism, there is a relation between $u_0$ and $u^0$ that can be derived and that will be quite useful:
+\begin{equation}
+\label{eq:u_0}
+\begin{aligned}
+    u^0 &= g^{0\mu}u_\mu = -\frac{u_0}{\alpha^2} + \frac{\beta^iu_i}{\alpha^2}\\
+    \Rightarrow u_0 &= \beta^iu_i - \alpha^2u^0.
+\end{aligned}
+\end{equation}
+Another useful equation is one relating $u^i$ and $u_i$:
+\begin{equation}
+\label{eq:u^i}
+\begin{aligned}
+    u^i &= g^{i\mu}u_\mu = g^{i0}u_0 + g^{ij}u_j = \frac{\beta^i}{\alpha^2}\big(\beta^ju_j - \alpha^2u^0\big) + \Big(\gamma^{ij} - \frac{\beta^i\beta^j}{\alpha^2}\Big)u_j\\
+    \Rightarrow u^i &= \gamma^{ij}u_j - \beta^iu^0.
+\end{aligned}
+\end{equation}
+The daunting task of expanding the geodesic equation can now be begun. The geodesic equation can be rewritten in the following way:
+\begin{equation}
+\label{eq:geodesic_derivation_part_0}
+\begin{aligned}
+    \frac{\text{d}u^\rho}{\text{d}\tau} &= - \Gamma^\rho_{\mu\nu} u^\mu u^\nu\\
+    \Rightarrow u^0 \frac{\text{d}u^\rho}{\text{d}t} &= - (u^0)^2\Gamma^\rho_{00} - 2u^0\Gamma^\rho_{0j} u^j - \Gamma^\rho_{jk} u^ju^k\\
+    \Rightarrow g_{i\rho}\frac{\text{d}u^\rho}{\text{d}t} &= - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k\\
+    \Rightarrow \frac{\text{d}u_i}{\text{d}t} - u^\rho\frac{\text{d}g_{i\rho}}{\text{d}t} &= - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k \quad\text{(using the product rule of derivatives)}.
+\end{aligned}
+\end{equation}
+The term $u^\rho\frac{\text{d}g_{i\rho}}{\text{d}t}$ on the left-hand side can be expanded by using $\frac{\text{d}g_{i\rho}}{\text{d}t} = \frac{\text{d}x^\mu}{\text{d}t} \frac{\partial g^{i\rho}}{\partial\mu}$. The derivation of the geodesic equation can then be continued:
+\begin{equation}
+\label{eq:geodesic_derivation_part_1}
+\begin{aligned}
+    \frac{\text{d}u_i}{\text{d}t} - u^\rho\frac{u^\mu}{u^0}\partial_\mu g_{i\rho} &= - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k\\
+    \Rightarrow \frac{\text{d}u_i}{\text{d}t} &= u^0\partial_0g_{i0} + u^j\partial_0g_{ij} + u^j\partial_j g_{i0} + \frac{u^k u^j}{u^0}\partial_k g_{ij}\\
+    &\quad - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k\\
+    &= u^0\partial_0\beta_i + \big(\gamma^{jk}u_k - \beta^ju^0\big)\partial_0\gamma_{ij} + \big(\gamma^{jk}u_k - \beta^ju^0\big)\partial_j\beta_i\\
+    &\quad + \frac{1}{u^0}\big(\gamma^{jl}u_l - \beta^ju^0\big)\big(\gamma^{km}u_m - \beta^ku^0\big)\partial_k\gamma_{ij}\\
+    &\quad - u^0g_{i\rho}\Gamma^\rho_{00} - 2\big(\gamma^{jk}u_k - \beta^ju^0\big)g_{i\rho}\Gamma^\rho_{0j}\\
+    &\quad - \frac{1}{u^0}\big(\gamma^{jl}u_l - \beta^ju^0\big)\big(\gamma^{km}u_m - \beta^ku^0\big)g_{i\rho}\Gamma^\rho_{jk} \quad\text{(using equation \eqref{eq:u^i})}\\
+    &= u^0\big[\partial_0\beta_i - \beta^j\partial_0\gamma_{ij} - \beta^j\partial_j\beta_i + \beta^j\beta^k\partial_k\gamma_{ij} - g_{i\rho}\Gamma^\rho_{00} + 2\beta^jg_{i\rho}\Gamma^\rho_{0j} - \beta^j\beta^kg_{i\rho}\Gamma^\rho_{jk}\big]\\
+    &\quad + u_j\big[\gamma^{jk}\partial_0\gamma_{ik} + \gamma^{jk}\partial_k\beta_i - \gamma^{jl}\beta^k\partial_k\gamma_{il} - \gamma^{jl}\beta^k\partial_l\gamma_{ik} - 2\gamma^{jk}g_{i\rho}\Gamma^\rho_{0k} + 2\beta^k\gamma^{jl}g_{i\rho}\Gamma^\rho_{kl}\big]\\
+    &\quad + \frac{u_ju_k}{u^0}\big[\gamma^{jl}\gamma^{km}\partial_m\gamma_{il} -\gamma^{jl}\gamma^{km}g_{i\rho}\Gamma^\rho_{lm}\big].
+\end{aligned}
+\end{equation}
+The right-hand side of the last line of this equation consists of three parts. Before expanding these three parts one by one, it is instructive to first look at what $g_{i\rho}\Gamma^\rho_{\mu\nu}$ is. Using the formula for the Christoffel symbols gives the following result:
+\begin{equation}
+    g_{i\rho}\Gamma^\rho_{\mu\nu} = \frac{1}{2}g_{i\rho}g^{\rho\sigma}\big(\partial_\mu g_{\nu\sigma} + \partial_\nu g_{\mu\sigma} - \partial_\sigma g_{\mu\nu}\big) = \frac{1}{2} \big(\partial_\mu g_{\nu i} + \partial_\nu g_{\mu i} - \partial_i g_{\mu\nu}\big).
+\end{equation}
+Splitting this equation into the three cases $g_{i\rho}\Gamma^\rho_{00}$, $g_{i\rho}\Gamma^\rho_{0j}$, and $g_{i\rho}\Gamma^\rho_{jk}$ we find that
+\begin{equation}
+\begin{aligned}
+    \rightarrow g_{i\rho}\Gamma^\rho_{00} &= \frac{1}{2} \big(2\partial_0 g_{0i} - \partial_i g_{00}\big) = \partial_0\beta_i + \frac{1}{2}\partial_i(\alpha^2 - \beta^j\beta_j)\\
+    \rightarrow g_{i\rho}\Gamma^\rho_{0j} &= \frac{1}{2} \big(\partial_0 g_{ij} + \partial_j g_{0i} - \partial_i g_{0j}\big) = \frac{1}{2}\big(\partial_0\gamma_{ij} + \partial_j\beta_i - \partial_i\beta_j\big)\\
+    \rightarrow g_{i\rho}\Gamma^\rho_{jk} &= \frac{1}{2} \big(\partial_j g_{ik} + \partial_k g_{ij} - \partial_i g_{jk}\big) = \frac{1}{2} \big(\partial_j \gamma_{ik} + \partial_k \gamma_{ij} - \partial_i \gamma_{jk}\big).
+\end{aligned}
+\end{equation}
+We now expand the first part of the final line of equation \eqref{eq:geodesic_derivation_part_1} (the terms proportional to $u^0$). In the following derivation, colored terms within the same line that have the same color cancel each other out:
+\begin{equation}
+\begin{aligned}
+    &u^0\big[\partial_0\beta_i - \beta^j\partial_0\gamma_{ij} - \beta^j\partial_j\beta_i + \beta^j\beta^k\partial_k\gamma_{ij} - g_{i\rho}\Gamma^\rho_{00} + 2\beta^jg_{i\rho}\Gamma^\rho_{0j} - \beta^j\beta^kg_{i\rho}\Gamma^\rho_{jk}\big]\\
+    &= u^0\Big[\textcolor{blue}{\partial_0\beta_i} - \textcolor{green}{\beta^j\partial_0\gamma_{ij}} - \textcolor{purple}{\beta^j\partial_j\beta_i} + \textcolor{red}{\beta^j\beta^k\partial_k\gamma_{ij}} - \textcolor{blue}{\partial_0\beta_i} - \frac{1}{2}\partial_i(\alpha^2 - \beta^j\beta_j) + \beta^j\big(\textcolor{green}{\partial_0\gamma_{ij}} + \textcolor{purple}{\partial_j\beta_i} - \partial_i\beta_j\big)\\
+    &\quad\;\;-\beta^j\beta^k\Big(\textcolor{red}{\partial_j \gamma_{ik}} - \frac{1}{2}\partial_i \gamma_{jk}\Big)\Big]\\
+    &= u^0 \big[-\alpha\partial_i\alpha + \frac{1}{2}\beta^j\partial_i\beta_j - \frac{1}{2}\beta_j\partial_i\beta^j - \frac{1}{2}\beta^j\beta^k\partial_i\gamma_{jk}\big]\\
+    &= u^0 \big[-\alpha\partial_i\alpha + \textcolor{blue}{\frac{1}{2}\beta^j\gamma_{jk}\partial_i\beta^k} + \textcolor{green}{\frac{1}{2}\beta^j\beta^k\partial_i\gamma_{jk}} - \textcolor{blue}{\frac{1}{2}\beta_j\partial_i\beta^j} - \textcolor{green}{\frac{1}{2}\beta^j\beta^k\partial_i\gamma_{jk}}\big]\\
+    &= -\alpha u^0\partial_i\alpha.
+\end{aligned}
+\end{equation}
+The second part of equation \eqref{eq:geodesic_derivation_part_1} (the terms proportional to $u^j$) become
+\begin{equation}
+\begin{aligned}
+    &u_j\big[\gamma^{jk}\partial_0\gamma_{ik} + \gamma^{jk}\partial_k\beta_i - \gamma^{jl}\beta^k\partial_k\gamma_{il} - \gamma^{jl}\beta^k\partial_l\gamma_{ik} - 2\gamma^{jk}g_{i\rho}\Gamma^\rho_{0k} + 2\beta^k\gamma^{jl}g_{i\rho}\Gamma^\rho_{kl}\big]\\
+    &= u_j\Big[\textcolor{blue}{\gamma^{jk}\partial_0\gamma_{ik}} + \textcolor{green}{\gamma^{jk}\partial_k\beta_i} - \textcolor{purple}{\gamma^{jl}\beta^k\partial_k\gamma_{il}} - \textcolor{red}{\gamma^{jl}\beta^k\partial_l\gamma_{ik}} - \gamma^{jk}\big(\textcolor{blue}{\partial_0\gamma_{ik}} + \textcolor{green}{\partial_k\beta_i} - \partial_i\beta_k\big) + \beta^k\gamma^{jl}\big(\textcolor{purple}{\partial_k \gamma_{il}} + \textcolor{red}{\partial_l \gamma_{ik}} - \partial_i \gamma_{kl}\big)\Big]\\
+    &= u_j \big[\gamma^{jk}\partial_i(\beta^l\gamma_{kl}) - \beta^k\gamma^{jl}\partial_i \gamma_{kl}\big]\\
+    &= u_j\partial_i\beta^j.
+\end{aligned}
+\end{equation}
+The final part of equation \eqref{eq:geodesic_derivation_part_1} (the terms proportional to $\frac{1}{u^0}u^ju^k$) is
+\begin{equation}
+\begin{aligned}
+    &\frac{u_ju_k}{u^0}\big[\gamma^{jl}\gamma^{km}\partial_m\gamma_{il} -\gamma^{jl}\gamma^{km}g_{i\rho}\Gamma^\rho_{lm}\big]\\
+    &= \frac{u_ju_k}{u^0}\gamma^{jl}\gamma^{km}\Big[\textcolor{blue}{\partial_m\gamma_{il}} - \textcolor{blue}{\partial_l \gamma_{im}} + \frac{1}{2}\partial_i\gamma_{lm}\Big]\\
+    &= \frac{u_ju_k}{2u^0}\gamma^{jl}\gamma^{km}\partial_i\gamma_{lm}\\
+    &= \frac{u_ju_k}{2u^0}\gamma^{jl} \big[\partial_i(\gamma^{km}\gamma_{lm}) - \gamma_{lm}\partial_i\gamma^{km}\big]\\
+    &= -\frac{u_ju_k}{2u^0}\partial_i\gamma^{jk} \quad\text{(using $\partial_i{\delta^k}_l = 0$)}.
+\end{aligned}
+\end{equation}
+((The details of the last step need to be resolved.)) The final result of this subsection is achieved by putting the three pieces back together. The geodesic equation in the ADM formalism is thus
+\begin{equation}
+\label{eq:geodesic_3+1}
+    \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_ju_k}{2u^0}\partial_i\gamma^{jk}.
+\end{equation}
+
+
+\subsection{The Kerr metric in spherical coordinates}
+
+The Kerr metric describes a rotating black hole in general relativity. In spherical coordinates, the metric can be written as
+\begin{equation}
+    \text{d}s^2 = -\Big(1 - \frac{2Mr}{\rho^2}\Big)\text{d}t^2 - \frac{4Mra\sin^2\theta}{\rho^2}\text{d}\phi\text{d}t + \frac{\rho^2}{\Delta}\text{d}r^2 + \rho^2\text{d}\theta^2 + \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta\,\text{d}\phi^2
+\end{equation}
+with $\;\rho^2 \equiv r^2 + a^2 \cos^2\theta\;$ and $\;\Delta \equiv r^2 - 2Mr + a^2$. We see that, in spherical coordinates, the spatial part of the metric is diagonal:
+\begin{equation}
+    \gamma_{ij} = \begin{pmatrix}
+    \gamma_{rr} & \gamma_{r\theta} & \gamma_{r\phi}\\
+    \gamma_{\theta r} & \gamma_{\theta\theta} & \gamma_{\theta\phi}\\
+    \gamma_{\phi r} & \gamma_{\phi\theta} & \gamma_{\phi\phi}\\
+    \end{pmatrix} = \begin{pmatrix}
+    \frac{\rho^2}{\Delta} & 0 & 0\\
+    0 & \rho^2 & 0\\
+    0 & 0 & \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta
+    \end{pmatrix}.
+\end{equation}
+The metric $\gamma^{ij}$ with the indices up is obtained by taking the inverse, which is easy to do since we have chosen coordinates in which the metric is diagonal:
+\begin{equation}
+    \gamma^{ij} = \begin{pmatrix}
+    \frac{\Delta}{\rho^2} & 0 & 0\\
+    0 & \frac{1}{\rho^2} & 0\\
+    0 & 0 & \frac{\rho^2}{\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big)\sin^2\theta}
+    \end{pmatrix}.
+\end{equation}
+We can also see that $\beta_i$ is
+\begin{equation}
+    \beta_i = \begin{pmatrix}
+    \beta_r\\
+    \beta_\theta\\
+    \beta_\phi
+    \end{pmatrix} = \begin{pmatrix}
+    0\\
+    0\\
+    -\frac{2Mra\sin^2\theta}{\rho^2}
+    \end{pmatrix}.
+\end{equation}
+$\beta^i$ with an upper index can be obtained by multiplying $\beta_j$ with $\gamma^{ij}$:
+\begin{equation}
+    \beta^i = \begin{pmatrix}
+    0\\
+    0\\
+    \beta_\phi \gamma^{\phi\phi}
+    \end{pmatrix} = \begin{pmatrix}
+    0\\
+    0\\
+    -\frac{2Mra}{\sigma^2}
+    \end{pmatrix}.
+\end{equation}
+Here we introduce the notation $\sigma^2 \equiv \rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta$. Finding $\alpha^2$ for the Kerr metric requires a bit more work. Comparing the Kerr metric to the decomposition of the metric in the ADM formalism, we find that
+\begin{equation}
+\begin{aligned}
+    -\alpha^2 + \beta_i\gamma^{ij}\beta_j &= -\Big(1 - \frac{2Mr}{\rho^2}\Big)\\
+    \Rightarrow \alpha^2 &= \Big(1 - \frac{2Mr}{\rho^2}\Big) + \beta_\phi^2\gamma^{\phi\phi}\\
+    &= \Big(1 - \frac{2Mr}{\rho^2}\Big) + \frac{4M^2r^2a^2\sin^4\theta}{\rho^4 \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta}\\
+    &= \Big(1 - \frac{2Mr}{\rho^2}\Big) + \frac{4M^2r^2a^2\sin^2\theta}{\rho^2\Big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\Big)}\\
+    &= \frac{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta - 2Mr\big(r^2 + a^2\big)}{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta}\\
+    &= \frac{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta - 2Mr\big(\rho^2 + a^2\sin^2\theta\big)}{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta} \quad\text{(using $\rho^2 = r^2 + a^2\cos^2\theta$)}\\
+    &= \frac{\rho^2\Delta}{\sigma^2}.
+\end{aligned}
+\end{equation}
+To simulate the particle trajectories, we also need the spatial derivatives of $\alpha^2$, $\beta^i$, and $\gamma^{ij}$. The derivative $\partial_r\alpha^2$ is
+\begin{equation}
+\begin{aligned}
+    \partial_r\alpha^2 &= \frac{\Delta}{\sigma^2}\partial_r\rho^2 + \frac{\rho^2}{\sigma^2}\partial_r\Delta - \frac{\rho^2\Delta}{\sigma^4}\partial_r\sigma^2\\
+    &= \frac{\Delta}{\sigma^2}(2r) + \frac{\rho^2}{\sigma^2}(2r-2M) - \frac{\rho^2\Delta}{\sigma^4}\big(2r\rho^2 + 2r^3 + 2ra^2 + 2Ma^2\sin^2\theta\big)\\
+    &= \frac{\Delta}{\sigma^2}(2r) + \frac{\rho^2}{\sigma^2}(2r-2M) - \frac{\rho^2\Delta}{\sigma^4}\big(4r^3 + 2ra^2\cos^2\theta + 2ra^2 + 2Ma^2\sin^2\theta\big)\\
+    &= \frac{2}{\sigma^4}\Big[\Delta\sigma^2r + \rho^2\sigma^2(r-M) - \rho^2\Delta\big(2r^3 + ra^2\cos^2\theta + ra^2 + Ma^2\sin^2\theta\big)\Big]\\
+    &= \frac{2}{\sigma^4}\Big[\big(\rho^2r^2 + \textcolor{blue}{\rho^2a^2} + 2Mra^2\sin^2\theta\big)\Delta r + \rho^2\sigma^2(r-M) - \rho^2\Delta\big(2r^3 + ra^2\cos^2\theta + \textcolor{blue}{ra^2} + Ma^2\sin^2\theta\big)\Big]\\
+    &= \frac{2}{\sigma^4}\Big[\big(-\rho^2r^3 - \rho^2ra^2\cos^2\theta + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)\Delta + \rho^2\sigma^2(r-M)\Big]\\
+    &= \frac{2}{\sigma^4}\Big[\big(-\rho^2r^3 - \rho^2ra^2\cos^2\theta + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)\big(r^2 - 2Mr + a^2\big)\\
+    &\qquad + \rho^2\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big)(r-M)\Big]\\
+    &= \frac{2}{\sigma^4}\Big[\big(-\textcolor{purple}{r^5 - r^3a^2\cos^2\theta} - \textcolor{blue}{r^3a^2\cos^2\theta - ra^4\cos^4\theta} + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)r^2\\
+    &\qquad - \big(-r^5 - \textcolor{yellow}{r^3a^2\cos^2\theta} - r^3a^2\cos^2\theta - ra^4\cos^4\theta + Mr^2a^2\sin^2\theta - \textcolor{cyan}{Ma^4\sin^2\theta\cos^2\theta}\big)2Mr\\
+    &\qquad + \big(-\textcolor{green}{r^5 - r^3a^2\cos^2\theta} - \textcolor{red}{r^3a^2\cos^2\theta - ra^4\cos^4\theta} + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)a^2\\
+    &\qquad + \big(\textcolor{purple}{r^4 + r^2a^2\cos^2\theta} + \textcolor{green}{r^2a^2 + a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)r^3\\
+    &\qquad + \big(\textcolor{blue}{r^4 + r^2a^2\cos^2\theta} + \textcolor{red}{r^2a^2 + a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)ra^2\cos^2\theta\\
+    &\qquad - \big(r^4 + \textcolor{yellow}{r^2a^2\cos^2\theta} + r^2a^2 + a^4\cos^2\theta + 2Mra^2\sin^2\theta\big)Mr^2\\
+    &\qquad - \big(\textcolor{yellow}{r^4} + r^2a^2\cos^2\theta + r^2a^2 + a^4\cos^2\theta + \textcolor{cyan}{2Mra^2\sin^2\theta}\big)Ma^2\cos^2\theta\Big]\\
+    &= \frac{2M}{\sigma^4}\Big[r^6 + r^4a^2(2\sin^2\theta + \cos^2\theta) - 4Mr^3a^2\sin^2\theta + r^2a^4(\sin^2\theta - \cos^2\theta) - a^6\cos^2\theta\Big].
+\end{aligned}
+\end{equation}
+The derivative $\partial_\theta\alpha^2$ is
+\begin{equation}
+\begin{aligned}
+    \partial_\theta\alpha^2 &= \frac{\Delta}{\sigma^2}\partial_\theta\rho^2 - \frac{\rho^2\Delta}{\sigma^4}\partial_\theta\sigma^2\\
+    &= \frac{\Delta}{\sigma^4}\big[\sigma^2\partial_\theta\rho^2 - \rho^2\partial_\theta\sigma^2\big]\\
+    &= \frac{\Delta}{\sigma^4}\Big[-2a^2\sin\theta\cos\theta\big(\textcolor{purple}{r^4} + \textcolor{blue}{r^2a^2\cos^2\theta} + \textcolor{cyan}{r^2a^2} + \textcolor{green}{a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)\\
+    &\qquad - r^2\big(-\textcolor{purple}{2r^2a^2\sin\theta\cos\theta} - \textcolor{cyan}{2a^4\sin\theta\cos\theta} + 4Mra^2\sin\theta\cos\theta\big)\\
+    &\qquad - a^2\cos^2\theta\big(-\textcolor{blue}{2r^2a^2\sin\theta\cos\theta} - \textcolor{green}{2a^4\sin\theta\cos\theta} + 4Mra^2\sin\theta\cos\theta\big)\Big]\\
+    &= \frac{\Delta}{\sigma^4}\Big[-4Mra^4\sin\theta\cos\theta - 4Mr^3a^2\sin\theta\cos\theta\Big] = -4Mra^2(r^2 + a^2)\sin\theta\cos\theta\frac{\Delta}{\sigma^4}.
+\end{aligned}
+\end{equation}
+The derivative $\partial_\phi\alpha^2$ is equal to zero. The metric does not depend on the coordinate $\phi$. The spatial derivatives of the non-zero component of $\beta^i$ are
+\begin{equation}
+\begin{aligned}
+    \rightarrow \partial_r\beta^\phi &= -\frac{2Ma}{\sigma^2} + \frac{2Mra}{\sigma^4}\partial_r\sigma^2\\
+    &= -\frac{2Ma}{\sigma^4}\Big[\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big) - r\big(r^2\partial_r\rho^2 + 2r\rho^2 + a^2\partial_r\rho^2 + 2Ma^2\sin^2\theta\big)\Big]\\
+    &= -\frac{2Ma}{\sigma^4}\Big[\big(r^4 + r^2a^2\cos^2\theta + r^2a^2 + a^4\cos^2\theta + \textcolor{blue}{2Mra^2\sin^2\theta}\big) - r\big(4r^3 + 2ra^2\cos^2\theta + 2ra^2 + \textcolor{blue}{2Ma^2\sin^2\theta}\big)\Big]\\
+    &= -\frac{2Ma}{\sigma^4}\big[-3r^4 - r^2a^2\cos^2\theta - r^2a^2 + a^4\cos^2\theta\big]\\
+    \rightarrow \partial_\theta\beta^\phi &= \frac{2Mra}{\sigma^4} \partial_\theta\sigma^2\\
+    &= \frac{2Mra}{\sigma^4}\big[r^2\partial_\theta\rho^2 + a^2\partial_\theta\rho^2 + 4Mra^2\sin\theta\cos\theta\big]\\
+    &= \frac{2Mra}{\sigma^4}\big[-2r^2a^2\sin\theta\cos\theta - 2a^4\sin\theta\cos\theta + 4Mra^2\sin\theta\cos\theta\big]\\
+    &= -\frac{4Mra^3\Delta}{\sigma^4}\sin\theta\cos\theta\\
+    \rightarrow \partial_\phi\beta^\phi &= 0
+\end{aligned}
+\end{equation}
+The spatial derivatives of $\gamma^{rr}$ are
+\begin{equation}
+\begin{aligned}
+    \rightarrow \partial_r\gamma^{rr} &= \frac{1}{\rho^4}\big[\rho^2\partial_r\Delta - \Delta\partial_r\rho^2\big]\\
+    &= \frac{1}{\rho^4}\Big[\big(r^2 + a^2\cos^2\theta\big)(2r - 2M) - \big(r^2 - 2Mr + a^2\big)2r\Big]\\
+    &= \frac{2}{\rho^4}\Big[ra^2\cos^2\theta + Mr^2 - Ma^2\cos^2\theta - ra^2\Big]\\
+    &= \frac{2}{\rho^4}\Big[(r-M)a^2\cos^2\theta + (Mr-a^2)r\Big]\\
+    \rightarrow \partial_\theta\gamma^{rr} &= -\frac{\Delta}{\rho^4}\partial_\theta\rho^2\\
+    &= \frac{2a^2\Delta}{\rho^4}\sin\theta\cos\theta\\
+    \rightarrow \partial_\phi\gamma^{rr} &= 0.
+\end{aligned}
+\end{equation}
+The spatial derivatives of $\gamma^{\theta\theta}$ are
+\begin{equation}
+\begin{aligned}
+    \rightarrow \partial_r\gamma^{\theta\theta} &= -\frac{1}{\rho^4}\partial_r\rho^2\\
+    &= -\frac{2r}{\rho^4}\\
+    \rightarrow \partial_\theta\gamma^{\theta\theta} &= -\frac{1}{\rho^4}\partial_\theta\rho^2\\
+    &= \frac{2a^2}{\rho^4}\sin\theta\cos\theta\\
+    \rightarrow \partial_\phi\gamma^{\theta\theta} &= 0.
+\end{aligned}
+\end{equation}
+The spatial derivatives of $\gamma^{\phi\phi}$ are
+\begin{equation}
+\begin{aligned}
+    \rightarrow \partial_r\gamma^{\phi\phi} &= \frac{1}{\sigma^4\sin^2\theta}\big[\sigma^2\partial_r\rho^2 - \rho^2\partial_r\sigma^2\big]\\
+    &= \frac{1}{\sigma^4\sin^2\theta} \Big[2r\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big) - \rho^2\big(4r^3 + 2ra^2\cos^2\theta + 2ra^2 + 2Ma^2\sin^2\theta\big)\Big]\\
+    &= \frac{1}{\sigma^4\sin^2\theta} \Big[2r\big(r^4 + \textcolor{purple}{r^2a^2\cos^2\theta + r^2a^2} + \textcolor{blue}{a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)\\
+    &\qquad\qquad\quad - r^2\big(4r^3 + \textcolor{purple}{2ra^2\cos^2\theta + 2ra^2} + 2Ma^2\sin^2\theta\big)\\
+    &\qquad\qquad\quad - a^2\cos^2\theta\big(4r^3 + 2ra^2\cos^2\theta + \textcolor{blue}{2ra^2} + 2Ma^2\sin^2\theta\big)\Big]\\
+    &= -\frac{2}{\sigma^4\sin^2\theta} \Big[r^2\big(r^3 - Ma^2\sin^2\theta\big) + a^2\cos^2\theta\big(2r^3 + ra^2\cos^2\theta + Ma^2\sin^2\theta\big)\Big]\\
+    \rightarrow \partial_\theta\gamma^{\phi\phi} &= \frac{1}{\sigma^4\sin^3\theta}\big[\sigma^2\sin\theta\,\partial_\theta\rho^2 - \rho^2\sin\theta\,\partial_\theta\sigma^2 - 2\rho^2\sigma^2\cos\theta\big]\\
+    &= \frac{\partial_\theta\alpha^2}{\Delta\sin^2\theta} - \frac{2\rho^2\cos\theta}{\sigma^2\sin^3\theta}\\
+    &= -4Mra^2(r^2 + a^2)\frac{\cos\theta}{\sigma^4\sin\theta} - \frac{2\rho^2\cos\theta}{\sigma^2\sin^3\theta}\\
+    &= -\frac{2\cos\theta}{\sigma^4\sin^3\theta}\Big[2Mra^2\sin^2\theta\,(r^2 + a^2) + \rho^2\sigma^2\Big]\\
+    \rightarrow \partial_\phi\gamma^{\phi\phi} &= 0.
+\end{aligned}
+\end{equation}
+To summarize, the components of the metric and their non-zero derivatives are:
+\begin{equation}
+\begin{aligned}
+    &\alpha^2 = \frac{\rho^2\Delta}{\sigma^2},\qquad \beta^i = \begin{pmatrix}
+    0\\
+    0\\
+    -\frac{2Mra}{\sigma^2}
+    \end{pmatrix},\qquad \gamma^{ij} = \begin{pmatrix}
+    \frac{\Delta}{\rho^2} & 0 & 0\\
+    0 & \frac{1}{\rho^2} & 0\\
+    0 & 0 & \frac{\rho^2}{\sigma^2\sin^2\theta}
+    \end{pmatrix},\\
+    &\partial_r\alpha^2 = \frac{2M}{\sigma^4}\Big[r^6 + r^4a^2(2\sin^2\theta + \cos^2\theta) - 4Mr^3a^2\sin^2\theta + r^2a^4(\sin^2\theta - \cos^2\theta) - a^6\cos^2\theta\Big],\\
+    &\partial_\theta\alpha^2 = -4Mra^2(r^2 + a^2)\sin\theta\cos\theta\frac{\Delta}{\sigma^4},\\
+    &\partial_r\beta^\phi = -\frac{2Ma}{\sigma^4}\big[-3r^4 - r^2a^2\cos^2\theta - r^2a^2 + a^4\cos^2\theta\big],\\
+    &\partial_\theta\beta^\phi = -\frac{4Mra^3\Delta}{\sigma^4}\sin\theta\cos\theta,\\
+    &\partial_r\gamma^{rr} = \frac{2}{\rho^4}\Big[(r-M)a^2\cos^2\theta + (Mr-a^2)r\Big],\hspace{30pt} \partial_\theta\gamma^{rr} = \frac{2a^2\Delta}{\rho^4}\sin\theta\cos\theta,\\
+    &\partial_r\gamma^{\theta\theta} = -\frac{2r}{\rho^4},\hspace{165pt} \partial_\theta\gamma^{\theta\theta} = \frac{2a^2}{\rho^4}\sin\theta\cos\theta,\\
+    &\partial_r\gamma^{\phi\phi} = -\frac{2}{\sigma^4\sin^2\theta} \Big[r^2\big(r^3 - Ma^2\sin^2\theta\big) + a^2\cos^2\theta\big(2r^3 + ra^2\cos^2\theta + Ma^2\sin^2\theta\big)\Big],\\
+    &\partial_\theta\gamma^{\phi\phi} = -\frac{2\cos\theta}{\sigma^4\sin^3\theta}\Big[2Mra^2\sin^2\theta\,(r^2 + a^2) + \rho^2\sigma^2\Big].
+\end{aligned}
+\end{equation}
+
 
 % olaf: Some brainstorming:
 
