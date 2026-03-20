@@ -268,12 +268,7 @@ py::tuple render
   double h_rel,
   double h_min
 )
-{ 
-  
-  
-  
-  
-  const metric::Kerr::Params params_Kerr {M, a};
+{ const metric::Kerr::Params params_Kerr {M, a};
   const metric::Kerr::BoyerLindquist metric;
   const finite_difference::StepPolicy_Simple step_policy {h_rel, h_min};
   const AccretionDisk disk
