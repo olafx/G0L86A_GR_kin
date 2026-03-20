@@ -268,7 +268,12 @@ py::tuple render
   double h_rel,
   double h_min
 )
-{ const metric::Kerr::Params params_Kerr {M, a};
+{ 
+  
+  
+  
+  
+  const metric::Kerr::Params params_Kerr {M, a};
   const metric::Kerr::BoyerLindquist metric;
   const finite_difference::StepPolicy_Simple step_policy {h_rel, h_min};
   const AccretionDisk disk
@@ -306,7 +311,7 @@ py::tuple render
   };
 
   {
-// Lock the GIL when doing parallelism.
+// Release the GIL for the computational work, don't need it.
     py::gil_scoped_release release;
 
     #pragma omp parallel for

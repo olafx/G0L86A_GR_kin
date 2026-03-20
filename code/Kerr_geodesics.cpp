@@ -119,7 +119,7 @@ py::tuple geodesics
   py::list geodesics_meta(ics.size());
 
   {
-// Lock the GIL when doing parallelism.
+// Release the GIL for the computational work, don't need it.
     py::gil_scoped_release release;
 
 // Iterate over each geodesic initial condition.
@@ -161,13 +161,14 @@ py::tuple geodesics
 // Reallocate `geodesic` in case `max_steps` is too large of a buffer.
         geodesic.shrink_to_fit();
 
-// Prepare the final output for Python. In particular this converts `geodesic`
-// to e.g. a NumPy array and passes ownership to the Python garbage collector.
-      geodesics[i_geodesic] = util::to_py_array(std::move(geodesic));
-      geodesics_meta[i_geodesic] = GeodesicMeta
-      { .steps = i_step,
-        .stop_criterion = std::to_underlying(stop_criterion)
-      };
+// Acquire the GIL for atomic Python list writes.
+      { py::gil_scoped_acquire acquire;
+        geodesics[i_geodesic] = util::to_py_array(std::move(geodesic));
+        geodesics_meta[i_geodesic] = GeodesicMeta
+        { .steps = i_step,
+          .stop_criterion = std::to_underlying(stop_criterion)
+        };
+      }
     }
   }
   return py::make_tuple(geodesics, geodesics_meta);

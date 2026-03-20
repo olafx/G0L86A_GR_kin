@@ -68,7 +68,7 @@ $(OUT_DIR):
 
 Kerr_geodesics: $(OUT_DIR)/Kerr_geodesics$(PY_EXT)
 $(OUT_DIR)/Kerr_geodesics$(PY_EXT): Kerr_geodesics.cpp | $(OUT_DIR)
-	$(CXX) $(CXX_FLAGS) $(PY_MOD_FLAGS) -I$(INC_PY) $(FLAGS_PYBIND11) $< -o $@ $(CXXSTDLIB_LD_FLAGS) $(FLAGS_LD_PY)
+	$(CXX) $(CXX_FLAGS) $(PY_MOD_FLAGS) $(OMP_FLAGS) -I$(INC_PY) $(FLAGS_PYBIND11) $< -o $@ $(CXXSTDLIB_LD_FLAGS) $(FLAGS_LD_PY)
 
 Kerr_accretion: $(OUT_DIR)/Kerr_accretion$(PY_EXT)
 $(OUT_DIR)/Kerr_accretion$(PY_EXT): Kerr_accretion.cpp | $(OUT_DIR)
