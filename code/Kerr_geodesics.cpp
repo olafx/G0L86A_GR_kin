@@ -162,6 +162,8 @@ py::tuple geodesics
         geodesic.shrink_to_fit();
 
 // Acquire the GIL for atomic Python list writes.
+// Pass the geodesic and geodesic_meta arrays to Python, which becomes e.g. a
+// NumPy array.
       { py::gil_scoped_acquire acquire;
         geodesics[i_geodesic] = util::to_py_array(std::move(geodesic));
         geodesics_meta[i_geodesic] = GeodesicMeta

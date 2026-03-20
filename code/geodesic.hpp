@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <limits>
 
 #include "metric.hpp"
 #include "util.hpp"

@@ -569,7 +569,7 @@ struct formatter<util::Vec<A, N>, CharT>
   { const auto begin = ctx.begin();
     const auto end = ctx.end();
     auto it = begin;
-    for (; it != end && *it != CharT('}'); it++)
+    for (; it != end && *it != CharT('}'); it++);
     spec = { begin, static_cast<size_t>(it-begin) };
     return it;
   }

@@ -1,11 +1,10 @@
 #pragma once
 
 #include <algorithm>
-#include <array>
 #include <cmath>
-#include <concepts>
 #include <cstddef>
-#include <type_traits>
+
+#include "util.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
