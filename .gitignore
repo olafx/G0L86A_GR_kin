@@ -1,11 +1,27 @@
-.DS_Store
-._*
-.Spotlight-V100
-.Trashes
-__pycache__/
-.cache/
+# This is an opt-in .gitignore system.
+*
+!/.gitignore
+!/.vscode/
 
-out/
-report/out/
-*.png
-compile_commands.json
+!/README.md
+
+!/code/
+/code/*
+!/code/finite_difference.hpp
+!/code/geodesic.hpp
+!/code/Kerr_accretion.cpp
+!/code/Kerr_accretion.py
+!/code/Kerr_geodesics.cpp
+!/code/Kerr_geodesics.py
+!/code/makefile
+!/code/metric.hpp
+!/code/solve.hpp
+!/code/util.hpp
+!/code/util.py
+
+!/report/
+/report/*
+!/report/main.bib
+!/report/main.tex
+!/report/makefile
+!/report/solve.hpp
