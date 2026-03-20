@@ -13,7 +13,7 @@ import Kerr_accretion as kerr_accretion
 
 ################################################################################
 
-res = (1280, 1280)
+res = (256, 256)
 camera_dist = 30
 camera_tilt = np.pi/18
 camera_target = (0, 0, 0)
