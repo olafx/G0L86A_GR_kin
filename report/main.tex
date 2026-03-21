@@ -493,7 +493,8 @@ Comparing \eqref{eq:Kerr_metric} to \eqref{eq:ADM_line_elem}, we can read off th
   \beta^2&=\beta_i\beta^i=\beta_\phi\beta^\phi\\
   &=\frac{4M^2a^2r^2\sin^2\theta}{(r^2+a^2)\Sigma^2+2Ma^2r\Sigma\sin^2\theta}
 \end{align}
-\begin{align}
+\begin{equation}
+\begin{split}
   -\alpha^2+\beta^2&=-\Delta/\Sigma+a^2\sin^2\theta/\Sigma\\
   \alpha^2&=\beta^2+\Delta/\Sigma-a^2\sin^2\theta/\Sigma\\
   &=\frac{4M^2a^2r^2\sin^2\theta}{(r^2+a^2)\Sigma^2+2Ma^2r\Sigma\sin^2\theta}+\frac{\Sigma-2Mr}\Sigma\\
@@ -501,7 +502,120 @@ Comparing \eqref{eq:Kerr_metric} to \eqref{eq:ADM_line_elem}, we can read off th
   &=\frac{(r^2+a^2)\Sigma-2Mr^3-2Mra^2\cos^2\theta}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
   &=\frac{(r^2+a^2)\Sigma-2Mr\Sigma}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
   &=\frac{\Delta\Sigma}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}
+\end{split}
+\end{equation}
+
+\section*{Particle Trajectories in Curved Spacetime}
+In this section, we will discuss the qualitative nature of trajectories of both massless and massive particles in the vicinity of black holes. The two cases under consideration will be the curved spacetime due to the fields of the Schwarzschild and Kerr Black Holes. Our analysis will only cover particles in the region outside the event horizon - in the case of the Kerr Black Hole, we will consider motion outside the outermost event horizon. 
+
+\subsection*{Kerr Spacetime}
+First, we once again specify the Kerr metric in the standard Boyer-Lindquist $(t,r,\theta,\phi)$ coordinates. We have taken the Gravitational Constant and the speed of light both to be unity,
+
+\begin{equation}
+    ds^2 = -(1-\frac{2Mr}{\Sigma})dt^2 - \frac{4Mr}{\Sigma}a \sin^2\theta dtd\phi + \Sigma(\frac{dr^2}{\Delta} + d\theta^2) + (r^2 + a^2 + \frac{2Mr}{\Sigma}a^2\sin^2\theta)\sin^2\theta d\phi^2
+\end{equation}
+
+where
+
+\[
+    \Sigma = r^2 + a^2\cos^2\theta, \qquad \Delta = r^2 - 2Mr + a^2
+\]
+
+and $M$ and $a$ represent the Mass and the angular momentum per unit mass of the black hole respectively.
+\newline\newline
+There are three interesting radial positions to note - two of these are the event horizons that are derived from the roots of $\Delta$ which make the terms of the metric singular - ($r_-$ and $r_+$).
+
+The other is the killing horizon where the time Killing vector becomes spacelike - which is the boundary of the ergosphere.
+\[
+    r_{\pm} = M \pm \sqrt{M^2 - a^2}, \qquad r_{ergo} = M + \sqrt{M^2 - a^2cos^\theta}
+\]
+
+Corresponding to this metric, the geodesic equations are as follows, we also define a corollary for theta as $u = cos\theta$, and the equations are parameterized by the proper time $\tau$,
+
+\begin{subequations} \label{eq:geodesic_equations}
+\begin{align}
+   \Sigma\frac{dr}{d\tau} = \pm\sqrt{R(r)} \\
+   \Sigma\frac{du}{d\tau} = \pm\sqrt{V(u)} \\ 
+   \Sigma\frac{d\phi}{d\tau} = \frac{\Phi}{1-u^2} + \frac{a}{\Delta}(2MrE - a\phi) \\
+   \Sigma\frac{dt}{d\tau} = -a^2E(1-u^2) + \frac{1}{\Delta}(E(r^2 + a^2)^2 - 2Mra\Phi)
 \end{align}
+\end{subequations}
+
+where,
+
+\[
+    R(r) = (E^2 - \mu^2)r^4 + 2M\mu^2r^3 + [a^2(E^2 - \mu^2) - Q - \phi^2]r^2 + 2M[(aE - \Phi)^2 + Q]r - a^2Q
+\]
+
+\[
+    V(u) = a^2(\mu^2 - E^2)u^4 - [Q + \Phi^2 + a^2(\mu^2 - E^2)]u^2 + Q
+\]
+
+Here, $\mu$ is a constant of motion that represents the parametrization of the four velocity. In the case of massive particles it is equal to 1 and in the case of massless particles it is equal to 0. $E$ is the energy of the particle, $\Phi$ is the angular momentum of the particle in the direction of rotation of the black hole and $Q$ is the Carter constant.
+
+The right hand side of \ref{eq:geodesic_equations} represents the total amount of kinetic energy available to the particle - its total energy minus the effective potential it has to overcome. 
+
+We can gain some information about this effective potential by looking at the radial geodesic equation for a specific class of trajectories
+
+\begin{itemize}
+    \item We consider a massless photon moving on null/light-like geodesics.
+    \item The photon starts its motion in the equatorial plane ($\theta = \pi/2$) with zero Carter's Constant.
+    \item It is either co-rotating or counter-rotating with respect to the black hole, so $\Phi$ is non-zero.
+\end{itemize}
+
+\underline{\textbf{Non-Circular Light-like Equatorial Motion:}} When the RHS is zero, it represents a turning point where the effective potential is equal to the energy of the particle - causing it to stop. If there is a non-zero force acting on the particle at this point (first derivative of the RHS functions) then it will reverse its direction. 
+
+For the specific case that we mentioned above, the RHS reduces to,
+\begin{equation}
+    \dot{r}^2 = \frac{(r^2+a^2)^2-a^2\Delta}{r^4}(E-V_-)(E-V_+) - \frac{\mu\Delta}{r^2}
+\end{equation}
+
+Where,
+\begin{equation}
+   \boxed{V_{\pm} = \frac{2Mar\Phi \pm r^2|\Phi|\sqrt{\Delta}}{(r^2+a^2)^2-a^2\Delta}}
+\end{equation}
+
+and in our case $\mu = 0$ since we are considering massless particles.
+\\ \newline
+The absolute value of $\Phi$ is taken to make sure that $V_+$ is always greater than $V_-$ in the case that the particle is counter-rotating or co-rotating with respect to the black hole.
+
+We now state some properties of the effective potentials,
+
+\begin{itemize}
+    \item Both the potentials coincide at the outer horizon when $\Delta=0$ which is a positive potential for co-rotating and negative for counter-rotating photons. Since, we only consider motion outside the outer event horizon for now, therefore our area of interest starts here. 
+    \item At infinity, both the potentials go to zero and they only have one extremum each - which is always a maximum for $V_+$ and a minimum for $V_-$. 
+    \item The object can have negative energies in the ergosphere, as we will see. For more information about a physical interpretation of this, see Appendix A.
+\end{itemize}
+
+For allowed ranges of motion the RHS should be non-negative, which can only happen at the following ranges. 
+
+\[ E < V_-, \qquad E > V_+ \]
+
+Any motion between these two ranges is forbidden since the particle does not have enough energy to overcome the effective potential. Figures 1 and 2 are sketches of the counter-rotating and co-rotating potentials for a specific value of $\Phi$ and $a$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/kerr_potential_counterrotating.png}
+    \label{fig:co_potential_sketch}
+    \caption{Sketches of Effective Potential for Counter-Rotating Photons in Kerr Spacetime.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/kerr_potential_corrotating.png}
+    \label{fig:counter_potential_sketch}
+    \caption{Sketches of Effective Potential for Co-Rotating Photons in Kerr Spacetime.}
+\end{figure}
+
+One case during this motion is when the particle starts from far away with some finite energy and approaches the black hole. It will be able to cross the horizon if its energy is greater than the maximum of $V_+$. This is a case of photon capture.
+\\ \newline
+If it is less than the maximum of $V_+$ then it will have a turning point somewhere outside the horizon and will reverse its direction back to infinity. This is the case of deflection.
+\\ \newline
+The other case pertains to motion of co-rotating photons between the outer event horizon and the maximum of $V_+$. It is only allowed to exist in this region within the range of $V_+(r_+) < E < V_+(r_{max})$.
+\\ \newline
+The last case is that of counter-rotating photons between the ergosphere (where $V_+ = 0$) and the outer event horizon. Here, the energy of the particle can be negative and it can exist in the range of $V_+(r_+) < E < 0$. The physical interpretation of this negative energy is explained in detail in Appendix A.
+
+\subsection*{Spherical Orbits}
 
 \printbibliography
 
