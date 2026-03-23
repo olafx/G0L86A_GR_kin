@@ -25,5 +25,4 @@
 !/report/main.tex
 !/report/makefile
 !/report/solve.hpp
-
-!/figures/
+!/report/figures/*
