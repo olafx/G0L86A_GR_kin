@@ -16,6 +16,8 @@
 \addbibresource{main.bib}
 
 \newcommand{\parHeading}[1]{\underline{\textbf{#1}}}
+\newcommand{\doubleline}{\\[2\baselineskip]}
+
 \begin{document}
 
 \title{\fontfamily{lmr} \Huge  Analysis of Particle Kinetics in Curved Space-time}
@@ -36,9 +38,7 @@
 
 
 \section*{Introduction}
-
 Test.\cite{Bacchini_2018}\cite{Bacchini_2019}
-
 
 \section{Geodesics}
 
@@ -507,39 +507,39 @@ Comparing \eqref{eq:Kerr_metric} to \eqref{eq:ADM_line_elem}, we can read off th
 \end{equation}
 
 \section*{Particle Trajectories in Curved Spacetime}
-In this section, we will discuss the qualitative nature of trajectories of both massless and massive particles in the vicinity of black holes. The two cases under consideration will be the curved spacetime due to the fields of the Schwarzschild and Kerr Black Holes. Our analysis will only cover particles in the region outside the event horizon - in the case of the Kerr Black Hole, we will consider motion outside the outermost event horizon. 
+In this section, we will discuss the qualitative nature of the trajectories of both massless and massive particles in the vicinity of black holes. The case under consideration will be that of the Kerr Black Hole, which can be trivially extended to the Schwarzschild solution as well. Our analysis will only cover particles in the region outside the outermost event horizon.
 
 \subsection*{Kerr Spacetime}
-First, we once again specify the Kerr metric in the standard Boyer-Lindquist $(t,r,\theta,\phi)$ coordinates. We have taken the Gravitational Constant and the speed of light both to be unity,
+First, we once again specify the Kerr metric in the standard Boyer-Lindquist $(t,r,\theta,\phi)$ coordinates. We have taken the gravitational constant and the speed of light both to be unity,
 
 \begin{equation}
     ds^2 = -(1-\frac{2Mr}{\Sigma})dt^2 - \frac{4Mr}{\Sigma}a \sin^2\theta dtd\phi + \Sigma(\frac{dr^2}{\Delta} + d\theta^2) + (r^2 + a^2 + \frac{2Mr}{\Sigma}a^2\sin^2\theta)\sin^2\theta d\phi^2
 \end{equation}
 
-where
+where,
 
 \[
     \Sigma = r^2 + a^2\cos^2\theta, \qquad \Delta = r^2 - 2Mr + a^2
 \]
 
-and $M$ and $a$ represent the Mass and the angular momentum per unit mass of the black hole respectively.
-\newline\newline
-There are three interesting radial positions to note - two of these are the event horizons that are derived from the roots of $\Delta$ which make the terms of the metric singular - ($r_-$ and $r_+$).
+and $M$ and $a$ represent the mass and the angular momentum per unit mass of the black hole respectively.\medskip
+
+There are three interesting radial positions to note - two of these are the event horizons that are derived from the roots of $\Delta$ which make the metric singular - ($r_-$ and $r_+$).
 
 The other is the killing horizon where the time Killing vector becomes spacelike - which is the boundary of the ergosphere.
 \[
-    r_{\pm} = M \pm \sqrt{M^2 - a^2}, \qquad r_{ergo} = M + \sqrt{M^2 - a^2cos^\theta}
+    r_{\pm} = M \pm \sqrt{M^2 - a^2}, \qquad r_{ergo} = M + \sqrt{M^2 - a^2\cos^2\theta}
 \]
 \\
 We will also briefly mention the nomenclature that will be used to classify the trajectories in this report. Namely,
 
 \begin{itemize}
-    \item \parHeading{Light-like vs Time-like}: Light-like trajectories are those followed by massless particles such as photons, while time-like trajectories are those followed by massive particles. The main difference between the two is that light-like trajectories have a four-velocity that is null, while time-like trajectories have a four-velocity that is timelike.
-    \item \parHeading{Spherical (Circular) vs Non-spherical (Non-circular)}: Spherical trajectories are those that maintain a constant radial coordinate, while non-spherical trajectories are those that do not. 
-    \item \parHeading{Equatorial vs Non-equatorial}: Equatorial trajectories are those that lie only in the equatorial plane $\theta = \pi/2$, while non-equatorial trajectories are those that do not.
+    \item \parHeading{Lightlike vs Timelike}: Lightlike trajectories are those followed by massless particles such as photons, while timelike trajectories are those followed by massive particles. The main difference between the two is that lightlike trajectories have a four-velocity that is null, while timelike trajectories have a four-velocity that is timelike.
+    \item \parHeading{Spherical (Circular) vs Non-spherical (Non-circular)}: Spherical trajectories are those that maintain a constant radial coordinate, while non-spherical trajectories are those that do not. When considering only the equatorial plane, these are referred to as circular and non-circular trajectories respectively.
+    \item \parHeading{Equatorial vs Non-equatorial}: Equatorial trajectories are those that lie only in the equatorial plane - $\theta = \pi/2$ - while, non-equatorial trajectories are those that do not.
 \end{itemize}
 
-Corresponding to this metric, the geodesic equations are as follows, we also define a corollary for theta as $u = cos\theta$, and the equations are parameterized by the proper time $\tau$,
+Corresponding to this metric, the geodesic equations parameterized by the proper time ($\tau$) are as follows. We have also defined a corollary for the $\theta$ coordinate as $u = \cos\theta$, which represents the latitudinal position of the particle with respect to the black hole.
 
 \begin{subequations} \label{eq:geodesic_equations}
 \begin{align}
@@ -553,100 +553,101 @@ Corresponding to this metric, the geodesic equations are as follows, we also def
 where,
 
 \begin{equation} \label{eq:radial_potential}
-    R(r) = (E^2 - \mu^2)r^4 + 2M\mu^2r^3 + [a^2(E^2 - \mu^2) - Q - \phi^2]r^2 + 2M[(aE - \Phi)^2 + Q]r - a^2Q
+    R(r) = (E^2 - \mu^2)r^4 + 2M\mu^2r^3 + [a^2(E^2 - \mu^2) - Q - \Phi^2]r^2 + 2M[(aE - \Phi)^2 + Q]r - a^2Q
 \end{equation}
 
 \begin{equation} \label{eq:theta_potential}
     V(u) = a^2(\mu^2 - E^2)u^4 - [Q + \Phi^2 + a^2(\mu^2 - E^2)]u^2 + Q
 \end{equation}
 
-Here, $\mu$ is the rest mass of the particle. In the case of massive particles we take it to be equal to 1 and in the case of massless particles it is equal to 0. $E$ is the energy of the particle, $\Phi$ is the angular momentum of the particle in the direction of rotation of the black hole and $Q$ is the Carter constant. We will elaborate on the nature of the Carter's constant in the next section, but for now we will just treat it as a constant of motion that is related to the motion of the particle in the $\theta$ direction.
+Here, $\mu$ is the rest mass of the particle. In the case of massive particles we take it to be equal to 1 and in the case of massless particles it is equal to 0. $E$ and $\Phi$ are the energy and the angular momentum of the particle in the direction of rotation of the black hole and $Q$ is the Carter's constant. We will elaborate on the nature of the Carter's constant in the next section, but for now we will just treat it as a constant of motion that is related to the motion of the particle in the $\theta$ direction.
 
-The right hand side of \ref{eq:geodesic_equations} represents the total amount of kinetic energy available to the particle - its total energy minus the effective potential it has to overcome. 
+The right hand side of (\ref{eq:geodesic_equations}) represents the total amount of kinetic energy available to the particle - its total energy minus the effective potential it has to overcome.\medskip
 
-We can gain some information about this effective potential by looking at the radial geodesic equation for a specific class of trajectories
-
+We can gain some information about this effective potential by looking at the radial geodesic equation for a specific class of trajectories,
 \begin{itemize}
-    \item We consider a massless photon moving on null/light-like geodesics.
+    \item We consider a massless photon moving on null/lightlike geodesics.
     \item The photon starts its motion in the equatorial plane ($\theta = \pi/2$) with zero Carter's Constant.
     \item It is either co-rotating or counter-rotating with respect to the black hole, so $\Phi$ is non-zero.
 \end{itemize}
 
-\parHeading{Non-Spherical, Light-like, Equatorial Motion:} When the RHS is zero, it represents a turning point where the effective potential is equal to the energy of the particle - causing it to stop. If there is a non-zero force acting on the particle at this point (first derivative of the RHS functions) then it will reverse its direction. 
+\parHeading{Non-Spherical, Lightlike, Equatorial Motion:} When the RHS of the radial and latitudinal equations ($R(r)$ and $V(u)$) are zero, it represents a turning point where the effective potential is equal to the energy of the particle - causing it to stop. If there is a non-zero force acting on the particle at this point (first derivative of the RHS functions) then it will reverse its motion in that particular direction. \medskip
 
-For the specific case that we mentioned above, the RHS reduces to,
+For the radial case with the conditions that we mentioned above, the RHS reduces to,
 \begin{equation}
-    \dot{r}^2 = \frac{(r^2+a^2)^2-a^2\Delta}{r^4}(E-V_-)(E-V_+) - \frac{\kappa\Delta}{r^2}
+    \dot{r}^2 = \frac{(r^2+a^2)^2-a^2\Delta}{r^4}(E-V_-)(E-V_+) + \frac{\kappa\Delta}{r^2}
 \end{equation}
 
-Where,
+where,
 \begin{equation}
    \boxed{V_{\pm} = \frac{2Mar\Phi \pm r^2|\Phi|\sqrt{\Delta}}{(r^2+a^2)^2-a^2\Delta}}
 \end{equation}
 
-$\kappa$ is the constant that leads to the parametrization of the four velocity. In the photon case $\kappa = 0$ since we are considering massless particles.
-\\ \newline
-The absolute value of $\Phi$ is taken to make sure that $V_+$ is always greater than $V_-$ in the case that the particle is counter-rotating or co-rotating with respect to the black hole.
+$\kappa$ is the constant that leads to the parametrization of the four velocity. In the photon case $\kappa = 0$ since we are considering massless particles.\medskip
+
+The absolute value of $\Phi$ is taken to make sure that $V_+$ is always greater than $V_-$ in the case that the particle is counter-rotating or co-rotating with respect to the black hole.\bigskip
 
 We now state some properties of the effective potentials,
 
 \begin{itemize}
-    \item Both the potentials coincide at the outer horizon when $\Delta=0$ which is a positive potential for co-rotating and negative for counter-rotating photons. Since, we only consider motion outside the outer event horizon for now, therefore our area of interest starts here. 
+    \item Both the potentials coincide at the outer horizon when $\Delta=0$. This converged potential is positive for co-rotating and negative for counter-rotating photons. Since, we only consider motion outside the outer event horizon for now, therefore, our area of interest starts here. 
     \item At infinity, both the potentials go to zero and they only have one extremum each - which is always a maximum for $V_+$ and a minimum for $V_-$. 
-    \item The object can have negative energies in the ergosphere, as we will see. For more information about a physical interpretation of this, see Appendix A.
+    \item Owing to the presence of the ergosphere, the object can have negative energies in specific regions as we will see. 
 \end{itemize}
 
 For allowed ranges of motion the RHS should be non-negative, which can only happen at the following ranges. 
 
 \[ E < V_-, \qquad E > V_+ \]
 
-Any motion between these two ranges is forbidden since the particle does not have enough energy to overcome the effective potential. Figures 1 and 2 are sketches of the counter-rotating and co-rotating potentials for a specific value of $\Phi$ and $a$.
+Any motion outside these two ranges is forbidden since the particle does not have enough energy to overcome the effective potential. Figures \ref{fig:counter_potential_sketch} and \ref{fig:co_potential_sketch} are sketches of the counter-rotating and co-rotating potentials for a specific value of $\Phi$, $M$ and $a$.
 
-\begin{figure}[H]
+\begin{figure}[H]     
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/kerr_potential_counterrotating.png}
-    \label{fig:co_potential_sketch}
+    \includegraphics[width=0.83\textwidth]{figures/kerr_potential_counterrotating.png}
     \caption{Sketches of Effective Potential for Counter-Rotating Photons in Kerr Spacetime.}
+    \label{fig:counter_potential_sketch}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/kerr_potential_corrotating.png}
-    \label{fig:counter_potential_sketch}
+    \includegraphics[width=0.83\textwidth]{figures/kerr_potential_corrotating.png}
     \caption{Sketches of Effective Potential for Co-Rotating Photons in Kerr Spacetime.}
+    \label{fig:co_potential_sketch}
 \end{figure}
 
-One case during this motion is when the particle starts from far away with some finite energy and approaches the black hole. It will be able to cross the horizon if its energy is greater than the maximum of $V_+$. This is a case of photon capture.
-\\ \newline
-If it is less than the maximum of $V_+$ then it will have a turning point somewhere outside the horizon and will reverse its direction back to infinity. This is the case of deflection.
-\\ \newline
-The other case pertains to motion of co-rotating photons between the outer event horizon and the maximum of $V_+$. It is only allowed to exist in this region within the range of $V_+(r_+) < E < V_+(r_{max})$.
-\\ \newline
-The last case is that of counter-rotating photons between the ergosphere (where $V_+ = 0$) and the outer event horizon. Here, the energy of the particle can be negative and it can exist in the range of $V_+(r_+) < E < 0$. The physical interpretation of this negative energy is explained in detail in Appendix A.
+One case during this motion is when the particle starts from far away with some finite energy and approaches the black hole. It will be able to cross the horizon if its energy is greater than the maximum of $V_+$. This is a case of photon capture.\smallskip
+
+If it is less than the maximum of $V_+$ then it will have a turning point somewhere outside the horizon and will reverse its direction back to infinity. This is the case of deflection.\bigskip
+
+The other case pertains to motion of co-rotating photons between the outer event horizon and the maximum of $V_+$. It is only allowed to exist in this region within the range of $V_+(r_+) < E < V_+(r_{max})$.\smallskip
+
+The last case is that of counter-rotating photons between the ergosphere (where $V_+ = 0$) and the outer event horizon. Here, the energy of the particle can be negative and it can exist in the range of $V_+(r_+) < E < 0$. The existence of this "negative energy" is due to the fact that the time Killing vector becomes spacelike in the ergosphere and therefore, the energy of the particle as measured by an observer can be negative. This is the same concept used during the description of the Penrose process. \bigskip
+
+We can also see that there are two unstable circular orbits present here - one prograde (co-rotating case) and one retrograde (counter-rotating case). These orbits are located at the maximum of $V_+$ and will be discussed in detail below in the section on spherical orbits. \bigskip
 
 \begin{framed}
-\textbf{Note:} We can expand this discussion to all non-spherical trajectories - those that are time-like and lie outside the equatorial plane.Their qualitative nature will also follow the same treatment. Although, the energy ranges will get modified due to the presence of the non-zero $\kappa$ and $\theta$ terms in the geodesic equations. 
+\textbf{Note:} Finally, we can expand this discussion to all non-spherical trajectories - including those that are timelike and lie outside the equatorial plane. Their qualitative nature also follows the same treatment. Although, in such cases, the energy ranges will get modified due to the presence of the non-zero $\kappa$ and $\theta$ terms in the geodesic equations. 
 \end{framed}
 
 \subsection*{Spherical Orbits}
 Spherical orbits constitute those special cases where the radial coordinate remains constant throughout the motion of the particle. However, the particle is free to move in the $\theta$ and $\phi$ directions. 
 
-The conditions for spherical orbits can be derived from the RHS of the radial geodesic equation (\ref{eq:geodesic_equations}a). For a spherical orbit, the radial velocity and the radial acceleration must both be zero. This leads to the following conditions:
+The conditions for spherical orbits can be derived from the radial geodesic equation (\ref{eq:geodesic_equations}a). For a spherical orbit, the radial velocity and the radial acceleration must both be zero. This leads to the following conditions:
 
 \[ R(r) =0, \qquad \dot{R}(r) =0 \]
 
-There are, however, restrictions on the motion of the particle in the $\theta$ plane. The RHS of the $\theta$ geodesic equation (\ref{eq:geodesic_equations}b) must also be non-negative for the particle to be able to move in the $\theta$ direction. 
+There are, however, restrictions on the motion of the particle in the $\theta$ plane. $V(u)$ in the $\theta$ geodesic equation (\ref{eq:geodesic_equations}b) must also be non-negative for the particle to be able to move in the latitudinal direction. This gives us the following condition,
 
 \[ V(u) \geq 0, \qquad |u| < 1\]
 
-Therefore, we have to look for values of u for which the above conditions are satisfied and this is done by looking at the behavior of the roots of $V(u)$. The solutions of this equation allow for the latitude variable $(u)$ to exist within a certain range. At the boundaries of this range, the particle will have a turning point in the $\theta$ direction and will reverse its direction. 
+Therefore, we have to look for values of u for which the above conditions are satisfied - which is done by looking at the behavior of the roots of $V(u)$. The solutions of this equation allow for the latitude variable, $u$, to exist within a certain range. At the boundaries of this range, the particle will have a turning point in the $\theta$ direction and will reverse its motion.\smallskip 
 
-Therefore, the motion in the $\theta$ direction is oscillatory between these two turning points.
+Therefore, the motion in the $\theta$ direction is oscillatory between these two turning points.\medskip
 
-Now it is time to analyze this periodic motion in the context of time-like and light-like geodesics.
+Now it is time to analyze this periodic motion in the context of timelike and lightlike geodesics.
 
-\subsubsection*{Light-Like Trajectories}
-We can rewrite the RHS of the $\theta$ geodesic equation for photons asd follows,
+\subsubsection*{Lightlike Trajectories}
+We can rewrite the $\theta$ geodesic equation (\ref{eq:geodesic_equations}b) for photons as follows,
 
 \begin{equation} \label{eq:theta_geodesic_photon}
     (\frac{\Sigma}{E})^2 \dot{u}^2 = \mathcal{Q} - (\mathcal{Q} + \varPhi^2 -a^2)u^2 - a^2u^4
@@ -654,11 +655,11 @@ We can rewrite the RHS of the $\theta$ geodesic equation for photons asd follows
 
 where,
 
-\[ \mathcal{Q} = \frac{Q}{E}, \qquad \varPhi = \frac{\Phi}{E} \]
+\[ \mathcal{Q} = \frac{Q}{E^2}, \qquad \varPhi = \frac{\Phi}{E} \]
 
-This equation is quadratic in $w = u^2$ and gives us an idea about the roots of $V(u)$ depending on the sign of Q.
+This equation is quadratic in $w = u^2$ and gives us an idea about the roots of $V(u)$ depending on the sign of $\mathcal{Q}$.
 
-According to \cite{taoPhotonSpherical}, non negative values of $w$ can only exist when $Q\geq 0$. Therefore, we will consider only this case for the rest of our discussion. The positive roots for the above equation for non-negative $Q$ are given by,
+According to the conditions outlined in the previous section, non-negative values of $w$ can only exist when $\mathcal{Q}\geq 0$ \cite{taoPhotonSpherical}. Therefore, we will consider only this case for the rest of our discussion. The positive roots for the above equation for non-negative $\mathcal{Q}$ are given by,
 
 \begin{subequations}
 \begin{align*}
@@ -667,72 +668,72 @@ According to \cite{taoPhotonSpherical}, non negative values of $w$ can only exis
 \end{align*}
 \end{subequations}
 
-\parHeading{$\mathcal{Q}>0$}: Here the particle reaches a maximum latitude of $u_0$ and then reverses its direction. The motion in the $\theta$ direction is oscillatory between $-u_0$ and $u_0$.
-\\ \newline
-\parHeading{$\mathcal{Q}=0$}: This represents a circular, equatorial orbit which is stable. 
+\parHeading{$\mathcal{Q}>0$}: Here the particle reaches a maximum latitude of $u_0$ and then reverses its direction. The motion in the $\theta$ direction is oscillatory between $-u_0$ and $u_0$.\medskip
+
+\parHeading{$\mathcal{Q}=0$}: This represents an unstable circular orbit where the particle starts in the equatorial plane with zero velocity in the $\theta$ direction and stays in the equatorial plane. These are the unstable circular orbits described above.
 
 \begin{framed}
-    \parHeading{Note:} If we set $u=0$ (equatorial plane) in the geodesic equation of \ref{eq:theta_geodesic_photon} we get $r^2\dot{\theta} = \pm\sqrt\mathcal{Q}$ which is the condition for equatorial orbits. Therefore, physically, the Carter's constant can be interpreted as a measure of the angular speed of the photon while crossing the Black Hole's equator. 
+    \parHeading{Note:} If we set $u=0$ (equatorial plane) in the geodesic equation (\ref{eq:theta_geodesic_photon}) we get $r^2\dot{\theta} = \pm\sqrt\mathcal{Q}$ which is the condition for equatorial orbits. Therefore, physically, the Carter's constant can be interpreted as a measure of the angular speed of the photon while crossing the Black Hole's equator. 
 \end{framed}
 
-Turning back to the radial geodesic equation, and setting the RHS and its derivative to zero, we can find the conditions for spherical photon orbits. These conditions give us the expressions for $\mathcal{Q}$ and $\varPhi$ in terms of the radius of the orbit $r$,
+Now that we have deduced the motion in the $\theta$ direction, we can turn to the radial geodesic equation. Setting $R(r)$ and its derivative to zero, we can find the conditions for spherical photon orbits. These restrictions give us the expressions for $\mathcal{Q}$ and $\varPhi$ in terms of the radius of the orbit, $r$,
 
 \begin{equation} \label{eq:phi_spherical_photon}
-    \varPhi = \frac{r^3 - 3Mr^2 + a^2r + a^2M}{a(r-M)}
+    \varPhi = -\frac{r^3 - 3Mr^2 + a^2r + a^2M}{a(r-M)}
 \end{equation}
 
 \begin{equation} \label{eq:Q_spherical_photon}
-    \mathcal{Q} = \frac{r^3(r^3 - 6Mr^2 + 9M^2r - 4a^2M)}{a^2(r-M)^2}
+    \mathcal{Q} = -\frac{r^3(r^3 - 6Mr^2 + 9M^2r - 4a^2M)}{a^2(r-M)^2}
 \end{equation}
 
-The azimuthal direction requires a more careful analysis. The $\phi$ geodesic equation can be rewritten in terms of $w$ using equations \ref{eq:geodesic_equations}c and \ref{eq:geodesic_equations}d as follows,
+The azimuthal direction requires a more careful analysis. The $\phi$ geodesic equation can be rewritten in terms of $w$ using (\ref{eq:geodesic_equations}c) and (\ref{eq:geodesic_equations}d) as follows,
 
 \begin{equation}
     \frac{d\phi}{dw} = \frac{1}{Y(w)}\Big[\frac{\varPhi}{2(1-w)} + \frac{2Mra - a^2\phi}{2\Delta}\Big]
 \end{equation}
 where
-\[ Y(w) = \mathcal{Q}w - (\mathcal{Q} + \varPhi^2 -a^2)w^2 - a^2w^3 \]
+\[ Y^2(w) = \mathcal{Q}w - (\mathcal{Q} + \varPhi^2 -a^2)w^2 - a^2w^3 \]
 
-Integration then can provide us with analytical values of $\Delta\phi$ for one period of oscillation in the $\theta$ direction. 
+Integrating these expressions can provide us with analytical values of $\Delta\phi$ for one period of oscillation in the $\theta$ direction. 
 
-The velocity in the $\phi$ direction is not always in the prograde or retrograde direction. From \ref{eq:geodesic_equations}c, we can see that $\dot{\phi}$ changes sign when $u$ hits the following value,
+The velocity in the $\phi$ direction is not always prograde or retrograde. From (\ref{eq:geodesic_equations}c), we can see that $\dot{\phi}$ changes sign when $u$ hits the following value,
 
 \begin{equation}
-    u_1^2 = \frac{r^3(3M-r)}{a^2(r+M)}
+    u_1^2 = \frac{r^2(3M-r)}{a^2(r+M)}
 \end{equation}
 
 Of course, this is only relevant when the photon is actually able to reach this point or when $u_1 < u_0$. 
 
 \begin{framed}
-Therefore, the velocity in the $\phi$ direction may reverse at certain points. But, overall, the orbit can be described as retrograde or prograde depending on the sign of $\varPhi$. As it is representative of the total displacement in the $\phi$ direction per latitude oscillation. 
+Therefore, the velocity in the $\phi$ direction may reverse at certain points. But, overall, the orbit can be described as retrograde or prograde depending on the sign of $\varPhi$. As it is representative of the total displacement in the $\phi$ direction per latitudinal oscillation. 
 \end{framed}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/kerr_photon.png}
+    \caption{Variation of $\varPhi, \mathcal{Q}, u_0$ and $u_1$ with changing radius of the orbit. Note that these values are only considered in the region between the two circular orbits as discussed.}
     \label{fig:parameter_values_photon}
-    \caption{Variation of $\varPhi, Q, u_0$ and $u_1$ with radius. Note that these values are only considered in the region between the two circular orbits as discussed.}
 \end{figure}
 
-In the plot (Figure \ref{fig:parameter_values_photon}), we see the ranges that $Q$ is positive for lie between two specific radii. These two radii represent the two circular orbits in the equatorial plane - one is the prograde and the other is the retrograde orbit. Both are unstable in nature. The radii of these orbits are,
+In the plot (Figure \ref{fig:parameter_values_photon}), we see that $\mathcal{Q}$ is positive in the range between two specific radii. These two radii represent the two unstable circular orbits in the equatorial plane - one is the prograde and the other is the retrograde one. The radii of these orbits are,
 
 \begin{subequations}
     \begin{align}
-        r_1 &= 2M\Big\{1 + \cos\Big[\frac{2}{3}\cos^{-1}\Big(-\frac{a}{M}\Big)\Big]\Big\} \\
-        r_2 &= 2M\Big\{1 + \cos\Big[\frac{2}{3}\cos^{-1}\Big(\frac{a}{M}\Big)\Big]\Big\}
+        r_1 &= 2M\Big\{1 + \cos\Big[\frac{2}{3}\arccos\Big(-\frac{|a|}{M}\Big)\Big]\Big\} \\
+        r_2 &= 2M\Big\{1 + \cos\Big[\frac{2}{3}\arccos\Big(\frac{|a|}{M}\Big)\Big]\Big\}
     \end{align}
 \end{subequations}
 
-We also see that the increase in the maximum latitude of the photon is associated with a decrease in the angular momentum of the photon in the $\phi$ direction. This relates to the conservation of total angular momentum for the photon. $\varPhi$ hits zero at the same point when $u_0$ hits its maximum value of $1$ where it can reach the poles. The spherical orbits shift from being prograde to retrograde at the radius where $\varPhi$ changes sign.
+We also see that the increase in the maximum latitude of the photon is associated with a decrease in the angular momentum of the photon in the $\phi$ direction. This relates to the conservation of total angular momentum for the photon. $\varPhi$ hits zero at the same point when $u_0$ hits its maximum value of $1$ where it can reach the poles. The spherical orbits shift from being prograde to retrograde at the radius where $\varPhi$ changes sign, given by,
 
 \begin{equation}
-    r_3 = M + 2\sqrt{M^2 - \frac{a^2}{3}}\cos\Big[\frac{1}{3}\cos^{-1}\frac{M(M^2-a^2)}{(M^2 - \frac{a^2}{3})^{\frac{3}{2}}}\Big]
+    r_3 = M + 2\sqrt{M^2 - \frac{a^2}{3}}\cos\Big[\frac{1}{3}\arccos\frac{M(M^2-a^2)}{(M^2 - \frac{a^2}{3})^{\frac{3}{2}}}\Big]
 \end{equation}
 
-A word about $\Delta \phi$ - it has a discontinuity at $r_3$. This occurs because at this radial distance, the photon reaches its maximum latitude at the poles. A small perturbation on either side would add or subtract a full $2\pi$ to the total displacement in the $\phi$ direction per latitude oscillation. In one case it would swing around the poles - adding a $2\pi$ - and in the other it would miss the poles and change direction - subtracting a $2\pi$.
+\parHeading{Note:} A word about $\Delta \phi$ - it has a discontinuity at $r_3$. This occurs because the photon reaches its maximum latitude at the poles during this orbit. A small perturbation on either side would add or subtract a full $2\pi$ to the total displacement in the $\phi$ direction. In one case it would swing around the poles - adding a $2\pi$ - and in the other it would miss the poles and end up with a retrograde displacement - subtracting a $2\pi$.
 
-\subsubsection*{Time-Like Trajectories}
-The situation is more complicated in the case of time-like trajectories as due to non-zero $\mu$, we cannot effectively factor out the energy as a normalization factor as we did in the case of photons. Here the roots of $V(u)$ are as follows for the case of $\mu = 1$,
+\subsubsection*{Timelike Trajectories}
+The situation is more complicated in the case of timelike trajectories as the non-zero $\mu$ does not allow us to effectively factor out the energy as a normalization factor - as we did in the case of photons. Here the roots of $V(u)$ are as follows for the case of $\mu = 1$,
 
 \begin{equation} \label{eq:w_roots}
    w_{1,2} = u_{1,2}^2 = \frac{1}{2a^2(1-E^2)}\Big[a^2(1-E^2) + \Phi^2 + Q \mp \sqrt{(a^2(1-E^2) + \Phi^2 + Q)^2 - 4a^2Q(1-E^2)}\Big]
@@ -740,11 +741,11 @@ The situation is more complicated in the case of time-like trajectories as due t
 
 Similarly, the radial geodesic equation cannot be parametrized in terms of $\mathcal{Q}$ and $\varPhi$ and will be better off being parametrized by $r$ and $Q$. Therefore, using the velocity and acceleration conditions for spherical orbits, the energy and angular momentum of the photon can be written as,
 
-\begin{equation}
+\begin{equation} \label{eq:energy_spherical_timelike}
     E_{a,b} = \frac{r^3(r-2M) - a(aQ \mp \sqrt{\Upsilon})}{r^2\sqrt{r^3(r-3M) -2a(aQ \mp \sqrt{\Upsilon})}}
 \end{equation}
 
-\begin{equation}
+\begin{equation} \label{eq:angular_momentum_spherical_timelike}
     \Phi_{a,b} = -\frac{2Mar^3 + (r^2+a^2)(aQ \mp \sqrt{\Upsilon})}{r^2\sqrt{r^3(r-3M) -2a(aQ \mp \sqrt{\Upsilon})}}
 \end{equation}
 
@@ -762,11 +763,11 @@ Before we produce the parameter space, we will discuss the nature of these orbit
 
 \begin{itemize}
     \item \parHeading{Prograde vs Retrograde}: Prograde orbits are those that are co-rotating with the black hole, while retrograde orbits are those that are counter-rotating. The sign of $\Phi$ can be used to determine whether the orbit is prograde or retrograde.
-    \item \parHeading{Stable vs Unstable}: Stable orbits are those that are stable under small perturbations, while unstable orbits are those that are not. The stability of an orbit can be determined by analyzing the second derivative of the effective potential at the radius of the orbit.
-    \item \parHeading{Bound vs Unbound}: Bound orbits are those that permit values in a finite range of radii outside th event horizon, while unbound orbits extend till infinity. The criteria to distinguish them is given by the behavior of $R(r)$ from the equation \ref{eq:radial_potential} at infinity. At large radii, only the leading coefficient of $(E^2 - \mu^2)$ plays a role in determining the sign of $R(r)$. If $R(r)$ is positive until infinity, then the orbit is unbound as motion even at diverging radii is allowed. If $R(r)$ starts to tend to negative values at $r$ increases then it is a bound orbit and the particle cannot escape to infinity. These are respectively the cases of $E > 1$ and $E < 1$ for time-like trajectories - with $E = 1$ being the critical case of marginally bound orbits.
+    \item \parHeading{Stable vs Unstable}: Stable orbits are those that are stable under small perturbations, while unstable orbits are those that are not. The stability of an orbit can be determined by analyzing the second derivative of $R(r)$ (\ref{eq:radial_potential}) at the radius of the orbit.
+    \item \parHeading{Bound vs Unbound}: Bound orbits are those that permit values in a finite range of radii outside the event horizon, while unbound orbits extend till infinity. The criteria to distinguish them is given by the behavior of $R(r)$ at infinity. At large radii, only the leading coefficient of $(E^2 - \mu^2)$ plays a role in determining the sign of $R(r)$. If $R(r)$ is positive until infinity, then the orbit is unbound as motion even at diverging radii is allowed. If $R(r)$ starts to tend to negative values at $r$ increases then it is a bound orbit and the particle cannot escape to infinity. These are respectively the cases of $E^2 > 1$ and $E^2 < 1$ for timelike trajectories - with $E^2 = 1$ being the critical case of marginally bound orbits.
 \end{itemize}
 
-All three of these criteria can be determined by looking at the value of $Q$. Namely boundaries of $Q$ exist for each r that separate the parameter space into different regions corresponding to different orbits. The marginal values of $Q$ that define these boundaries are given by $Q_{mb}, Q_{ms}, Q_o$ for the bound, stable and prograde/retrograde boundaries respectively. These are given by the following expressions,
+All three of these criteria can be determined by looking at the value of $Q$. Namely, boundaries of $Q$ exist for each radius $r$ that separate the parameter space into different regions corresponding to different orbits. The marginal values of $Q$ that define these boundaries are given by $Q_{mb}, Q_{ms}, Q_o$ for the bound, stable and prograde/retrograde boundaries respectively. These are given by the following expressions,
 
 \begin{subequations}
     \begin{align}
@@ -776,16 +777,16 @@ All three of these criteria can be determined by looking at the value of $Q$. Na
     \end{align}
 \end{subequations}
 
-Keep in mind that the criterion related to angular momentum and $Q_o$ is only relevant past a certain radius as $Q_o$ is negative for radii smaller than a certain $r_o$. This radiusis given by the following expression and the orbits are all prograde for $r<r_o$ irrespective of the value of $Q$ in this range.
+Keep in mind that the criterion related to angular momentum and $Q_o$ is only relevant past a certain radius, as $Q_o$ is negative for radii smaller than a certain $r_o$. This radius is given by the following expression and the orbits are all prograde for $r<r_o$ irrespective of the value of $Q$ in this range.
 
-\[ r_o = M + 2\sqrt{\frac{3M^2-a^2}{3}}\cos\Big(\frac{1}{3}\cos^{-1}\Big(\frac{3M(M^2-a^2)}{3M^2 - a^2}\sqrt{\frac{3}{3M^2-a^2}}\Big)\Big) \]
+\[ r_o = M + 2\sqrt{\frac{3M^2-a^2}{3}}\cos\Big(\frac{1}{3}\arccos\Big(\frac{3M(M^2-a^2)}{3M^2 - a^2}\sqrt{\frac{3}{3M^2-a^2}}\Big)\Big) \]\bigskip
 
-\parHeading{Summary of Time-like Spherical Orbits:}
-The ranges of interest can be divided using the two photon circular orbit radii $r_1$ and $r_2$ as follows,
+\parHeading{Summary of Timelike Spherical Orbits:}
+The various regimes of solutions can be divided using the two photon circular orbits of radii $r_1$ and $r_2$,
 \begin{itemize}
-    \item \parHeading{$r = r_1, a=M$}: For the extremal Kerr black hole, there is a stable circular prograde orbit at the horizon. This is a special case of what is called a horizon-skimming orbit. For more information about this case, see \cite{taoTimelikeSpherical}.
-    \item \parHeading{$r_1 \leq r < r_2$}: There is always a $Q=0$ solution that corresponds to a stable circular prograde orbit. The particle starts its latitudinal oscillations (much like the photons) when $Q$ is increased. In this range, only the first class ($a$) of solutions of Energy and Angular Momentum are possible and $Q$ can take any positive value. As $Q$ is increased, the orbits become to begin to move towards the unstable and unbound range. 
-    \item \parHeading{$r = r_2$}: Here, there are restrictions on the value of $Q$ and it can only follow the range $ 0 \leq Q < 32M^2$. As $Q$ moves towards the upper limit, this orbit reduces to the circular retrograde orbit at this radius. Only the $a$ branch of the solutions exist here.
+    \item \parHeading{$r = r_1, a=M$}: For the extremal Kerr black hole, there is a stable circular prograde orbit at the horizon. This is a special case and is called a horizon-skimming orbit. For more information about this case, see \cite{taoTimelikeSpherical}.
+    \item \parHeading{$r_1 \leq r < r_2$}: There is always a $Q=0$ solution that corresponds to a stable circular prograde orbit. The particle starts its latitudinal oscillations (much like the photons) when $Q$ is increased. In this range, only the first class ($a$) of solutions of energy (\ref{eq:energy_spherical_timelike}) and angular momentum (\ref{eq:angular_momentum_spherical_timelike}) are possible and $Q$ can take any positive value. As $Q$ is increased, the orbits become to begin to move towards the unstable and unbound range. 
+    \item \parHeading{$r = r_2$}: Here, there are restrictions on the value of $Q$ and it can only follow the range $ 0 \leq Q < 32M^2$. As $Q$ moves towards the upper limit, this orbit reduces to the unstable circular retrograde orbit at this radius. Only the $a$ branch of the solutions exist here.
     \item \parHeading{$r>r_2$}: The range of $Q$ is equal to $0 \leq Q < Q_1$ where the upper limit has the following expression,
     \[Q_1 = \frac{r^2}{2a^2}(r(r-3M)\mp \sqrt{r\Xi})\]
     where,
@@ -796,19 +797,21 @@ The ranges of interest can be divided using the two photon circular orbit radii 
     However, now both branches $(a,b)$ are feasible with different parameter spaces. These two solutions converge at the the upper limit of $Q=Q_1$ and all orbits in the second branch are retrograde. 
 \end{itemize}
 
-We represent the parameter space with different orbit crtieria in the Figure \ref{fig:parameter_values_time-like}.
+We represent the parameter space within the range $r_1 \leq r < r_2$ in Figure \ref{fig:parameter_values_timelike}.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/kerr_timelike_parameter_space.png}
-    \label{fig:parameter_values_time-like}
-    \caption{Parameter Space of Time-like trajectories for a non-extremal Kerr Black Hole. Here, the boundaries for each criterion are presented and the radii range from $r_1 \leq r < r_2$.}
+    \caption{Parameter Space of timelike trajectories for a non-extremal Kerr Black Hole. Here, the boundaries for each criterion are presented and the radii range from $r_1 \leq r < r_2$.}
+    \label{fig:parameter_values_timelike}
 \end{figure}
 
 Finally, we end our discussion with certain analytical solutions of the geodesical equation that can be found using Mino's Method \cite{taoTimelikeSpherical}. 
 
-We will not go into the details of the derivation using Mino's Method but the basis is the shift from parametrization using proper time to a new parameter, $\lambda$ which is given by,
+We will not go into the details of the derivation but the basis is the shift from using proper time as a parameter to, $\lambda$ which is given by,
 
 \[ \Sigma \frac{x^\mu}{d\tau} = \frac{dx^\mu}{d\lambda}\]
+
+and called Mino's parameter.\medskip
 
 Here, we can write the geodesic equation in the $\theta$ direction as follows,
 
@@ -818,14 +821,14 @@ Here, we can write the geodesic equation in the $\theta$ direction as follows,
 
 where,
 
-\[ Y(w) = a^2(1-E^2)w(w-w_1)(w-w_2) \]
+\[ Y^2(w) = a^2(1-E^2)w(w-w_1)(w-w_2) \]
 
-where $w_{1,2}$ are the given by the equation \ref{eq:w_roots}.
+where $w_{1,2}$ are the given by (\ref{eq:w_roots}).\medskip
 
-Now, we integrate the equation to get $\lambda$ as a function of $w$ which can then be inverted to get the expression for $w$.
+Now, we integrate the equation - starting from the equator- to get $\lambda$ as a function of $w$, which can then be inverted.
 
 \begin{equation}
-    \lambda(w) = \int \frac{dw}{2Y(w)} = \frac{1}{a\sqrt{(1-E^2)w_2}F(\psi,k)}
+    \lambda(w) = \int_0^{w} \frac{dw}{2Y(w)} = \frac{1}{a\sqrt{(1-E^2)w_2}F(\psi,k)}
 \end{equation}
 where,
 \[ \psi = \arcsin\sqrt{\frac{w}{w_1}}, \quad k = \sqrt{\frac{w_1}{w_2}} \]
@@ -834,7 +837,7 @@ Here, $F(\psi,k)$ is the incomplete elliptic integral of the first kind.
 Inverting this, we get the following expression for $\psi$,
 
 \begin{equation}
-    \psi = am(a\sqrt{(1-E^2)w_2}\lambda, k)
+    \psi = \operatorname{am}(a\sqrt{(1-E^2)w_2}\lambda, k)
 \end{equation}
 
 A full oscillation continues from $\lambda = 0$ to $4\lambda_0$ where,
@@ -845,8 +848,8 @@ Similarly, the $\phi$ and $t$ coordinates can also be expressed in terms of $w$ 
 
 \begin{subequations}
     \begin{align}
-    \phi(w) = \frac{\Phi}{a\sqrt{(1-E^2)w_2}}\Pi(\psi, w_1, k) + (2MrE - a\Phi)\frac{a}{\Delta} \\
-    t(w) = -\frac{aE}{a\sqrt{(1-E^2)w_2}}\Big[ (1-w_2)F(\psi,k) + w_2E(\psi,k) \Big] + \frac{1}{\Delta}\Big[ E(r^2 + a^2)^2 - 2Mra\Phi \Big]a\lambda
+    \phi(\lambda) = \frac{\Phi}{a\sqrt{(1-E^2)w_2}}\Pi(\psi, w_1, k) + (2MrE - a\Phi)\frac{a}{\Delta} \\
+    t(\lambda) = -\frac{aE}{a\sqrt{(1-E^2)w_2}}\Big[ (1-w_2)F(\psi,k) + w_2E(\psi,k) \Big] + \frac{1}{\Delta}\Big[ E(r^2 + a^2)^2 - 2Mra\Phi \Big]\lambda
     \end{align}
 \end{subequations}
 
@@ -857,18 +860,41 @@ These integrals will only be consistent with the periodicity of the $\theta$ and
 \begin{subequations}
     \begin{align}
         F(-\psi, k) = - F(\psi, k) && F(\psi+ \pi, k) = F(\psi, k) + 2K(k)\\
-        \Pi(-\psi, w_1, k) = - \Pi(\psi, k) && \Pi(\psi + \pi, w_1, k) = \Pi(\psi, w_1, k) + 2\Pi(w_1, k)\\
+        \Pi(-\psi, w_1, k) = - \Pi(\psi, w_1, k) && \Pi(\psi + \pi, w_1, k) = \Pi(\psi, w_1, k) + 2\Pi(w_1, k)\\
         E(-\psi, k) = - E(\psi, k) && E(\psi + \pi, k) = E(\psi, k) + 2E(k)
     \end{align}
 \end{subequations}
 
-An example for a selected orbit is shown in the figure below for an extremal black hole. The radius is selected as $r=1.2M$ and the Carter's constant is selected as $Q = 0.5M^2$.
+Keep in mind that this solution is valid only for bound orbits or $E^2<1$. For unbound orbits, the solution changes as follows,
+
+\begin{subequations}
+    \begin{align}
+        k &= \sqrt{\frac{w_1}{w_1 - w_2}}, \qquad k \in (0,1) \\
+        \psi &= \arcsin\sqrt{\frac{w(w_1 - w_2)}{w_1(w-w_2)}} = \operatorname{am}(a\sqrt{(E^2-1)(w_1-w_2)}\,\lambda,\, k)
+    \end{align}
+\end{subequations}
+
+\begin{subequations}
+    \begin{align}
+        \phi(\lambda) &= \frac{\Phi}{a(1-w_2)\sqrt{(E^2-1)(w_1-w_2)}}\Big[F(\psi, k) - w_2\,\Pi(\psi,\, k^2(1-w_2),\, k)\Big]
+        + \frac{a}{\Delta}(2MrE - a\Phi)\,\lambda \\
+        t(\lambda) &= -\frac{aE}{\sqrt{(E^2-1)(w_1-w_2)}}\Big[ (1-w_2)F(\psi,k) + w_2\,\Pi\!\left(\psi,\, k^2,\, k\right)\Big]
+        + \frac{1}{\Delta}\Big[ E(r^2+a^2)^2 - 2Mra\Phi \Big]\lambda
+    \end{align}
+\end{subequations}
+
+\begin{equation}
+    \lambda_0 = \frac{K(k)}{a\sqrt{(E^2-1)(w_1-w_2)}}
+\end{equation}
+
+
+An example for a selected orbit is shown in the figure below for an extremal black hole. The radius is selected as $r=1.2M$ and the Carter's constant is selected as $Q = 0.5M^2$. We can see that the particle reaches the maximum latitude and then drops - consistent with our analysis. The particle also has a prograde motion in the $\phi$ direction as $\Phi$ is positive for this case. The numerical values of the maximum latitude, energy and angular momentum also agree with \cite{taoTimelikeSpherical} for this case. 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/kerr_timelike_orbit.png}
+    \includegraphics[width=0.8\textwidth]{figures/kerr_timelike_orbit.png}
     \label{fig:timelike_orbit}
-    \caption{Example of a Time-like Spherical Orbit for an Extremal Kerr Black Hole.}
+    \caption{Example of a Timelike Spherical Orbit for an Extremal Kerr Black Hole.}
 \end{figure}
 
 \printbibliography
