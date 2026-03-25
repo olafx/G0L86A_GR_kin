@@ -436,13 +436,23 @@ To summarize, the components of the metric and their non-zero derivatives are:
 
 The Kerr-Schild form of the Kerr metric is
 \begin{equation}
-    g_{\mu\nu} = \eta_{\mu\nu} + f k_\mu k_\nu \quad\text{with}\quad f\equiv\frac{2Mr^3}{r^4+a^2z^2} \quad\text{and}\quad k_\mu = \Big(1, \frac{rx+ay}{r^2+a^2}, \frac{ry-ax}{r^2+a^2}, \frac{z}{r}\Big)
+    g_{\mu\nu} = \eta_{\mu\nu} + f k_\mu k_\nu \quad\text{with}\quad f\equiv\frac{2Mr^3}{r^4+a^2z^2} \quad\text{and}\quad k_\mu = \Big(1,\; \frac{rx+ay}{r^2+a^2},\; \frac{ry-ax}{r^2+a^2},\; \frac{z}{r}\Big)
 \end{equation}
 where $r$ is defined by the relation $\frac{x^2+y^2}{r^2+a^2} + \frac{z^2}{r^2} = 1$. In the limit that $a \to 0$, these coordinates become standard Cartesian coordinates. The formula for the parameter $r$ can be rewritten as
 \begin{equation}
     r^2 = \frac{1}{2}\Big(x^2 + y^2 + z^2 - a^2 + \sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}\,\Big)
 \end{equation}
-The spatial component $\gamma_{ij}$ and its inverse $\gamma^{ij}$ are
+A helpful quantity to derive is
+\begin{equation}
+\begin{aligned}
+    k_i\delta^{ij}k_j &= k_1^2 + k_2^2 + k_3^2\\
+    &= \frac{(rx+ay)^2}{(r^2+a^2)^2} + \frac{(ry-ax)^2}{(r^2+a^2)^2} + \frac{z^2}{r^2}\\
+    &= \frac{(rx+ay)^2 + (ry-ax)^2}{(r^2+a^2)^2} + 1 - \frac{x^2+y^2}{r^2+a^2} \quad\text{(using the definition of $r$)}\\
+    &= 1 + \frac{(r^2+a^2)(x^2+y^2) - (r^2+a^2)(x^2+y^2)}{(r^2+a^2)^2r^2}\\
+    &= 1.
+\end{aligned}
+\end{equation}
+The four-vector $k_\mu$ is thus a null-vector. The spatial component $\gamma_{ij}$ and its inverse $\gamma^{ij}$ are
 \begin{equation}
 \begin{aligned}
     \gamma_{ij} &= \delta_{ij} + f k_i k_j\\
@@ -457,7 +467,8 @@ The spatial component $\gamma_{ij}$ and its inverse $\gamma^{ij}$ are
     -fk_1k_2 & 1+f(k_1^2+k_3^2) & -fk_2k_3\\
     -fk_1k_3 & -fk_2k_3 & 1+f(k_1^2+k_2^2)
     \end{pmatrix}\\
-    &= \frac{1}{\gamma}\big[(1+fk_lk^l)\delta^{ij} - fk^ik^j\big].
+    &= \frac{1}{\gamma}\big[(1+fk_lk^l)\delta^{ij} - fk^ik^j\big]\\
+    &= \frac{1}{\gamma}\big[(1+f)\delta^{ij} - fk^ik^j\big].
 \end{aligned}
 \end{equation}
 In the last line of this equation, we introduce $k^i$ with an upper index, of which the components are identical to $k_i$. More formally, we use $k^\mu \equiv \eta^{\mu\nu}k_\nu$. The determinant $\gamma$ can be computed as well:
@@ -465,7 +476,8 @@ In the last line of this equation, we introduce $k^i$ with an upper index, of wh
 \begin{aligned}
     \gamma &= \gamma_{11}(\gamma_{22}\gamma_{33}-\gamma_{23}\gamma_{32}) - \gamma_{12}(\gamma_{21}\gamma_{33}-\gamma_{23}\gamma_{31}) + \gamma_{13}(\gamma_{21}\gamma_{32}-\gamma_{22}\gamma_{32})\\
     &= (1+fk_1^2)\big(1+f(k_2^2+k_3^2)\big) + f^2k_1^2k_2^2 - f^2k_1^2k_3^2\\
-    &= 1 + fk_ik^i.
+    &= 1 + fk_ik^i\\
+    &= 1 + f.
 \end{aligned}
 \end{equation}
 The components $\beta_i$ and $\beta^i$ of the metric are
@@ -473,16 +485,118 @@ The components $\beta_i$ and $\beta^i$ of the metric are
 \begin{aligned}
     \beta_i &= fk_i\\
     \beta^i &= f\gamma^{ij}k_j\\
-    &= f\Big[\delta^{ij} - \frac{f}{1+fk_lk^l}k^ik^j\Big]k_j\\
-    &= \frac{fk^i}{1+fk_lk^l}.
+    &= f\Big[\delta^{ij} - \frac{f}{1+f}k^ik^j\Big]k_j\\
+    &= \frac{fk^i}{1+f}.
 \end{aligned}
 \end{equation}
 The final component of the metric, $\alpha^2$, is
 \begin{equation}
 \begin{aligned}
     \alpha^2 &= -g_{00} + \beta_i\beta^i\\
-    &= 1 - f + \frac{f^2k_ik^i}{1+fk_lk^l}\\
-    &= 1 - \frac{f}{1+fk_lk^l}.
+    &= 1 - f + \frac{f^2k_ik^i}{1+f}\\
+    &= 1 - \frac{f}{1+f}\\
+    &= \frac{1}{1+f}.
+\end{aligned}
+\end{equation}
+To numerically solve the trajectories of particles in this metric, we again need the spatial derivatives of $\alpha^2$, $\beta^i$, and $\gamma^{ij}$. To start, spatial derivatives of $\alpha^2$ are
+\begin{equation}
+    \partial_i\alpha^2 = -\frac{\partial_if}{(1+f)^2}
+\end{equation}
+with
+\begin{equation}
+\begin{aligned}
+    \partial_if &= 2M\partial_i\Big(\frac{r^3}{r^4+a^2z^2}\Big)\\
+    &= \frac{2Mr^2}{(r^4+a^2z^2)^2}\Big[(-r^4+3a^2z^2)\partial_ir - 2ra^2z\partial_iz\Big]\\
+    &= -2Mr^2\frac{(r^4-3a^2z^2)}{(r^4+a^2z^2)^2}\begin{pmatrix}
+        \partial_xr\\
+        \partial_yr\\
+        \partial_zr
+    \end{pmatrix} - 2Mr^2\frac{2ra^2}{(r^4+a^2z^2)^2}\begin{pmatrix}
+        0\\
+        0\\
+        z
+    \end{pmatrix}
+\end{aligned}
+\end{equation}
+and
+\begin{equation}
+\begin{aligned}
+    \partial_ir &= \begin{pmatrix}
+        \partial_xr\\
+        \partial_yr\\
+        \partial_zr
+    \end{pmatrix}\\
+    &= \frac{2\big(x^2 + y^2 - z^2 - a^2\big) + \sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}}{\sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}}\begin{pmatrix}
+        x\\
+        y\\
+        z
+    \end{pmatrix}\\
+    &= \frac{2r^2 + x^2 + y^2 - 3z^2 - a^2}{2r^2 - x^2 - y^2 - z^2 + a^2}\begin{pmatrix}
+        x\\
+        y\\
+        z
+    \end{pmatrix}
+\end{aligned}
+\end{equation}
+The spatial derivatives of $\beta^i$ are
+\begin{equation}
+\begin{aligned}
+    \partial_j\beta^i &= \frac{(1+f)k^i\partial_jf + (1+f)f\partial_jk^i - fk^i\partial_jf}{(1+f)^2}\\
+    &= \frac{k^i\partial_jf + (1+f)f\partial_jk^i}{(1+f)^2}
+\end{aligned}
+\end{equation}
+with
+\begin{equation}
+\begin{aligned}
+    \partial_jk^i &= \begin{pmatrix}
+        \partial_xk_1 & \partial_xk_2 & \partial_xk_3\\
+        \partial_yk_1 & \partial_yk_2 & \partial_yk_3\\
+        \partial_zk_1 & \partial_zk_2 & \partial_zk_3
+    \end{pmatrix}\\
+    &= \begin{pmatrix}
+        \frac{r(r^2+a^2)+(-xr^2+xa^2-2ray)\partial_xr}{(r^2+a^2)^2} & \frac{-a(r^2+a^2)+(-yr^2+ya^2+2rax)\partial_xr}{(r^2+a^2)^2} & -\frac{z\partial_xr}{r^2}\\
+        \frac{a(r^2+a^2) + (-xr^2+xa^2-2ray)\partial_yr}{(r^2+a^2)^2} & \frac{r(r^2+a^2) + (-yr^2+ya^2+2rax)\partial_yr}{(r^2+a^2)^2} & -\frac{z\partial_yr}{r^2}\\
+        \frac{(-xr^2+xa^2-2ray)\partial_zr}{(r^2+a^2)^2} & \frac{(-yr^2+ya^2+2rax)\partial_zr}{(r^2+a^2)^2} & \frac{r - z\partial_zr}{r^2}
+    \end{pmatrix}\\
+    &= \begin{pmatrix}
+        \frac{r}{r^2+a^2} & \frac{-a}{r^2+a^2} & 0\\
+        \frac{a}{r^2+a^2} & \frac{r}{r^2+a^2} & 0\\
+        0 & 0 & \frac{1}{r}
+    \end{pmatrix} + \begin{pmatrix}
+        \partial_xr\\
+        \partial_yr\\
+        \partial_zr
+    \end{pmatrix} \times \begin{pmatrix}
+        \frac{-xr^2+xa^2-2ray}{(r^2+a^2)^2} & \frac{-yr^2+ya^2+2rax}{(r^2+a^2)^2} & -\frac{z}{r^2}
+    \end{pmatrix}.
+\end{aligned}
+\end{equation}
+We continue by calculating the spatial derivatives of $\gamma^{ij}$:
+\begin{equation}
+\begin{aligned}
+    \partial_l\gamma^{ij} &= \partial_l\Big[\delta^{ij} - \frac{f}{1+f}k^ik^j\Big]\\
+    &= -\frac{\partial_lf}{(1+f)^2}k^ik^j - \frac{f}{1+f}(k^i\partial_lk^j + k^j\partial_lk^i)
+\end{aligned}
+\end{equation}
+To summarize, the components of the metric in Kerr-Schild coordinates and their non-zero derivatives are:
+\begin{equation}
+\begin{aligned}
+    &\alpha^2 = \frac{1}{1+f},\qquad \beta^i = \frac{fk^i}{1+f},\qquad \gamma^{ij} = \delta^{ij} - \frac{fk^ik^j}{1+f}\\
+    &\partial_i\alpha^2 = -\frac{\partial_if}{(1+f)^2},\qquad \partial_j\beta^i = \frac{k^i\partial_jf + (1+f)f\partial_jk^i}{(1+f)^2}\\
+    &\partial_l\gamma^{ij} = -\frac{\partial_lf}{(1+f)^2}k^ik^j - \frac{f}{1+f}(k^i\partial_lk^j + k^j\partial_lk^i)\\
+    \text{with}\quad &\partial_if = -2Mr^2\frac{(r^4-3a^2z^2)}{(r^4+a^2z^2)^2}\partial_ir - 2Mr^2\frac{2ra^2}{(r^4+a^2z^2)^2}\begin{pmatrix}
+        0\\
+        0\\
+        z
+    \end{pmatrix}\\
+    \text{and}\quad &\partial_ir = \frac{2r^2 + x^2 + y^2 - 3z^2 - a^2}{2r^2 - x^2 - y^2 - z^2 + a^2}x_i\\
+    \text{and}\quad &\partial_jk^i = \begin{pmatrix}
+        \frac{r}{r^2+a^2} & \frac{-a}{r^2+a^2} & 0\\
+        \frac{a}{r^2+a^2} & \frac{r}{r^2+a^2} & 0\\
+        0 & 0 & \frac{1}{r}
+    \end{pmatrix} + \partial_jr \times \begin{pmatrix}
+        \frac{-xr^2+xa^2-2ray}{(r^2+a^2)^2} & \frac{-yr^2+ya^2+2rax}{(r^2+a^2)^2} & -\frac{z}{r^2}
+    \end{pmatrix}.
 \end{aligned}
 \end{equation}
 
