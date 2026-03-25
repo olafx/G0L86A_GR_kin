@@ -212,6 +212,56 @@ The final part of equation \eqref{eq:geodesic_derivation_part_1} (the terms prop
 \end{equation}
 
 
+\subsection{The Electromagnetic force}
+
+When adding the electromagnetic force, the geodesic equation becomes
+\begin{equation}
+\label{eq:geodesic_gr_lorentz}
+    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = \frac{q}{m}g_{\mu\nu}F^{\rho\mu}\frac{\text{d}x^\nu}{\text{d}\tau}
+\end{equation}
+where $F^{\mu\nu}$ is the electromagnetic field tensor. Building on the work done in the previous subsection, this geodesic equation can be written in the ADM formalism:
+\begin{equation}
+\begin{aligned}
+    u^0\frac{\text{d}u^\rho}{\text{d}t} &= -\Gamma^\rho_{\mu\nu} u^\mu u^\nu + \frac{q}{m}g_{\mu\nu}F^{\rho\mu}u^\nu\\
+    \Rightarrow g_{i\rho}\frac{\text{d}u^\rho}{\text{d}t} &= -g_{i\rho}\Gamma^\rho_{\mu\nu} \frac{u^\mu u^\nu}{u^0} + \frac{q}{m}g_{i\rho}g_{\mu\nu}F^{\rho\mu} \frac{u^\nu}{u^0}\\
+    \Rightarrow \frac{\text{d}u_i}{\text{d}t} &= -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_j u_k}{2u^0}\partial_i\gamma^{jk} + \frac{q}{m}F_{i\mu}\frac{u^\mu}{u^0}.
+\end{aligned}
+\end{equation}
+The electromagnetic field tensor might not always be easy to obtain, in which case it might be better to write the geodesic equation in terms of the electric and magnetic field vectors. To do this, we use the following definitions:
+\begin{equation}
+\begin{aligned}
+    D^i &= \alpha F^{0i}\\
+    H_i &= \frac{1}{2}\alpha \sqrt{\gamma}\,\varepsilon_{ijk}F^{jk}\\
+    E_i &= F_{i0}\\
+    B^i &= \frac{1}{2}\sqrt{\gamma}^{-1}\varepsilon^{ijk}F_{jk}.
+\end{aligned}
+\end{equation}
+Here $\gamma$ is the determinant of $\gamma_{ij}$ and $\varepsilon_{ijk}$ is the Levi-Civita symbol. Multiplying by $\varepsilon_{ilm}$ and using the property $\varepsilon_{ilm}\varepsilon^{ijk} = {\delta_l}^j {\delta_m}^k - {\delta_l}^k {\delta_m}^j$, the defining relation of $B^i$ becomes
+\begin{equation}
+\begin{aligned}
+    2\sqrt{\gamma}\,\varepsilon_{ilm}B^i &= \big({\delta_l}^j {\delta_m}^k - {\delta_l}^k {\delta_m}^j\big) F_{jk}\\
+    \Rightarrow \sqrt{\gamma}\,\varepsilon_{ijk}B^i &= F_{jk} \quad\text{(using $F_{\mu\nu} = -F_{\nu\mu}$)}.
+\end{aligned}
+\end{equation}
+The electromagnetic term in the geodesic equation can then be written as
+\begin{equation}
+\begin{aligned}
+    \frac{q}{m}F_{i\mu}\frac{u^\mu}{u^0} &= \frac{q}{m}F_{i0} + \frac{q}{m}F_{ij}\frac{u^j}{u^0}\\
+    &= \frac{q}{m}F_{i0} - \frac{q}{m}F_{ij}\beta^j + \frac{q}{m}F_{ij}\frac{\gamma^{jl}u_l}{u^0} \quad\text{(using equation \eqref{eq:u^i})}\\
+    &= \frac{q}{m}F_{i0} - \frac{q}{m}F_{ij}\beta^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
+    &= -\frac{q}{m}\alpha^2\big(F_{i0}g^{00} + F_{ij}g^{j0}\big) + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
+    &= -\frac{q}{m}\alpha^2{F_i}^0 + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
+    &= -\frac{q}{m}\alpha^2\big(g_{i0}F^{00} + g_{ij}F^{j0}\big) + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
+    &= \frac{q}{m}\alpha^2g_{ij}F^{0j} + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k \quad \text{(using $F^{00} = 0$ and $F^{j0} = -F^{0j}$)}\\
+    &= \frac{q}{m}\alpha\gamma_{ij}D^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k
+\end{aligned}
+\end{equation}
+The geodesic equation in the ADM formalism in terms of $D^i$ and $B^i$ is thus
+\begin{equation}
+    \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_j u_k}{2u^0}\partial_i\gamma^{jk} + \frac{q}{m}\alpha\gamma_{ij}D^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k.
+\end{equation}
+
+
 \subsection{The Kerr metric in spherical coordinates}
 
 The Kerr metric describes a rotating black hole in general relativity. In spherical coordinates, the metric can be written as
@@ -378,6 +428,61 @@ To summarize, the components of the metric and their non-zero derivatives are:
     &\partial_r\gamma^{\theta\theta} = -\frac{2r}{\rho^4},\hspace{165pt} \partial_\theta\gamma^{\theta\theta} = \frac{2a^2}{\rho^4}\sin\theta\cos\theta,\\
     &\partial_r\gamma^{\phi\phi} = -\frac{2}{\sigma^4\sin^2\theta} \Big[r^2\big(r^3 - Ma^2\sin^2\theta\big) + a^2\cos^2\theta\big(2r^3 + ra^2\cos^2\theta + Ma^2\sin^2\theta\big)\Big],\\
     &\partial_\theta\gamma^{\phi\phi} = -\frac{2\cos\theta}{\sigma^4\sin^3\theta}\Big[2Mra^2\sin^2\theta\,(r^2 + a^2) + \rho^2\sigma^2\Big].
+\end{aligned}
+\end{equation}
+
+
+\subsection{The Kerr metric in Kerr-Schild coordinates}
+
+The Kerr-Schild form of the Kerr metric is
+\begin{equation}
+    g_{\mu\nu} = \eta_{\mu\nu} + f k_\mu k_\nu \quad\text{with}\quad f\equiv\frac{2Mr^3}{r^4+a^2z^2} \quad\text{and}\quad k_\mu = \Big(1, \frac{rx+ay}{r^2+a^2}, \frac{ry-ax}{r^2+a^2}, \frac{z}{r}\Big)
+\end{equation}
+where $r$ is defined by the relation $\frac{x^2+y^2}{r^2+a^2} + \frac{z^2}{r^2} = 1$. In the limit that $a \to 0$, these coordinates become standard Cartesian coordinates. The formula for the parameter $r$ can be rewritten as
+\begin{equation}
+    r^2 = \frac{1}{2}\Big(x^2 + y^2 + z^2 - a^2 + \sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}\,\Big)
+\end{equation}
+The spatial component $\gamma_{ij}$ and its inverse $\gamma^{ij}$ are
+\begin{equation}
+\begin{aligned}
+    \gamma_{ij} &= \delta_{ij} + f k_i k_j\\
+    \gamma^{ij} &= \frac{1}{\gamma} \text{adj}(\gamma_{ij}) \quad\text{(where we take the adjugate matrix)}\\
+    &= \frac{1}{\gamma}\begin{pmatrix}
+    (1+fk_2^2)(1+fk_3^2)-f^2k_2^2k_3^3 & -(1+fk_3^2)fk_1k_2+f^2k_1k_2k_3^2 & f^2k_1k_2^2k_3-(1+fk_2^2)fk_1k_3\\
+    -(1+fk_3^2)fk_1k_2+f^2k_1k_2k_3^2 & (1+fk_1^2)(1+fk_3^2)-f^2k_1^2k_3^3 & -(1+fk_1^2)fk_2k_3+f^2k_1^2k_2k_3\\
+    f^2k_1k_2^2k_3-(1+fk_2^2)fk_1k_3 & -(1+fk_1^2)fk_2k_3+f^2k_1^2k_2k_3 & (1+fk_1^2)(1+fk_2^2)-f^2k_1^2k_2^3
+    \end{pmatrix}\\
+    &= \frac{1}{\gamma}\begin{pmatrix}
+    1+f(k_2^2+k_3^2) & -fk_1k_2 & -fk_1k_3\\
+    -fk_1k_2 & 1+f(k_1^2+k_3^2) & -fk_2k_3\\
+    -fk_1k_3 & -fk_2k_3 & 1+f(k_1^2+k_2^2)
+    \end{pmatrix}\\
+    &= \frac{1}{\gamma}\big[(1+fk_lk^l)\delta^{ij} - fk^ik^j\big].
+\end{aligned}
+\end{equation}
+In the last line of this equation, we introduce $k^i$ with an upper index, of which the components are identical to $k_i$. More formally, we use $k^\mu \equiv \eta^{\mu\nu}k_\nu$. The determinant $\gamma$ can be computed as well:
+\begin{equation}
+\begin{aligned}
+    \gamma &= \gamma_{11}(\gamma_{22}\gamma_{33}-\gamma_{23}\gamma_{32}) - \gamma_{12}(\gamma_{21}\gamma_{33}-\gamma_{23}\gamma_{31}) + \gamma_{13}(\gamma_{21}\gamma_{32}-\gamma_{22}\gamma_{32})\\
+    &= (1+fk_1^2)\big(1+f(k_2^2+k_3^2)\big) + f^2k_1^2k_2^2 - f^2k_1^2k_3^2\\
+    &= 1 + fk_ik^i.
+\end{aligned}
+\end{equation}
+The components $\beta_i$ and $\beta^i$ of the metric are
+\begin{equation}
+\begin{aligned}
+    \beta_i &= fk_i\\
+    \beta^i &= f\gamma^{ij}k_j\\
+    &= f\Big[\delta^{ij} - \frac{f}{1+fk_lk^l}k^ik^j\Big]k_j\\
+    &= \frac{fk^i}{1+fk_lk^l}.
+\end{aligned}
+\end{equation}
+The final component of the metric, $\alpha^2$, is
+\begin{equation}
+\begin{aligned}
+    \alpha^2 &= -g_{00} + \beta_i\beta^i\\
+    &= 1 - f + \frac{f^2k_ik^i}{1+fk_lk^l}\\
+    &= 1 - \frac{f}{1+fk_lk^l}.
 \end{aligned}
 \end{equation}
 
