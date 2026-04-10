@@ -601,6 +601,108 @@ To summarize, the components of the metric in Kerr-Schild coordinates and their 
 \end{equation}
 
 
+\section{Sourceless Maxwell equations in curved spacetime}
+
+In the ADM formalism, spacetime is sliced into spacelike hypersurfaces $\Sigma_t$ on which the time coordinate $t$ is constant. The electric and magnetic fields are 3-vectors that live within these hypersurfaces, but can also be seen as 4-vectors that are tangent to these hypersurfaces \cite{Alcubierre2009}. The 4-vector $n_\mu = (-\alpha, 0, 0, 0)$ is a unit vector that is tangential to $\Sigma_t$ \cite{Alcubierre2009}, satisfying the relation $n_\mu n^\mu = -1$. The electric and magnetic fields $E^\mu$ and $B^\mu$, written as 4-vectors, must be perpendicular to $n_\mu$. Therefore, the zeroth components $E^0$ and $B^0$ must be zero. A projection operator that projects 4-vectors onto $\Sigma_t$ can be defined as
+\begin{equation}
+    {h_\mu}^\nu \equiv {\delta_\mu}^\nu + n_\mu n^\nu.
+\end{equation}
+With this projection operator, the Maxwell equations can be written in the language of the ADM formalism. The Maxwell equations without sources become \cite{Alcubierre2009}
+\begin{equation}
+\begin{aligned}
+    &{h_\mu}^\nu \nabla_\nu E^\mu = 0\\
+    &{h_\mu}^\nu \nabla_\nu B^\mu = 0\\
+    &\alpha {h^i}_\nu (n^\rho \partial_\rho E^\nu - E^\rho \partial_\rho n^\nu) = \epsilon^{ijk} \partial_j (\alpha B_k) + \alpha K E^i\\
+    &\alpha {h^i}_\nu (n^\rho \partial_\rho B^\nu - B^\rho \partial_\rho n^\nu) = -\epsilon^{ijk} \partial_j (\alpha E_k) + \alpha K B^i
+\end{aligned}
+\end{equation}
+where $K \equiv -\nabla_\mu n^\mu$ is the trace of the extrinsic curvature of $\Sigma_t$.
+
+\subsection{An analytic solution}
+
+This subsection considers a simple curved metric for which an analytic wave solution of the Maxwell equations can be found. The spacetime metric that is considered is the static metric of the Newtonian gauge
+\begin{equation}
+    g_{\mu\nu} = \begin{pmatrix}
+        -(1+2\Phi) & 0 & 0 & 0\\
+        0 & 1-2\Phi & 0 & 0\\
+        0 & 0 & 1-2\Phi & 0\\
+        0 & 0 & 0 & 1-2\Phi
+    \end{pmatrix}.
+\end{equation}
+This metric is a solution of the linearized Einstein field equations in the absence of anisotropic pressure \cite{1995ApJ}. In other words, as long as the scalar $|\Phi|$ is much smaller than $1$, this metric is an approximate solution of the Einstein field equations. In the presence of anisotropic pressure, the metric is parameterized by two scalars instead of only $\Phi$. The scalar $\Phi$ can be interpreted as the gravitational potential \cite{1995ApJ}. Because the metric is diagonal, the trace of the extrinsic curvature vanishes:
+\begin{equation}
+\begin{aligned}
+    K &= -\nabla_\mu (g^{\mu\nu} n_\nu) = -\nabla_0 (g^{00} n_0) = -\nabla_0 \Big(\frac{1}{\alpha}\Big) = -\partial_0 \Big(\frac{1}{\alpha}\Big) - \frac{1}{\alpha} \Gamma_{00}^0\\
+    &= \frac{1}{\alpha^2} \partial_0\alpha - \frac{1}{2\alpha} g^{00} \partial_0 g_{00} = \frac{1}{\alpha^2} \partial_0\alpha + \frac{1}{2\alpha^3} \partial_0 (-\alpha^2) = \frac{1}{\alpha^2} \partial_0\alpha - \frac{1}{\alpha^2} \partial_0\alpha = 0.
+\end{aligned}
+\end{equation}
+Because the metric is diagonal, the spatial part of the projection operator is ${h_i}^j = {\delta_i}^j$. The Maxwell equations thus simplify:
+\begin{equation}
+\begin{aligned}
+    &\nabla_i E^i = 0\\
+    &\nabla_i B^i = 0\\
+    &\partial_t E^i = \epsilon^{ijk} \partial_j (\alpha B_k)\\
+    &\partial_t B^i = -\epsilon^{ijk} \partial_j (\alpha E_k).
+\end{aligned}
+\end{equation}
+The first of the Maxwell equations can be expanded using the formulas for the covariant derivative and Christoffel symbols:
+\begin{equation}
+\begin{aligned}
+    \nabla_i E^i &= \partial_i E^i + \Gamma_{ij}^i E^j\\
+    &= \partial_i E^i + \frac{1}{2} E^j g^{ik} \big(\partial_i g_{jk} + \partial_j g_{ik} - \partial_k g_{ij}\big)\\
+    &= \partial_i E^i + \frac{1}{2} E^j g^{ik} \partial_j g_{ik} = 0.
+\end{aligned}
+\end{equation}
+Here we used that $g^{ik}$ is only nonzero if $i=k$. Similarly, the second Maxwell equation can be written as
+\begin{equation}
+    \partial_i B^i + \frac{1}{2} B^j g^{ik} \partial_j g_{ik} = 0.
+\end{equation}
+We consider wave solutions of the electric and magnetic fields using the following ansatz:
+\begin{equation}
+\begin{aligned}
+    &E^i = \big(0, E_0 e^{i(k(x)x-\omega t)}, 0\big)\\
+    &B^i = \big(0, 0, B_0 e^{i(k(x)x-\omega t)}\big)\\
+    &\partial_y \Phi(x) = 0\\
+    &\partial_z \Phi(x) = 0.
+\end{aligned}
+\end{equation}
+The physical interpretation behind this ansatz is that of a photon diving into or climbing out of a gravitational well. The wave-vector $k_i = (k(x), 0, 0)$ is allowed to be a function of $x$, while $\omega$ is chosen to be a constant. This ansatz already satisfies the first two Maxwell equations. Filling in this ansatz into the remaining Maxwell equations, we get the following nontrivial relations:
+\begin{equation}
+\begin{aligned}
+    &\begin{cases}
+        \partial_t E^y = \epsilon^{yxz} \partial_x(\alpha g_{zz} B^z)\\
+        \partial_t B^z = -\epsilon^{zxy} \partial_x(\alpha g_{yy} E^y)
+    \end{cases}\\
+    \Rightarrow\, &\begin{cases}
+        -i\omega E_0 = -\big(\partial_x A + iA\partial_x(kx)\big) B_0\\
+        -i\omega B_0 = -\big(\partial_x A + iA\partial_x(kx)\big) E_0
+    \end{cases} \quad\text{with}\quad A \equiv \alpha g_{yy} = \alpha g_{zz}\\
+    \Rightarrow\, &\begin{cases}
+        E_0 = B_0\\
+        \omega^2 = \big(A\partial_x(kx) - i\partial_xA\big)^2
+    \end{cases}\\
+    \Rightarrow\, &\hspace{7pt} \omega = A\partial_x(kx) - i\partial_xA \quad\text{without loss of generality}\\
+    \Rightarrow\, &\hspace{7pt} kx = \int \frac{\omega + i\partial_xA}{A} \text{d}x = \omega \int \frac{\text{d}x}{A} + i\log{A}.
+\end{aligned}
+\end{equation}
+The solutions for the nonzero components of the electric and magnetic fields are thus
+\begin{equation}
+\label{eq:EM_waves_theory}
+\begin{aligned}
+    &E^y = E_0 e^{i\omega(\int\frac{\text{d}x}{A}-t) - \log{A}}\\
+    &B^z = B_0 e^{i\omega(\int\frac{\text{d}x}{A}-t) - \log{A}}.
+\end{aligned}
+\end{equation}
+For the metric of the Newtonian gauge, we get $A = \sqrt{1+2\Phi}(1-2\Phi)$. In the limit that spacetime is flat and $\Phi \to 0$, the obtained solutions for the electromagnetic waves become
+\begin{equation}
+\begin{aligned}
+    &E^y = E_0 e^{i\omega(x-t)}\\
+    &B^z = B_0 e^{i\omega(x-t)}
+\end{aligned}
+\end{equation}
+which are the familiar solutions we expect to find in flat spacetime. As the waves enter a gravitational well and $\Phi$ becomes negative, then $A$ becomes larger than $1$. As a result, two things happen: the amplitude of the wave gets damped, and the wavelength decreases. The decreasing of the wavelength shows that the light is gravitationally blueshifted. The group speed of the light also decreases within a gravitational well, which is a consequence of the situation being seen from the point of view of an observer at $x \to \infty$ (where $g_{\mu\nu} \to \eta_{\mu\nu}$). Equation \eqref{eq:EM_waves_theory} can be used to verify the result of numerical codes that solve the Maxwell equations in a curved spacetime.
+
+
 % olaf: Some brainstorming:
 
 % \section*{Conventions}
