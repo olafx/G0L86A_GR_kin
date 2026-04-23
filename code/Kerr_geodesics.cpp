@@ -1,10 +1,12 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/numpy.h>
+
 #include <bit>
 #include <cmath>
 #include <vector>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/numpy.h>
+
 
 #include "util.hpp"
 #include "solve.hpp"
@@ -107,7 +109,8 @@ py::tuple geodesics
   int max_steps,
   double domain_L,
   double h_rel,
-  double h_min
+  double h_min,
+  int n_iter
 )
 { const metric::Kerr::Params params_Kerr {M, a};
   const metric::Kerr::BoyerLindquist metric;
@@ -152,7 +155,9 @@ py::tuple geodesics
         if (stop_criterion != StopCriterion::none)
           break;
         state = std::bit_cast<Mat23>(
-          solve::rk4_step(rhs, dt, std::bit_cast<Vec6>(state)));
+          n_iter == 0
+          ? solve::rk4_step(rhs, dt, std::bit_cast<Vec6>(state))
+          : solve::implicit_midpoint_step(rhs, dt, std::bit_cast<Vec6>(state), n_iter));
         geodesic.push_back(state.X);
       }
       if (i_step == max_steps)
@@ -228,6 +233,7 @@ PYBIND11_MODULE(Kerr_geodesics, m)
     py::arg("max_steps"),
     py::arg("domain_L"),
     py::arg("h_rel"),
-    py::arg("h_min")
+    py::arg("h_min"),
+    py::arg("n_iter") = 0
   );
 }

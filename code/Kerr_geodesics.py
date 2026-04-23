@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from pathlib import Path
 import sys
@@ -45,6 +45,7 @@ geos, geos_meta = kerr_geodesics.geodesics(
   max_steps,
   domain_L,
   h_rel, h_min,
+  n_iter=0,  # 0 = RK4 and number of iterations for IMR
 )
 
 stop_criterion = [

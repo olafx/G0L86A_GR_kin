@@ -19,6 +19,7 @@
 !/code/util.hpp
 !/code/util.py
 !/code/trajectoryKerrPlot.ipynb
+!/code/Kerr_geodesics_verify.ipynb
 
 !/report/
 /report/*
