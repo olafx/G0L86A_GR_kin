@@ -1,5 +1,8 @@
+# Supports Linux and macOS.
+
 CXX ?= g++
 PYTHON ?= python
+UNAME_S := $(shell uname -s)
 
 # Output directory where compiled binaries and plots and such go. This will be
 # removed with `make clean`.
@@ -27,7 +30,12 @@ endif
 # Ubuntu and the default Ubuntu now should come with a sytem compiler that
 # supports C++23.
 CXX_FLAGS := -std=c++23 -O3 $(FLAGS_CXXSTDLIB)
-PY_MOD_FLAGS := -fPIC -shared
+
+ifeq ($(UNAME_S),Darwin)
+PY_MOD_FLAGS ?= -fPIC -bundle -undefined dynamic_lookup
+else
+PY_MOD_FLAGS ?= -fPIC -shared
+endif
 
 # OpenMP is disabled by default. Enable it with `OMP=1 make ...`.
 OMP ?= 0
