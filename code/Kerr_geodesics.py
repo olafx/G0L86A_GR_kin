@@ -18,10 +18,13 @@ import util
 M = 1.
 a = .7
 dt = .02
-max_steps = 50000
+max_steps = 50_000
 domain_L = 20.
 h_rel = 1e-5
 h_min = 1e-6
+method = 'IMR'
+iters_IMR = 4
+assert method in ('RK4', 'IMR')
 
 ics = [
   kerr_geodesics.IC( 8.00, 0.50*np.pi, +0.00, +0.00, +0.00, +3.80, 1),
@@ -38,15 +41,25 @@ labels = [
 
 ################################################################################
 
-geos, geos_meta = kerr_geodesics.geodesics(
-  ics,
-  M, a,
-  dt,
-  max_steps,
-  domain_L,
-  h_rel, h_min,
-  n_iter=0,  # 0 = RK4 and number of iterations for IMR
-)
+match method:
+  case 'RK4':
+    geos, geos_meta = kerr_geodesics.geodesics_RK4(
+      M, a,
+      dt,
+      max_steps,
+      domain_L,
+      h_rel, h_min,
+      ics,
+    )
+  case 'IMR':
+    geos, geos_meta = kerr_geodesics.geodesics_IMR(
+      M, a,
+      dt,
+      max_steps, iters_IMR,
+      domain_L,
+      h_rel, h_min,
+      ics,
+    )
 
 stop_criterion = [
   'none',
@@ -65,7 +78,7 @@ for i_geo, (geo, geo_meta) in enumerate(zip(geos, geos_meta)):
 ################################################################################
 
 # Horizons in Kerr-Schild Cartesian coordinates:
-#   (x^2+y^2)/(r_h^2+a^2) + z^2/r_h^2 = 1
+#   (x^2+y^2)/(r_h^2+a^2)+z^2/r_h^2 = 1
 
 alpha_horizon = .2
 n_horizon = 64

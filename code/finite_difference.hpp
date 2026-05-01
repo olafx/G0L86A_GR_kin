@@ -5,33 +5,38 @@
 #include <cstddef>
 
 #include "util.hpp"
+#include "common.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace finite_difference
 {
 
-template <size_t N>
-using Vec = util::Vec<double, N>;
-
-template <size_t N1, size_t N2>
-using Mat = util::Ten<double, N1, N2>::V;
-
 // We overcomplicate picking a step h a bit here if in the future there are
 // additional constraints.
-
 template <typename Fn, size_t N>
-concept StepPolicy =
+concept Policy =
   std::invocable<const Fn&, const Vec<N>&, size_t> &&
   std::same_as<
     std::invoke_result_t<const Fn&, const Vec<N>&, size_t>,
     double>;
 
-// A simple StepPolicy with some minimum h and minimum absolute h.
-// 
-// NOTE: Using operator() here makes this an invocable, a valid StepPolicy, and
-//   it is convenient to keep the policy as a struct.
-struct StepPolicy_Simple
+// A Stencil describes how a derivative is approximated. This can represent
+// arbitrary derivatives in arbitrary dimensions in principle, as specific
+// usages.
+template <size_t N, size_t K>
+struct Stencil
+{ Mat<N, K> xs;
+  Vec<K> ws;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace policies
+{
+
+// A simple `Policy` with some minimum h and minimum absolute h.
+struct Simple
 { double h_rel;
   double h_min;
 
@@ -44,16 +49,12 @@ struct StepPolicy_Simple
   }
 };
 
+} // namespace policies
+
 ////////////////////////////////////////////////////////////////////////////////
 
-// A Stencil describes how a derivative is approximated. This can represent
-// arbitrary derivatives in arbitrary dimensions in principle, as specific
-// usages.
-template <size_t N, size_t K>
-struct Stencil
-{ Mat<N, K> xs;
-  Vec<K> ws;
-};
+namespace stencils
+{
 
 // 1st derivative, central difference
 // 
@@ -62,7 +63,7 @@ struct Stencil
 // vector e.
 template <size_t N>
 [[nodiscard]] Stencil<N, 2> first_central
-( StepPolicy<N> auto&& step_policy,
+( Policy<N> auto&& step_policy,
   const Vec<N>& x,
   size_t axis
 )
@@ -88,7 +89,7 @@ template <size_t N>
 //   works.
 template <size_t N>
 [[nodiscard]] Stencil<2, 5> Laplacian_central
-( StepPolicy<2> auto&& step_policy,
+( Policy<2> auto&& step_policy,
   const Vec<2>& x
 )
 { const Vec<2> h
@@ -111,4 +112,5 @@ template <size_t N>
   return out;
 }
 
+} // namespace stencils
 } // namespace finite_difference

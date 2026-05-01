@@ -3,24 +3,21 @@
 #include <cmath>
 #include <cstddef>
 
-#include "finite_difference.hpp"
 #include "util.hpp"
+#include "common.hpp"
+#include "finite_difference.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace metric
 {
 
-using Vec2 = util::Vec<double, 2>;
-using Vec3 = util::Vec<double, 3>;
-using Mat3 = util::Ten<double, 3, 3>::V;
-using Mat23 = util::Ten<double, 3, 2>::V;
-using Ten3 = util::Ten<double, 3, 3, 3>::V;
-
 // We differentiate between spacetimes (like the Kerr spacetime) and metrics
 // (like the Boyer-Lindquist coordinates for the Kerr spacetime), since we may
 // be interested in different spacetimes and different metrics within the
 // spacetime.
+
+////////////////////////////////////////////////////////////////////////////////
 
 namespace Kerr
 {
@@ -41,6 +38,8 @@ struct Params
     r_horizon.p = M+sqrt(M*M-a*a);
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 struct BoyerLindquist
 {
@@ -88,12 +87,12 @@ struct BoyerLindquist
   ( const Params& params_phys,
     Vec3 x
   ) const
-  {
+  { std::unreachable();
   }
 
   [[nodiscard]] Derivatives derivatives_numerical
   ( const Params& params_phys,
-    const finite_difference::StepPolicy_Simple& step_policy,
+    const finite_difference::Policy<3> auto& policy_fd,
     Vec3 x
   ) const
   { Derivatives out;
@@ -102,7 +101,8 @@ struct BoyerLindquist
     {
 // The stencil is reused. This central difference stencil requires 2 function
 // evaluations. It is abstracted away in finite_difference.hpp.
-      const auto stencil = finite_difference::first_central(step_policy, x, i);
+      const auto stencil = finite_difference::stencils::first_central(
+        policy_fd, x, i);
       const Mat23& xs = stencil.xs;
       const Vec2& ws = stencil.ws;
       util::Vec<Fields, 2> f
@@ -129,10 +129,11 @@ struct BoyerLindquist
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 // TODO: Implementing this.
 struct KerrSchildCartesian
 {
-
 };
 
 } // namespace Kerr

@@ -1,15 +1,13 @@
 #include <bit>
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <mdspan>
-#include <stdexcept>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
 #include "util.hpp"
+#include "common.hpp"
 #include "solve.hpp"
 #include "geodesic.hpp"
 #include "metric.hpp"
@@ -24,14 +22,6 @@ namespace py = pybind11;
 // Let us be explicit about the coordinate system, writing Vec3_sph for
 // spherical or Boyer-Lindquist coordinates, and Vec3_Car for Cartesian or
 // Kerr-Schild Cartesian coordinates.
-using Vec3     = util::Vec<double, 3>;
-using Vec6     = util::Vec<double, 6>;
-using Mat23    = util::Ten<double, 3, 2>::V;
-using Vec3_sph = Vec3;
-using Vec3_Car = Vec3;
-using Vec2     = util::Vec<double, 2>;
-using RGB      = util::Vec<uint8_t, 3>;
-using Mat3     = util::Ten<double, 3, 3>::V;
 
 // A camera has a position, an orientation, and some optical/sensor properties.
 // It is convenient to specify the orientation by 3 orthonormal vectors.
@@ -80,11 +70,11 @@ struct AccretionDisk
 // an image increase towards +right, the pixels along y towards down=-up.
 [[nodiscard]] Vec3 pixel_direction
 ( const Camera& camera,
-  int i_x, int i_y,
-  int n_x, int n_y
+  const int2& i,
+  const int2& res
 )
-{ const double sx = ((i_x+.5)/n_x-.5)*camera.focal_ratio*n_x/n_y;
-  const double sy = ((i_y+.5)/n_y-.5)*camera.focal_ratio;
+{ const double sx = ((i.x+.5)/res.x-.5)*camera.focal_ratio*res.x/res.y;
+  const double sy = ((i.y+.5)/res.y-.5)*camera.focal_ratio;
   return normalized(camera.forward+sx*camera.right-sy*camera.up);
 }
 
@@ -241,83 +231,56 @@ struct AccretionDisk
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Supporting different ODE integrators, in particular the symplectic
-// implicit midpoint rule with Picard iteration is next. Need to look into what
-// the best way is to handle that, because the parameters will be slightly
-// different, but also don't want to copy paste all the code, and the switching
-// should also be at compile time, like there should be no slow check in the
-// main loop.
+// `Stepper` should be a `Fn_Stepper`, concept is checked later when the
+// `Fn_RHS` is defined.
+template <typename Stepper>
 py::tuple render
-( int n_x,
-  int n_y,
-  double camera_dist,
-  double camera_tilt,
-  double camera_target_x,
-  double camera_target_y,
-  double camera_target_z,
-  double camera_focal_ratio,
-  double disk_inclination,
-  double disk_r_inner,
-  double disk_r_outer,
-  double M,
-  double a,
+( const metric::Kerr::Params& params_Kerr,
+  const metric::Kerr::BoyerLindquist& metric,
+  const AccretionDisk& disk,
   double eps,
-  double dt,
+  const finite_difference::policies::Simple& step_policy,
+  const Stepper& stepper,
   int max_steps,
   double domain_L,
-  double h_rel,
-  double h_min
+  const Camera& camera,
+  int2 res
 )
-{ const metric::Kerr::Params params_Kerr {M, a};
-  const metric::Kerr::BoyerLindquist metric;
-  const finite_difference::StepPolicy_Simple step_policy {h_rel, h_min};
-  const AccretionDisk disk
-  { .normal = {0, sin(disk_inclination),
-                  cos(disk_inclination)},
-    .r = {disk_r_inner,
-          disk_r_outer}
-  };
-  const Camera camera = make_camera
-  ( camera_dist, camera_tilt, camera_focal_ratio,
-    { camera_target_x,
-      camera_target_y,
-      camera_target_z
-    }
-  );
-  const Vec3_sph camera_x = util::Car_to_sph(camera.x);
-
+{
 // We return the main colored image, an image of stop criteria, and an image of
 // the number of iterations.
-  auto* buf_img           = new RGB[n_x*n_y];
-  auto* buf_stop_criteria = new int[n_x*n_y];
-  auto* buf_iterations    = new int[n_x*n_y];
-  std::mdspan img              {buf_img,           n_y, n_x};
-  std::mdspan stop_criteria    {buf_stop_criteria, n_y, n_x};
-  std::mdspan iteration_counts {buf_iterations,    n_y, n_x};
+  auto* buf_img           = new RGB[res.x*res.y];
+  auto* buf_stop_criteria = new int[res.x*res.y];
+  auto* buf_iterations    = new int[res.x*res.y];
+  std::mdspan img              {buf_img,           res.y, res.x};
+  std::mdspan stop_criteria    {buf_stop_criteria, res.y, res.x};
+  std::mdspan iteration_counts {buf_iterations,    res.y, res.x};
 
 // Prepare the ODE integrator.
 // The RHS function for the ODE integrator works on vectors (Vec6), while the
 // geodesic RHS describes a position and velocity evolution (Mat23), so we must
 // do some casting.
   auto rhs = [&](const Vec6& y)
-  { return std::bit_cast<Vec6>(
-      geodesic::rhs(
-        params_Kerr, metric, eps, std::bit_cast<Mat23>(y), step_policy));
+  { return Vec6 {geodesic::rhs(params_Kerr, metric, eps, y, step_policy)};
   };
+// Now that `rhs` exists, can see if `Stepper` is a `FN_Stepper`.
+  static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
 
   {
-// Release the GIL for the computational work, don't need it.
+// Release the GIL for the computational work.
     py::gil_scoped_release release;
 
-    #pragma omp parallel for
-    for (int i_y = 0; i_y < n_y; i_y++)
-      for (int i_x = 0; i_x < n_x; i_x++)
+    const Vec3_sph camera_x = util::Car_to_sph(camera.x);
+
+    #pragma omp parallel for schedule(dynamic)
+    for (int i_y = 0; i_y < res.y; i_y++)
+      for (int i_x = 0; i_x < res.x; i_x++)
       {
 // More preparation for the ODE integrator.
         Mat23 state =
         { camera_x,
           direction_to_u_cov(
-            camera_x, pixel_direction(camera, i_x, i_y, n_x, n_y))
+            camera_x, pixel_direction(camera, {i_x, i_y}, res))
         };
         Vec3_sph x_prev = state.X;
         StopCriterion stop_criterion = StopCriterion::max_steps;
@@ -330,8 +293,7 @@ py::tuple render
           if (stop_criterion != StopCriterion::none)
             break;
           x_prev = x;
-          state = std::bit_cast<Mat23>(
-            solve::rk4_step(rhs, dt, std::bit_cast<Vec6>(state)));
+          state = stepper(rhs, Vec6 {state});
         }
         if (i_step == max_steps)
           stop_criterion = StopCriterion::max_steps;
@@ -354,29 +316,143 @@ py::tuple render
 
 ////////////////////////////////////////////////////////////////////////////////
 
+py::tuple render_RK4
+( double metric_M,
+  double metric_a,
+  double disk_inclination,
+  double disk_r_inner,
+  double disk_r_outer,
+  double eps,
+  double h_rel,
+  double h_min,
+  double dt,
+  int max_steps,
+  double domain_L,
+  double camera_dist,
+  double camera_tilt,
+  double camera_target_x,
+  double camera_target_y,
+  double camera_target_z,
+  double camera_focal_ratio,
+  int res_x,
+  int res_y
+)
+{ const metric::Kerr::Params params_Kerr {metric_M, metric_a};
+  const metric::Kerr::BoyerLindquist metric;
+  const AccretionDisk disk
+  { .normal = {0, sin(disk_inclination),
+                  cos(disk_inclination)},
+    .r = {disk_r_inner,
+          disk_r_outer}
+  };
+  const finite_difference::policies::Simple policy_fd {h_rel, h_min};
+  const solve::RK4 stepper {dt};
+  const Camera camera = make_camera
+  ( camera_dist, camera_tilt, camera_focal_ratio,
+    { camera_target_x,
+      camera_target_y,
+      camera_target_z
+    }
+  );
+  const int2 res {res_x, res_y};
+  return render(params_Kerr, metric, disk, eps, policy_fd, stepper, max_steps,
+    domain_L, camera, res);
+}
+
+py::tuple render_IMR
+( double metric_M,
+  double metric_a,
+  double disk_inclination,
+  double disk_r_inner,
+  double disk_r_outer,
+  double eps,
+  double h_rel,
+  double h_min,
+  double dt,
+  int max_steps,
+  int iters_IMR,
+  double domain_L,
+  double camera_dist,
+  double camera_tilt,
+  double camera_target_x,
+  double camera_target_y,
+  double camera_target_z,
+  double camera_focal_ratio,
+  int res_x,
+  int res_y
+)
+{ const metric::Kerr::Params params_Kerr {metric_M, metric_a};
+  const metric::Kerr::BoyerLindquist metric;
+  const AccretionDisk disk
+  { .normal = {0, sin(disk_inclination),
+                  cos(disk_inclination)},
+    .r = {disk_r_inner,
+          disk_r_outer}
+  };
+  const finite_difference::policies::Simple policy_fd {h_rel, h_min};
+  const solve::IMR stepper {dt, iters_IMR};
+  const Camera camera = make_camera
+  ( camera_dist, camera_tilt, camera_focal_ratio,
+    { camera_target_x,
+      camera_target_y,
+      camera_target_z
+    }
+  );
+  const int2 res {res_x, res_y};
+  return render(params_Kerr, metric, disk, eps, policy_fd, stepper, max_steps,
+    domain_L, camera, res);
+}
+
 PYBIND11_MODULE(Kerr_accretion, m)
 {
-  m.def(
-    "render",
-    &render,
-    py::arg("n_x"),
-    py::arg("n_y"),
-    py::arg("camera_dist"),
-    py::arg("camera_tilt"),
-    py::arg("camera_target_x"),
-    py::arg("camera_target_y"),
-    py::arg("camera_target_z"),
-    py::arg("camera_focal_ratio"),
-    py::arg("disk_inclination"),
-    py::arg("disk_r_inner"),
-    py::arg("disk_r_outer"),
-    py::arg("M"),
-    py::arg("a"),
-    py::arg("eps"),
-    py::arg("dt"),
-    py::arg("max_steps"),
-    py::arg("domain_L"),
-    py::arg("h_rel"),
-    py::arg("h_min")
-  );
+
+m.def(
+  "render_RK4",
+  &render_RK4,
+  py::arg("metric_M"),
+  py::arg("metric_a"),
+  py::arg("disk_inclination"),
+  py::arg("disk_r_inner"),
+  py::arg("disk_r_outer"),
+  py::arg("eps"),
+  py::arg("h_rel"),
+  py::arg("h_min"),
+  py::arg("dt"),
+  py::arg("max_steps"),
+  py::arg("domain_L"),
+  py::arg("camera_dist"),
+  py::arg("camera_tilt"),
+  py::arg("camera_target_x"),
+  py::arg("camera_target_y"),
+  py::arg("camera_target_z"),
+  py::arg("camera_focal_ratio"),
+  py::arg("res_x"),
+  py::arg("res_y")
+);
+
+m.def(
+  "render_IMR",
+  &render_IMR,
+  py::arg("metric_M"),
+  py::arg("metric_a"),
+  py::arg("disk_inclination"),
+  py::arg("disk_r_inner"),
+  py::arg("disk_r_outer"),
+  py::arg("eps"),
+  py::arg("h_rel"),
+  py::arg("h_min"),
+  py::arg("dt"),
+  py::arg("max_steps"),
+  py::arg("iters_IMR"),
+  py::arg("domain_L"),
+  py::arg("camera_dist"),
+  py::arg("camera_tilt"),
+  py::arg("camera_target_x"),
+  py::arg("camera_target_y"),
+  py::arg("camera_target_z"),
+  py::arg("camera_focal_ratio"),
+  py::arg("res_x"),
+  py::arg("res_y")
+);
+
 }

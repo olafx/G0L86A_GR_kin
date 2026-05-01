@@ -39,19 +39,37 @@ domain_L = 60.
 h_rel = 1e-5
 h_min = 1e-6
 
+method = 'IMR'
+iters_IMR = 4
+assert method in ('RK4', 'IMR')
+
 ################################################################################
 
-colors, stop_criteria, iteration_counts = kerr_accretion.render(
-  *res,
-  camera_dist, camera_tilt, *camera_target,
-  camera_focal_ratio,
-  disk_inclination, *disk_radius,
-  M, a, eps,
-  dt,
-  max_steps,
-  domain_L,
-  h_rel, h_min,
-)
+match method:
+  case 'RK4':
+    colors, stop_criteria, iteration_counts = kerr_accretion.render_RK4(
+      M, a,
+      disk_inclination, *disk_radius,
+      eps,
+      h_rel, h_min,
+      dt,
+      max_steps,
+      domain_L,
+      camera_dist, camera_tilt, *camera_target, camera_focal_ratio,
+      *res,
+    )
+  case 'IMR':
+    colors, stop_criteria, iteration_counts = kerr_accretion.render_IMR(
+      M, a,
+      disk_inclination, *disk_radius,
+      eps,
+      h_rel, h_min,
+      dt,
+      max_steps, iters_IMR,
+      domain_L,
+      camera_dist, camera_tilt, *camera_target, camera_focal_ratio,
+      *res,
+    )
 
 stop_criterion = [
   'none',

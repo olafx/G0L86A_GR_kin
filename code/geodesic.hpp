@@ -3,16 +3,14 @@
 #include <cmath>
 #include <cstddef>
 
-#include "metric.hpp"
 #include "util.hpp"
+#include "common.hpp"
+#include "metric.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace geodesic
 {
-
-using Vec3 = util::Vec<double, 3>;
-using Mat23 = util::Ten<double, 3, 2>::V;
 
 // Describe the RHS of the geodesic equation, i.e. y'=rhs(y). We represent this
 // y as a Mat23 instead of Vec6 for clarity, separating the position and
@@ -23,15 +21,15 @@ template <typename Metric>
   const Metric& metric,
   double eps,
   const Mat23& state,
-  const finite_difference::StepPolicy_Simple& fd_step_policy
+  const finite_difference::Policy<3> auto& policy_fd
 )
 { const Vec3& x = state.X;
   const Vec3& u = state.V;
   const auto f = metric.fields(params_phys, x);
 // TODO: This is numerical for now since analytical has not been implemented.
-// rhs will no longer need a fd_step_policy, and numerical params won't need to
-// be passed anymore.
-  const auto d = metric.derivatives_numerical(params_phys, fd_step_policy, x);
+//   rhs will no longer need a fd_step_policy, and numerical params won't need
+//   to be passed anymore.
+  const auto d = metric.derivatives_numerical(params_phys, policy_fd, x);
 
   double u0 = eps;
   for (size_t i = 0; i < 3; i++)

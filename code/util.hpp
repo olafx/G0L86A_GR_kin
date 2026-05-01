@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bit>
 #include <cmath>
 #include <cstddef>
 #include <array>
@@ -45,6 +46,31 @@ struct Vec;
 namespace detail
 {
 
+template <typename T>
+struct FlatTraits
+{ using Scalar = T;
+  static constexpr size_t size = 1;
+};
+
+template <typename A, typename B>
+concept ReshapeCompatible =
+  std::same_as<
+    std::remove_cv_t<typename FlatTraits<A>::Scalar>,
+    std::remove_cv_t<typename FlatTraits<B>::Scalar>
+  > &&
+  (FlatTraits<A>::size == FlatTraits<B>::size) &&
+  (sizeof(A) == sizeof(B)) &&
+  std::is_trivially_copyable_v<A> &&
+  std::is_trivially_copyable_v<B>;
+
+template <typename A, typename B>
+requires ReshapeCompatible<A, B>
+constexpr A reshape_cast
+( const B& x
+)
+{ return std::bit_cast<A>(x);
+}
+
 template <typename A, size_t... Ns>
 struct WrapTen;
 
@@ -74,6 +100,9 @@ template <typename A>
 requires std::is_trivially_copyable_v<A>
 struct Vec<A, 2>
 {
+  using Scalar = typename detail::FlatTraits<A>::Scalar;
+  static constexpr size_t size = 2*detail::FlatTraits<A>::size;
+
   union
   { struct { A x, y; };
     struct { A u, v; };
@@ -101,6 +130,15 @@ struct Vec<A, 2>
       data[i] = static_cast<A>(other.data[i]);
   }
 
+  template <typename B, size_t M>
+  requires detail::ReshapeCompatible<Vec<A, 2>, Vec<B, M>> &&
+    (!(M == 2 && std::is_convertible_v<B, A>))
+  constexpr Vec
+  ( const Vec<B, M>& other
+  )
+  { *this = detail::reshape_cast<Vec>(other);
+  }
+
   constexpr A& operator[]
   ( auto i
   ) noexcept
@@ -118,6 +156,9 @@ template <typename A>
 requires std::is_trivially_copyable_v<A>
 struct Vec<A, 3>
 {
+  using Scalar = typename detail::FlatTraits<A>::Scalar;
+  static constexpr size_t size = 3*detail::FlatTraits<A>::size;
+
   union
   { struct { A x, y, z; };
     struct { A r, th, phi; };
@@ -144,6 +185,15 @@ struct Vec<A, 3>
       data[i] = static_cast<A>(other.data[i]);
   }
 
+  template <typename B, size_t M>
+  requires detail::ReshapeCompatible<Vec<A, 3>, Vec<B, M>> &&
+    (!(M == 3 && std::is_convertible_v<B, A>))
+  constexpr Vec
+  ( const Vec<B, M>& other
+  )
+  { *this = detail::reshape_cast<Vec>(other);
+  }
+
   constexpr A& operator[]
   ( auto i
   ) noexcept
@@ -161,6 +211,9 @@ template <typename T>
 requires std::is_trivially_copyable_v<T>
 struct Vec<T, 4>
 {
+  using Scalar = typename detail::FlatTraits<T>::Scalar;
+  static constexpr size_t size = 4*detail::FlatTraits<T>::size;
+
   union
   { struct { T x, y, z, w; };
     struct { T a, b, c, d; };
@@ -185,6 +238,15 @@ struct Vec<T, 4>
       data[i] = static_cast<T>(other.data[i]);
   }
 
+  template <typename B, size_t M>
+  requires detail::ReshapeCompatible<Vec<T, 4>, Vec<B, M>> &&
+    (!(M == 4 && std::is_convertible_v<B, T>))
+  constexpr Vec
+  ( const Vec<B, M>& other
+  )
+  { *this = detail::reshape_cast<Vec>(other);
+  }
+
   constexpr T& operator[]
   ( auto i
   ) noexcept
@@ -202,6 +264,9 @@ template <typename A, size_t N>
 requires std::is_trivially_copyable_v<A>
 struct Vec
 {
+  using Scalar = typename detail::FlatTraits<A>::Scalar;
+  static constexpr size_t size = N*detail::FlatTraits<A>::size;
+
   std::array<A, N> data;
 
   constexpr Vec() = default;
@@ -224,6 +289,15 @@ struct Vec
       data[i] = static_cast<A>(other.data[i]);
   }
 
+  template <typename B, size_t M>
+  requires detail::ReshapeCompatible<Vec<A, N>, Vec<B, M>> &&
+    (!(M == N && std::is_convertible_v<B, A>))
+  constexpr Vec
+  ( const Vec<B, M>& other
+  )
+  { *this = detail::reshape_cast<Vec>(other);
+  }
+
   constexpr A& operator[]
   ( auto i
   ) noexcept
@@ -236,6 +310,12 @@ struct Vec
   { return data[i];
   }
 }; // struct Vec<A, N>
+
+template <typename A, size_t N>
+struct detail::FlatTraits<Vec<A, N>>
+{ using Scalar = typename FlatTraits<A>::Scalar;
+  static constexpr size_t size = N*FlatTraits<A>::size;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -578,8 +658,7 @@ struct formatter<util::Vec<A, N>, CharT>
   auto format(const util::Vec<A, N>& vec, FormatContext& ctx) const
   { static_assert
     ( std::is_same_v<CharT, char> ||
-      std::is_same_v<CharT, wchar_t>,
-      "util::Vec formatter only supports char and wchar_t"
+      std::is_same_v<CharT, wchar_t>
     );
 // NOTE: Reconstruct `"{:<spec>}"` or `"{:<spec>}"`
     std::basic_string<CharT> fmt;
