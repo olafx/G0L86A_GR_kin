@@ -258,8 +258,7 @@ py::tuple render
 
 // Prepare the ODE integrator.
 // The RHS function for the ODE integrator works on vectors (Vec6), while the
-// geodesic RHS describes a position and velocity evolution (Mat23), so we must
-// do some casting.
+// geodesic RHS describes a position and velocity evolution (Mat23).
   auto rhs = [&](const Vec6& y)
   { return Vec6 {geodesic::rhs(params_Kerr, metric, eps, y, step_policy)};
   };
