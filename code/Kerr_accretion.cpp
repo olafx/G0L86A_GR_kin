@@ -1,11 +1,3 @@
-#include <bit>
-#include <cmath>
-#include <cstddef>
-#include <mdspan>
-
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-
 #include "util.hpp"
 #include "common.hpp"
 #include "solve.hpp"

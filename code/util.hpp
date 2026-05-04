@@ -1,18 +1,19 @@
 #pragma once
 
-#include <bit>
-#include <cmath>
 #include <cstddef>
-#include <array>
+#include <cmath>
+#include <utility>
+#include <bit>
 #include <concepts>
+#include <type_traits>
 #include <format>
 #include <mdspan>
-#include <string>
-#include <type_traits>
-#include <utility>
+#include <array>
 #include <vector>
+#include <string>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
 ////////////////////////////////////////////////////////////////////////////////

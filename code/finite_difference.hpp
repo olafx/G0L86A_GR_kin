@@ -1,9 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-
 #include "util.hpp"
 #include "common.hpp"
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cmath>
-#include <cstddef>
-
 #include "util.hpp"
 #include "common.hpp"
 #include "finite_difference.hpp"

@@ -38,6 +38,8 @@ PY_MOD_FLAGS ?= -fPIC -shared
 endif
 
 # OpenMP is disabled by default. Enable it with `OMP=1 make ...`.
+# On Apple Clang openmp is activated differently, we don't support that
+# compiler.
 OMP ?= 0
 OMP_FLAGS :=
 ifeq ($(OMP),1)

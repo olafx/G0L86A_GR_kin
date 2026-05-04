@@ -1,10 +1,3 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/numpy.h>
-
-#include <cmath>
-#include <vector>
-
 #include "util.hpp"
 #include "common.hpp"
 #include "solve.hpp"
