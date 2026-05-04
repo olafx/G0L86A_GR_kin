@@ -18,6 +18,7 @@
 !/code/solve.hpp
 !/code/util.hpp
 !/code/util.py
+!/code/common.hpp
 !/code/trajectoryKerrPlot.ipynb
 !/code/Kerr_geodesics_verify.ipynb
 
