@@ -24,7 +24,7 @@ h_rel = 1e-5
 h_min = 1e-6
 method = 'IMR'
 iters_IMR = 4
-assert method in ('RK4', 'IMR')
+assert method in ('RK4', 'IMR', 'IMR_split')
 
 ics = [
   kerr_geodesics.IC( 8.00, 0.50*np.pi, +0.00, +0.00, +0.00, +3.80, 1),
@@ -53,6 +53,15 @@ match method:
     )
   case 'IMR':
     geos, geos_meta = kerr_geodesics.geodesics_IMR(
+      M, a,
+      dt,
+      max_steps, iters_IMR,
+      domain_L,
+      h_rel, h_min,
+      ics,
+    )
+  case 'IMR_split':
+    geos, geos_meta = kerr_geodesics.geodesics_IMR_split(
       M, a,
       dt,
       max_steps, iters_IMR,

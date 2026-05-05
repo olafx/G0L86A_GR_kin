@@ -41,7 +41,7 @@ h_min = 1e-6
 
 method = 'IMR'
 iters_IMR = 4
-assert method in ('RK4', 'IMR')
+assert method in ('RK4', 'IMR', 'IMR_split')
 
 ################################################################################
 
@@ -60,6 +60,18 @@ match method:
     )
   case 'IMR':
     colors, stop_criteria, iteration_counts = kerr_accretion.render_IMR(
+      M, a,
+      disk_inclination, *disk_radius,
+      eps,
+      h_rel, h_min,
+      dt,
+      max_steps, iters_IMR,
+      domain_L,
+      camera_dist, camera_tilt, *camera_target, camera_focal_ratio,
+      *res,
+    )
+  case 'IMR_split':
+    colors, stop_criteria, iteration_counts = kerr_accretion.render_IMR_split(
       M, a,
       disk_inclination, *disk_radius,
       eps,

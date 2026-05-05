@@ -165,7 +165,7 @@ struct AccretionDisk
 
 // Stop criteria triggered by an event along the geodesic.
 [[nodiscard]] StopCriterion stop_event
-( const metric::Kerr::Params& params_Kerr,
+( const metric::Kerr::Params& metric_params,
   const AccretionDisk& disk,
   double domain_L,
   const Vec3_sph& x_prev,
@@ -174,7 +174,7 @@ struct AccretionDisk
 { for (auto e : x.data)
     if (!std::isfinite(e)) [[unlikely]]
       return StopCriterion::invalid_state;
-  if (x.r <= params_Kerr.r_horizon.p) [[unlikely]]
+  if (x.r <= metric_params.r_horizon.p) [[unlikely]]
     return StopCriterion::horizon_entry;
   const Vec3_Car x_Car = util::sph_to_Car(x);
   if (is_outside_domain(domain_L, x_Car)) [[unlikely]]
@@ -225,10 +225,9 @@ struct AccretionDisk
 
 // `Stepper` should be a `Fn_Stepper`, concept is checked later when the
 // `Fn_RHS` is defined.
-template <typename Stepper>
+template <bool split, typename Stepper>
 py::tuple render
-( const metric::Kerr::Params& params_Kerr,
-  const metric::Kerr::BoyerLindquist& metric,
+( const metric::Kerr::BoyerLindquist& metric,
   const AccretionDisk& disk,
   double eps,
   const finite_difference::policies::Simple& step_policy,
@@ -247,15 +246,6 @@ py::tuple render
   std::mdspan img              {buf_img,           res.y, res.x};
   std::mdspan stop_criteria    {buf_stop_criteria, res.y, res.x};
   std::mdspan iteration_counts {buf_iterations,    res.y, res.x};
-
-// Prepare the ODE integrator.
-// The RHS function for the ODE integrator works on vectors (Vec6), while the
-// geodesic RHS describes a position and velocity evolution (Mat23).
-  auto rhs = [&](const Vec6& y)
-  { return Vec6 {geodesic::rhs(params_Kerr, metric, eps, y, step_policy)};
-  };
-// Now that `rhs` exists, can see if `Stepper` is a `FN_Stepper`.
-  static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
 
   {
 // Release the GIL for the computational work.
@@ -280,11 +270,26 @@ py::tuple render
         size_t i_step = 0;
         for (; i_step < max_steps; i_step++)
         { const Vec3_sph& x = state.X;
-          stop_criterion = stop_event(params_Kerr, disk, domain_L, x_prev, x);
+          stop_criterion = stop_event(metric.params, disk, domain_L, x_prev, x);
           if (stop_criterion != StopCriterion::none)
             break;
           x_prev = x;
-          state = stepper(rhs, Vec6 {state});
+          if constexpr (split)
+          { auto rhs_x = [&](const Vec3& x)
+            { return geodesic::rhs_x(metric, eps, x, state.V); };
+            auto rhs_u = [&](const Vec3& u)
+            { return geodesic::rhs_u(metric, eps, state.X, u, step_policy); };
+            static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_x), 3>);
+            static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_u), 3>);
+            state.X = stepper(rhs_x, state.X);
+            state.V = stepper(rhs_u, state.V);
+          }
+          else
+          { auto rhs = [&](const Vec6& y)
+            { return Vec6 {geodesic::rhs(metric, eps, y, step_policy)}; };
+            static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
+            state = stepper(rhs, Vec6 {state});
+          }
         }
         if (i_step == max_steps)
           stop_criterion = StopCriterion::max_steps;
@@ -328,8 +333,9 @@ py::tuple render_RK4
   int res_x,
   int res_y
 )
-{ const metric::Kerr::Params params_Kerr {metric_M, metric_a};
-  const metric::Kerr::BoyerLindquist metric;
+{ const metric::Kerr::BoyerLindquist metric
+  { .params = {metric_M, metric_a}
+  };
   const AccretionDisk disk
   { .normal = {0, sin(disk_inclination),
                   cos(disk_inclination)},
@@ -346,8 +352,8 @@ py::tuple render_RK4
     }
   );
   const int2 res {res_x, res_y};
-  return render(params_Kerr, metric, disk, eps, policy_fd, stepper, max_steps,
-    domain_L, camera, res);
+  return render</*split*/false>(metric, disk, eps, policy_fd, stepper,
+    max_steps, domain_L, camera, res);
 }
 
 py::tuple render_IMR
@@ -372,8 +378,9 @@ py::tuple render_IMR
   int res_x,
   int res_y
 )
-{ const metric::Kerr::Params params_Kerr {metric_M, metric_a};
-  const metric::Kerr::BoyerLindquist metric;
+{ const metric::Kerr::BoyerLindquist metric
+  { .params = {metric_M, metric_a}
+  };
   const AccretionDisk disk
   { .normal = {0, sin(disk_inclination),
                   cos(disk_inclination)},
@@ -390,7 +397,52 @@ py::tuple render_IMR
     }
   );
   const int2 res {res_x, res_y};
-  return render(params_Kerr, metric, disk, eps, policy_fd, stepper, max_steps,
+  return render</*split*/false>(metric, disk, eps, policy_fd, stepper,
+    max_steps, domain_L, camera, res);
+}
+
+py::tuple render_IMR_split
+( double metric_M,
+  double metric_a,
+  double disk_inclination,
+  double disk_r_inner,
+  double disk_r_outer,
+  double eps,
+  double h_rel,
+  double h_min,
+  double dt,
+  int max_steps,
+  int iters_IMR,
+  double domain_L,
+  double camera_dist,
+  double camera_tilt,
+  double camera_target_x,
+  double camera_target_y,
+  double camera_target_z,
+  double camera_focal_ratio,
+  int res_x,
+  int res_y
+)
+{ const metric::Kerr::BoyerLindquist metric
+  { .params = {metric_M, metric_a}
+  };
+  const AccretionDisk disk
+  { .normal = {0, sin(disk_inclination),
+                  cos(disk_inclination)},
+    .r = {disk_r_inner,
+          disk_r_outer}
+  };
+  const finite_difference::policies::Simple policy_fd {h_rel, h_min};
+  const solve::IMR stepper {dt, iters_IMR};
+  const Camera camera = make_camera
+  ( camera_dist, camera_tilt, camera_focal_ratio,
+    { camera_target_x,
+      camera_target_y,
+      camera_target_z
+    }
+  );
+  const int2 res {res_x, res_y};
+  return render</*split*/true>(metric, disk, eps, policy_fd, stepper, max_steps,
     domain_L, camera, res);
 }
 
@@ -424,6 +476,31 @@ m.def(
 m.def(
   "render_IMR",
   &render_IMR,
+  py::arg("metric_M"),
+  py::arg("metric_a"),
+  py::arg("disk_inclination"),
+  py::arg("disk_r_inner"),
+  py::arg("disk_r_outer"),
+  py::arg("eps"),
+  py::arg("h_rel"),
+  py::arg("h_min"),
+  py::arg("dt"),
+  py::arg("max_steps"),
+  py::arg("iters_IMR"),
+  py::arg("domain_L"),
+  py::arg("camera_dist"),
+  py::arg("camera_tilt"),
+  py::arg("camera_target_x"),
+  py::arg("camera_target_y"),
+  py::arg("camera_target_z"),
+  py::arg("camera_focal_ratio"),
+  py::arg("res_x"),
+  py::arg("res_y")
+);
+
+m.def(
+  "render_IMR_split",
+  &render_IMR_split,
   py::arg("metric_M"),
   py::arg("metric_a"),
   py::arg("disk_inclination"),

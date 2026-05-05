@@ -40,6 +40,8 @@ struct Params
 
 struct BoyerLindquist
 {
+  Params params;
+
   struct Fields
   { double alpha;
     Vec3 beta_con;
@@ -53,17 +55,16 @@ struct BoyerLindquist
   };
 
   [[nodiscard]] Fields fields
-  ( const Params& params_phys,
-    Vec3 x
+  ( Vec3 x
   ) const
   { const double r = x.r;
     const double r2 = pow(r, 2);
-    const double a = params_phys.a;
+    const double a = params.a;
     const double a2 = pow(a, 2);
     const double th = x.th;
     const double sin2_th = pow(sin(th), 2);
     const double cos2_th = pow(cos(th), 2);
-    const double M = params_phys.M;
+    const double M = params.M;
     const double Sig = r2+a2*cos2_th;
     const double Del = r2-2*M*r+a2;
     const double den = (r2+a2)*Sig+2*M*a2*r*sin2_th;
@@ -81,15 +82,13 @@ struct BoyerLindquist
 
 // TODO: Implementing analytical derivatives.
   [[nodiscard]] Derivatives derivatives
-  ( const Params& params_phys,
-    Vec3 x
+  ( Vec3 x
   ) const
   { std::unreachable();
   }
 
   [[nodiscard]] Derivatives derivatives_numerical
-  ( const Params& params_phys,
-    const finite_difference::Policy<3> auto& policy_fd,
+  ( const finite_difference::Policy<3> auto& policy_fd,
     Vec3 x
   ) const
   { Derivatives out;
@@ -103,8 +102,8 @@ struct BoyerLindquist
       const Mat23& xs = stencil.xs;
       const Vec2& ws = stencil.ws;
       util::Vec<Fields, 2> f
-      { fields(params_phys, xs[0]),
-        fields(params_phys, xs[1])
+      { fields(xs[0]),
+        fields(xs[1])
       };
 // The weights and function evaluations we apply ourselves, computing:
 // - partial_i alpha
