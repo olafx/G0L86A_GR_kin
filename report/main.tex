@@ -700,7 +700,16 @@ For the metric of the Newtonian gauge, we get $A = \sqrt{1+2\Phi}(1-2\Phi)$. In 
     &B^z = B_0 e^{i\omega(x-t)}
 \end{aligned}
 \end{equation}
-which are the familiar solutions we expect to find in flat spacetime. As the waves enter a gravitational well and $\Phi$ becomes negative, then $A$ becomes larger than $1$. As a result, two things happen: the amplitude of the wave gets damped, and the wavelength decreases. The decreasing of the wavelength shows that the light is gravitationally blueshifted. The group speed of the light also decreases within a gravitational well, which is a consequence of the situation being seen from the point of view of an observer at $x \to \infty$ (where $g_{\mu\nu} \to \eta_{\mu\nu}$). Equation \eqref{eq:EM_waves_theory} can be used to verify the result of numerical codes that solve the Maxwell equations in a curved spacetime.
+which are the familiar solutions we expect to find in flat spacetime. As the waves enter a gravitational well and $\Phi$ becomes negative, $A$ becomes larger than $1$. As a result, two things happen: the amplitude of the wave changes and the wavelength decreases. The decreasing of the wavelength shows that the light is gravitationally blueshifted. Equation \eqref{eq:EM_waves_theory} can be used to verify the result of numerical codes that solve the Maxwell equations in a curved spacetime.\\
+\\
+As an example, we consider $\Phi = -a \exp{(-x^2/2)}$. $\Phi$ cannot become smaller than $-0.5$, otherwise the metric components change sign. The resulting solution is shown in figure \ref{fig:gravitational_redshift}.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=\hsize]{Figures/gravitational_redshift.png}
+    \caption{The gravitational potential $\Phi = -a \exp{(-x^2/2)}$ with $a = 0.45$ and the corresponding electric field strength at some fixed moment in time. The frequency of the electric wave is $\omega = 10$.}
+    \label{fig:gravitational_redshift}
+\end{figure}
 
 
 % olaf: Some brainstorming:
