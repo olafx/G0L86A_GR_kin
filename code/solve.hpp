@@ -47,10 +47,13 @@ struct RK4
 // Solved by fixed-point iteration: y_next^(k+1) = y + dt*f((y + y_next^(k))/2).
 // The metric is stationary so f has no explicit time dependence and the
 // midpoint time argument (t^n + t^{n+1})/2 drops out.
+// Iteration stops early when the update norm falls below `tol`, or after
+// at most 150 iterations regardless of `n_iter`.
 struct IMR
 {
   double dt;
   int n_iter;
+  double tol = 1e-12;
 
   template <size_t N>
   Vec<N> operator()
@@ -58,8 +61,13 @@ struct IMR
     const Vec<N>& y
   ) const
   { Vec<N> y_next = y;
-    for (int k = 0; k < n_iter; k++)
-      y_next = y+dt*rhs((y+y_next)*.5);
+    const int n_max = n_iter < 150 ? n_iter : 150;
+    for (int k = 0; k < n_max; k++)
+    { const Vec<N> y_new = y+dt*rhs((y+y_next)*.5);
+      if (norm2(y_new-y_next) < tol*tol)
+        return y_new;
+      y_next = y_new;
+    }
     return y_next;
   }
 };

@@ -3,6 +3,7 @@
 #include "solve.hpp"
 #include "geodesic.hpp"
 #include "metric.hpp"
+#include "electromagnetic.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,6 +20,7 @@ namespace py = pybind11;
 struct IC
 { Mat23 state;
   double eps;
+  double q_over_m = 0.0;
 };
 
 // Numerical geodesic metadata.
@@ -81,11 +83,12 @@ enum class StopCriterion : int
 
 // `Stepper` should be a `Fn_Stepper`, concept is checked later when the
 // `Fn_RHS` is defined.
-template <bool split, typename Stepper>
+template <bool split, typename Stepper, em::EMField EM>
 py::tuple geodesics
 ( const metric::Kerr::BoyerLindquist& metric,
   const finite_difference::policies::Simple& policy_fd,
   const Stepper& stepper,
+  const EM& em_field,
   int max_steps,
   double domain_L,
   const std::vector<IC>& ics
@@ -124,7 +127,8 @@ py::tuple geodesics
         { auto rhs_x = [&](const Vec3& x)
           { return geodesic::rhs_x(metric, ic.eps, x, state.V); };
           auto rhs_u = [&](const Vec3& u)
-          { return geodesic::rhs_u(metric, ic.eps, state.X, u, policy_fd); };
+          { return geodesic::rhs_u(metric, ic.eps, ic.q_over_m,
+                                   em_field, state.X, u, policy_fd); };
           static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_x), 3>);
           static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_u), 3>);
           state.X = stepper(rhs_x, state.X);
@@ -132,7 +136,8 @@ py::tuple geodesics
         }
         else
         { auto rhs = [&](const Vec6& y)
-          { return Vec6 {geodesic::rhs(metric, ic.eps, y, policy_fd)}; };
+          { return Vec6 {geodesic::rhs(metric, ic.eps, ic.q_over_m,
+                                       em_field, Mat23{y}, policy_fd)}; };
           static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
           state = stepper(rhs, Vec6 {state});
         }
@@ -165,12 +170,15 @@ py::tuple geodesics_RK4
   int max_steps,
   double domain_L,
   double h_rel, double h_min,
+  const std::string& em_field_name,
+  double B_z, double B_x, double Q_charge,
   const std::vector<IC>& ics
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
   const solve::RK4 stepper {dt};
-  return geodesics</*split*/false>(metric, policy_fd, stepper,
+  const auto em_field = em::make_field(em_field_name, metric.params, B_z, B_x, Q_charge);
+  return geodesics</*split*/false>(metric, policy_fd, stepper, em_field,
     max_steps, domain_L, ics);
 }
 
@@ -180,12 +188,15 @@ py::tuple geodesics_IMR
   int max_steps, int iters_IMR,
   double domain_L,
   double h_rel, double h_min,
+  const std::string& em_field_name,
+  double B_z, double B_x, double Q_charge,
   const std::vector<IC>& ics
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
   const solve::IMR stepper {dt, iters_IMR};
-  return geodesics</*split*/false>(metric, policy_fd, stepper,
+  const auto em_field = em::make_field(em_field_name, metric.params, B_z, B_x, Q_charge);
+  return geodesics</*split*/false>(metric, policy_fd, stepper, em_field,
     max_steps, domain_L, ics);
 }
 
@@ -195,12 +206,15 @@ py::tuple geodesics_IMR_split
   int max_steps, int iters_IMR,
   double domain_L,
   double h_rel, double h_min,
+  const std::string& em_field_name,
+  double B_z, double B_x, double Q_charge,
   const std::vector<IC>& ics
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
   const solve::IMR stepper {dt, iters_IMR};
-  return geodesics</*split*/true>(metric, policy_fd, stepper,
+  const auto em_field = em::make_field(em_field_name, metric.params, B_z, B_x, Q_charge);
+  return geodesics</*split*/true>(metric, policy_fd, stepper, em_field,
     max_steps, domain_L, ics);
 }
 
@@ -223,7 +237,8 @@ py::class_<IC>(m, "IC")
         double u_r,
         double u_th,
         double u_phi,
-        double eps
+        double eps,
+        double q_over_m
       )
       { return IC
         { .state =
@@ -231,6 +246,7 @@ py::class_<IC>(m, "IC")
             {u_r, u_th, u_phi}
           },
           .eps = eps,
+          .q_over_m = q_over_m,
         };
       }
     ),
@@ -240,7 +256,8 @@ py::class_<IC>(m, "IC")
     py::arg("u_r"),
     py::arg("u_th"),
     py::arg("u_phi"),
-    py::arg("eps")
+    py::arg("eps"),
+    py::arg("q_over_m") = 0.0
   );
 
 py::class_<GeodesicMeta>(m, "GeodesicMeta")
@@ -256,6 +273,10 @@ m.def
   py::arg("domain_L"),
   py::arg("h_rel"),
   py::arg("h_min"),
+  py::arg("em_field") = "vacuum",
+  py::arg("B_z") = 0.0,
+  py::arg("B_x") = 0.0,
+  py::arg("Q_charge") = 0.0,
   py::arg("ics")
 );
 
@@ -269,6 +290,10 @@ m.def
   py::arg("domain_L"),
   py::arg("h_rel"),
   py::arg("h_min"),
+  py::arg("em_field") = "vacuum",
+  py::arg("B_z") = 0.0,
+  py::arg("B_x") = 0.0,
+  py::arg("Q_charge") = 0.0,
   py::arg("ics")
 );
 
@@ -282,6 +307,10 @@ m.def
   py::arg("domain_L"),
   py::arg("h_rel"),
   py::arg("h_min"),
+  py::arg("em_field") = "vacuum",
+  py::arg("B_z") = 0.0,
+  py::arg("B_x") = 0.0,
+  py::arg("Q_charge") = 0.0,
   py::arg("ics")
 );
 

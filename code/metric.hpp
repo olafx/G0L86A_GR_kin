@@ -46,6 +46,8 @@ struct BoyerLindquist
   { double alpha;
     Vec3 beta_con;
     Mat3 gamma_con;
+    Mat3 gamma_cov;
+    double sqrt_gamma;
   };
 
   struct Derivatives
@@ -77,6 +79,12 @@ struct BoyerLindquist
     out.beta_con.phi = -2*M*a*r/den;
 // NOTE: If ever here this alpha^2 is negative, this will blow up.
     out.alpha = sqrt(Del*Sig/den);
+// Covariant spatial metric gamma_ij = diag(Sigma/Delta, Sigma, g_phiphi_cov).
+    out.gamma_cov[0][0] = Sig/Del;
+    out.gamma_cov[1][1] = Sig;
+    out.gamma_cov[2][2] = sin2_th*((r2+a2)+2*M*a2*r*sin2_th/Sig);
+// sqrt(det(gamma_ij)) = Sigma * sin(theta) for Boyer-Lindquist.
+    out.sqrt_gamma = Sig*sqrt(sin2_th);
     return out;
   }
 

@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "common.hpp"
 #include "finite_difference.hpp"
+#include "electromagnetic.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -65,6 +66,36 @@ template <typename Fields, typename Derivatives>
   return du_dt;
 }
 
+template <typename Fields>
+[[nodiscard]] Vec3 lorentz_force
+( const Fields& f,
+  const em::Fields& em,
+  const Vec3& u,
+  double u_0_
+)
+{ const double sq = f.sqrt_gamma;
+  double v[3] = {0.0, 0.0, 0.0};
+  for (size_t j = 0; j < 3; j++)
+    for (size_t l = 0; l < 3; l++)
+      v[j] += f.gamma_con[j][l] * u[l];
+  for (size_t j = 0; j < 3; j++) v[j] /= u_0_;
+
+  const double cross_vel_B[3] = {
+    sq*(v[1]*em.B[2] - v[2]*em.B[1]),
+    sq*(v[2]*em.B[0] - v[0]*em.B[2]),
+    sq*(v[0]*em.B[1] - v[1]*em.B[0])
+  };
+
+  Vec3 force;
+  for (size_t i = 0; i < 3; i++)
+  { double elec = 0;
+    for (size_t j = 0; j < 3; j++)
+      elec += f.alpha * f.gamma_cov[i][j] * em.D[j];
+    force[i] = elec + cross_vel_B[i]/u_0_;
+  }
+  return force;
+}
+
 } // namespace detail
 
 // Describe the RHS of the geodesic equation, i.e. y'=rhs(y). We represent this
@@ -112,6 +143,64 @@ template <typename Metric>
 { const auto f = metric.fields(x);
   const auto d = metric.derivatives_numerical(policy_fd, x);
   return detail::rhs_u(f, d, eps, u);
+}
+
+// EM-aware rhs_u: geodesic acceleration plus Lorentz force.
+template <typename Metric, em::EMField EM>
+[[nodiscard]] Vec3 rhs_u
+( const Metric& metric,
+  double eps,
+  double q_over_m,
+  const EM& em_field,
+  const Vec3& x,
+  const Vec3& u,
+  const finite_difference::Policy<3> auto& policy_fd
+)
+{ const auto f = metric.fields(x);
+  const auto d = metric.derivatives_numerical(policy_fd, x);
+  Vec3 du_dt = detail::rhs_u(f, d, eps, u);
+
+  if (q_over_m != 0.0)
+  { const em::Fields em = em_field(x);
+    const double u_0_ = detail::u_0(f, eps, u);
+    const Vec3 force = detail::lorentz_force(f, em, u, u_0_);
+    for (size_t i = 0; i < 3; i++)
+      du_dt[i] += q_over_m * force[i];
+  }
+
+  return du_dt;
+}
+
+// EM-aware overload: adds Lorentz force for charged particles (q_over_m != 0).
+// For q_over_m = 0 or em_field = em::Vacuum{}, reduces to pure geodesic motion.
+template <typename Metric, em::EMField EM>
+[[nodiscard]] Mat23 rhs
+( const Metric& metric,
+  double eps,
+  double q_over_m,
+  const EM& em_field,
+  const Mat23& state,
+  const finite_difference::Policy<3> auto& policy_fd
+)
+{ const Vec3& x = state.X;
+  const Vec3& u = state.V;
+  const auto f = metric.fields(x);
+  const auto d = metric.derivatives_numerical(policy_fd, x);
+
+  Mat23 result
+  { detail::rhs_x(f, eps, u),
+    detail::rhs_u(f, d, eps, u)
+  };
+
+  if (q_over_m != 0.0)
+  { const em::Fields em = em_field(x);
+    const double u_0_ = detail::u_0(f, eps, u);
+    const Vec3 force = detail::lorentz_force(f, em, u, u_0_);
+    for (size_t i = 0; i < 3; i++)
+      result.V[i] += q_over_m * force[i];
+  }
+
+  return result;
 }
 
 } // namespace geodesic
