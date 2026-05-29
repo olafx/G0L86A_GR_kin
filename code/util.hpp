@@ -18,6 +18,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace util
+{
+
 ////////////////////////////////////////////////////////////////////////////////
 // 
 // Compile-time size arrays similar to those in GLM, with anonymous union
@@ -37,40 +40,12 @@
 // 
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace util
-{
-
 template <typename A, size_t N>
 requires std::is_trivially_copyable_v<A>
 struct Vec;
 
 namespace detail
 {
-
-template <typename T>
-struct FlatTraits
-{ using Scalar = T;
-  static constexpr size_t size = 1;
-};
-
-template <typename A, typename B>
-concept ReshapeCompatible =
-  std::same_as<
-    std::remove_cv_t<typename FlatTraits<A>::Scalar>,
-    std::remove_cv_t<typename FlatTraits<B>::Scalar>
-  > &&
-  (FlatTraits<A>::size == FlatTraits<B>::size) &&
-  (sizeof(A) == sizeof(B)) &&
-  std::is_trivially_copyable_v<A> &&
-  std::is_trivially_copyable_v<B>;
-
-template <typename A, typename B>
-requires ReshapeCompatible<A, B>
-constexpr A reshape_cast
-( const B& x
-)
-{ return std::bit_cast<A>(x);
-}
 
 template <typename A, size_t... Ns>
 struct WrapTen;
@@ -97,12 +72,91 @@ struct Ten
 
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace detail
+{
+
+template <typename T, size_t N>
+consteval std::array<T, N+1> prepend
+( T head,
+  const std::array<T, N>& tail
+)
+{ std::array<T, N+1> out {};
+  out[0] = head;
+  for (size_t i = 0; i < N; i++)
+    out[i+1] = tail[i];
+  return out;
+}
+
+} // namespace detail
+
+template <typename T>
+struct VecTraits
+{ using Scalar = T;
+  static constexpr size_t rank = 0;
+  static constexpr size_t size = 1;
+  static constexpr std::array<size_t, rank> shape {};
+  static constexpr std::array<size_t, rank> strides {};
+};
+
+template <typename A, size_t N>
+requires std::is_trivially_copyable_v<A>
+struct VecTraits<Vec<A, N>>
+{ using Element = A;
+  using ElementTraits = VecTraits<Element>;
+  using Scalar = typename ElementTraits::Scalar;
+
+  static constexpr size_t rank = 1+ElementTraits::rank;
+  static constexpr size_t extent = N;
+  static constexpr size_t size = N*ElementTraits::size;
+  static constexpr std::array<size_t, rank> shape =
+    detail::prepend<size_t>(N, ElementTraits::shape);
+  static constexpr std::array<size_t, rank> strides =
+    detail::prepend<size_t>(sizeof(Element), ElementTraits::strides);
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+// For reshaping, e.g. (2,3,2)->(12)->(4,3).
+
+namespace detail
+{
+
+template <typename A, typename B>
+concept ReshapeCompatible =
+  std::same_as<
+    std::remove_cv_t<typename VecTraits<A>::Scalar>,
+    std::remove_cv_t<typename VecTraits<B>::Scalar>
+  > &&
+  (VecTraits<A>::size == VecTraits<B>::size) &&
+  (sizeof(A) == sizeof(B)) &&
+  std::is_trivially_copyable_v<A> &&
+  std::is_trivially_copyable_v<B>;
+
+template <typename A, typename B>
+requires ReshapeCompatible<A, B>
+constexpr A reshape_cast
+( const B& x
+)
+{ return std::bit_cast<A>(x);
+}
+
+} // namespace detail
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Anonymous union members for sizes 2, 3, and 4.
+
 template <typename A>
 requires std::is_trivially_copyable_v<A>
 struct Vec<A, 2>
 {
-  using Scalar = typename detail::FlatTraits<A>::Scalar;
-  static constexpr size_t size = 2*detail::FlatTraits<A>::size;
+  using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
+  static constexpr size_t rank = Traits::rank;
+  static constexpr size_t extent = Traits::extent;
+  static constexpr size_t size = Traits::size;
+  static constexpr std::array<size_t, rank> shape = Traits::shape;
+  static constexpr std::array<size_t, rank> strides = Traits::strides;
 
   union
   { struct { A x, y; };
@@ -157,8 +211,13 @@ template <typename A>
 requires std::is_trivially_copyable_v<A>
 struct Vec<A, 3>
 {
-  using Scalar = typename detail::FlatTraits<A>::Scalar;
-  static constexpr size_t size = 3*detail::FlatTraits<A>::size;
+  using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
+  static constexpr size_t rank = Traits::rank;
+  static constexpr size_t extent = Traits::extent;
+  static constexpr size_t size = Traits::size;
+  static constexpr std::array<size_t, rank> shape = Traits::shape;
+  static constexpr std::array<size_t, rank> strides = Traits::strides;
 
   union
   { struct { A x, y, z; };
@@ -212,8 +271,13 @@ template <typename T>
 requires std::is_trivially_copyable_v<T>
 struct Vec<T, 4>
 {
-  using Scalar = typename detail::FlatTraits<T>::Scalar;
-  static constexpr size_t size = 4*detail::FlatTraits<T>::size;
+  using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
+  static constexpr size_t rank = Traits::rank;
+  static constexpr size_t extent = Traits::extent;
+  static constexpr size_t size = Traits::size;
+  static constexpr std::array<size_t, rank> shape = Traits::shape;
+  static constexpr std::array<size_t, rank> strides = Traits::strides;
 
   union
   { struct { T x, y, z, w; };
@@ -265,8 +329,13 @@ template <typename A, size_t N>
 requires std::is_trivially_copyable_v<A>
 struct Vec
 {
-  using Scalar = typename detail::FlatTraits<A>::Scalar;
-  static constexpr size_t size = N*detail::FlatTraits<A>::size;
+  using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
+  static constexpr size_t rank = Traits::rank;
+  static constexpr size_t extent = Traits::extent;
+  static constexpr size_t size = Traits::size;
+  static constexpr std::array<size_t, rank> shape = Traits::shape;
+  static constexpr std::array<size_t, rank> strides = Traits::strides;
 
   std::array<A, N> data;
 
@@ -312,13 +381,9 @@ struct Vec
   }
 }; // struct Vec<A, N>
 
-template <typename A, size_t N>
-struct detail::FlatTraits<Vec<A, N>>
-{ using Scalar = typename FlatTraits<A>::Scalar;
-  static constexpr size_t size = N*FlatTraits<A>::size;
-};
-
 ////////////////////////////////////////////////////////////////////////////////
+
+// Operations.
 
 // vector + vector
 template <typename A, size_t N, typename B>
@@ -498,6 +563,8 @@ constexpr auto operator/
   return out;
 }
 
+// NOTE: We trust the compiler to optimize these to be in-place.
+
 // vector += rhs
 template <typename A, size_t N, typename B>
 requires requires (Vec<A, N>& l, B const& r) { l = l+r; }
@@ -559,8 +626,8 @@ constexpr bool operator==
 
 // vector != vector
 template <typename A, size_t N, typename B>
-requires requires (Vec<A, N> const& l, Vec<B, N> const& r)
-{ { l == r } -> std::convertible_to<bool>;
+requires requires (A const& a, B const& b)
+{ { a == b } -> std::convertible_to<bool>;
 }
 constexpr bool operator!=
 ( Vec<A, N> const& lhs,
@@ -628,6 +695,46 @@ constexpr void normalize
 ( Vec<A, N>& vec
 )
 { vec /= norm(vec);
+}
+
+// sum
+template <typename A, size_t N>
+requires
+  (Vec<A, N>::rank == 1) &&
+  requires (A const& a, A const& b) { a+b; }
+constexpr auto sum
+( Vec<A, N> const& vec
+)
+{ using R = std::remove_cvref_t<decltype(
+    std::declval<A const&>()+std::declval<A const&>())>;
+  if constexpr (N == 0)
+    return R {};
+  else
+  { R out = static_cast<R>(vec[0]);
+    for (size_t i = 1; i < N; i++)
+      out += static_cast<R>(vec[i]);
+    return out;
+  }
+}
+
+// product
+template <typename A, size_t N>
+requires
+  (Vec<A, N>::rank == 1) &&
+  requires (A const& a, A const& b) { a*b; }
+constexpr auto product
+( Vec<A, N> const& vec
+)
+{ using R = std::remove_cvref_t<decltype(
+    std::declval<A const&>()*std::declval<A const&>())>;
+  if constexpr (N == 0)
+    return R {1};
+  else
+  { R out = static_cast<R>(vec[0]);
+    for (size_t i = 1; i < N; i++)
+      out *= static_cast<R>(vec[i]);
+    return out;
+  }
 }
 
 } // namespace util
@@ -762,83 +869,62 @@ namespace util
 
 namespace py = pybind11;
 
-// A recursive scheme to construct pybind11 shapes and strides from
-// `Ten<T, ...>:V`.
 namespace detail
 {
 
-// TODO: There should be a way to just get the n-th template parameter now. This
-// kind of style of template metaprogramming can be improved now I believe.
-
-template <typename T>
-struct PyArrayTraits
-{ using ScalarT = T;
-  static constexpr size_t rank = 0;
-
-  template <size_t rank_>
-  static constexpr void fill
-  ( std::array<py::ssize_t, rank_>&,
-    std::array<py::ssize_t, rank_>&,
-    size_t
-  )
-  {}
-};
-
-template <typename A, size_t N>
-struct PyArrayTraits<Vec<A, N>>
-{ using Traits = PyArrayTraits<A>;
-  using ScalarT = typename Traits::ScalarT;
-  static constexpr size_t rank = 1+Traits::rank;
-
-  template <size_t rank_>
-  static constexpr void fill
-  ( std::array<py::ssize_t, rank_>& shape,
-    std::array<py::ssize_t, rank_>& strides,
-    size_t off
-  )
-  { shape  [off] = static_cast<py::ssize_t>(N);
-    strides[off] = static_cast<py::ssize_t>(sizeof(A));
-    Traits::fill(shape, strides, off+1);
+// Copy from `VecTraits` to pybind11's type.
+template <typename T, size_t rank_>
+constexpr void vec_traits_py
+( std::array<py::ssize_t, rank_>& shape,
+  std::array<py::ssize_t, rank_>& strides,
+  size_t off
+)
+{ using Traits = VecTraits<T>;
+  for (size_t i = 0; i < Traits::rank; i++)
+  { shape  [off+i] = static_cast<py::ssize_t>(Traits::shape  [i]);
+    strides[off+i] = static_cast<py::ssize_t>(Traits::strides[i]);
   }
-};
+}
 
 } // namespace detail
 
 // For `std::vector<Vec<...>>`, `Vec` treated recursively.
 // 
 // NOTE: Ownership of `x` is lost.
+// NOTE: Assumes no padding for `Vec`.
 template <typename Vec>
-py::array_t<typename detail::PyArrayTraits<Vec>::ScalarT>
+py::array_t<typename VecTraits<Vec>::Scalar>
 to_py_array
 ( std::vector<Vec>&& x
 )
-{ using Traits = detail::PyArrayTraits<Vec>;
-  using ScalarT = typename Traits::ScalarT;
+{ using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
   constexpr size_t rank = 1+Traits::rank;
   std::array<py::ssize_t, rank> shape {}, strides {};
   shape  [0] = static_cast<py::ssize_t>(x.size());
   strides[0] = static_cast<py::ssize_t>(sizeof(Vec));
-  Traits::fill(shape, strides, 1);
+  detail::vec_traits_py<Vec>(shape, strides, 1);
   auto* x_ = new std::vector<Vec>(std::move(x));
   auto owner = py::capsule {x_,
     [](void* p) { delete static_cast<decltype(x_)>(p); }
   };
-  return {shape, strides, reinterpret_cast<ScalarT*>(x_->data()), owner};
+  return {shape, strides, reinterpret_cast<Scalar*>(x_->data()), owner};
 }
 
 // For `std::mdspan<Vec<...>>`, `Vec` treated recursively.
 // 
 // NOTE: Ownership of `x.data_handle()` is lost.
 // NOTE: `x.data_handle()` must have been allocated via `new[]`.
-// NOTE: Does not support every layout and access policy.
+// NOTE: Does not support every `std::mdspan` layout and access policy.
+// NOTE: Assumes no padding for `Vec`.
 template <typename Vec, typename Extents>
 requires (!std::is_const_v<Vec>)
-py::array_t<typename detail::PyArrayTraits<Vec>::ScalarT>
+py::array_t<typename VecTraits<Vec>::Scalar>
 to_py_array
 ( std::mdspan<Vec, Extents, std::layout_right> x
 )
-{ using Traits = detail::PyArrayTraits<Vec>;
-  using ScalarT = typename Traits::ScalarT;
+{ using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
   constexpr size_t rank = Extents::rank()+Traits::rank;
   std::array<py::ssize_t, rank> shape {}, strides {};
   auto stride = static_cast<py::ssize_t>(sizeof(Vec));
@@ -847,12 +933,12 @@ to_py_array
     strides[i] = stride;
     stride *= shape[i];
   }
-  Traits::fill(shape, strides, Extents::rank());
+  detail::vec_traits_py<Vec>(shape, strides, Extents::rank());
   auto* data = x.data_handle();
   auto owner = py::capsule {data,
     [](void* p) { delete[] static_cast<Vec*>(p); }
   };
-  return {shape, strides, reinterpret_cast<ScalarT*>(data), owner};
+  return {shape, strides, reinterpret_cast<Scalar*>(data), owner};
 }
 
 } // namespace util

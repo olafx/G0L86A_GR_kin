@@ -39,7 +39,7 @@ domain_L = 60.
 h_rel = 1e-5
 h_min = 1e-6
 
-method = 'IMR'
+method = 'IMR_split'
 iters_IMR = 4
 assert method in ('RK4', 'IMR', 'IMR_split')
 

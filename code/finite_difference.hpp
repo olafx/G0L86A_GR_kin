@@ -18,8 +18,7 @@ concept Policy =
     double>;
 
 // A Stencil describes how a derivative is approximated. This can represent
-// arbitrary derivatives in arbitrary dimensions in principle, as specific
-// usages.
+// arbitrary derivatives in arbitrary dimensions in principle.
 template <size_t N, size_t K>
 struct Stencil
 { Mat<N, K> xs;
@@ -109,4 +108,5 @@ template <size_t N>
 }
 
 } // namespace stencils
+
 } // namespace finite_difference

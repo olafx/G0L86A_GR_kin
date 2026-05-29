@@ -218,20 +218,16 @@ struct AccretionDisk
       return {0x00, 0xff, 0x40};  // green
   }
   else
-    return {0, 0, 0}; // black
+    return {0x00, 0x00, 0x00}; // black
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// `Stepper` should be a `Fn_Stepper`, concept is checked later when the
-// `Fn_RHS` is defined.
-template <bool split, typename Stepper>
+template <typename Scheme>
 py::tuple render
-( const metric::Kerr::BoyerLindquist& metric,
+( const geodesic::Problem& problem,
   const AccretionDisk& disk,
-  double eps,
-  const finite_difference::policies::Simple& step_policy,
-  const Stepper& stepper,
+  const Scheme& scheme,
   int max_steps,
   double domain_L,
   const Camera& camera,
@@ -240,9 +236,9 @@ py::tuple render
 {
 // We return the main colored image, an image of stop criteria, and an image of
 // the number of iterations.
-  auto* buf_img           = new RGB[res.x*res.y];
-  auto* buf_stop_criteria = new int[res.x*res.y];
-  auto* buf_iterations    = new int[res.x*res.y];
+  auto* buf_img           = new RGB[product(res)];
+  auto* buf_stop_criteria = new int[product(res)];
+  auto* buf_iterations    = new int[product(res)];
   std::mdspan img              {buf_img,           res.y, res.x};
   std::mdspan stop_criteria    {buf_stop_criteria, res.y, res.x};
   std::mdspan iteration_counts {buf_iterations,    res.y, res.x};
@@ -255,50 +251,37 @@ py::tuple render
 
     #pragma omp parallel for schedule(dynamic)
     for (int i_y = 0; i_y < res.y; i_y++)
-      for (int i_x = 0; i_x < res.x; i_x++)
-      {
-// More preparation for the ODE integrator.
-        Mat23 state =
-        { camera_x,
-          direction_to_u_cov(
-            camera_x, pixel_direction(camera, {i_x, i_y}, res))
-        };
-        Vec3_sph x_prev = state.X;
-        StopCriterion stop_criterion = StopCriterion::max_steps;
+    for (int i_x = 0; i_x < res.x; i_x++)
+    {
+// Preparation for the ODE integrator.
+      Mat23 state =
+      { camera_x,
+        direction_to_u_cov(
+          camera_x, pixel_direction(camera, {i_x, i_y}, res))
+      };
+      scheme.initialize(problem, state);
+      Vec3_sph x_prev = state.X;
+      StopCriterion stop_criterion = StopCriterion::max_steps;
 
 // The ODE integrator main loop. Check for the stop event.
-        size_t i_step = 0;
-        for (; i_step < max_steps; i_step++)
-        { const Vec3_sph& x = state.X;
-          stop_criterion = stop_event(metric.params, disk, domain_L, x_prev, x);
-          if (stop_criterion != StopCriterion::none)
-            break;
-          x_prev = x;
-          if constexpr (split)
-          { auto rhs_x = [&](const Vec3& x)
-            { return geodesic::rhs_x(metric, eps, x, state.V); };
-            auto rhs_u = [&](const Vec3& u)
-            { return geodesic::rhs_u(metric, eps, state.X, u, step_policy); };
-            static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_x), 3>);
-            static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_u), 3>);
-            state.X = stepper(rhs_x, state.X);
-            state.V = stepper(rhs_u, state.V);
-          }
-          else
-          { auto rhs = [&](const Vec6& y)
-            { return Vec6 {geodesic::rhs(metric, eps, y, step_policy)}; };
-            static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
-            state = stepper(rhs, Vec6 {state});
-          }
-        }
-        if (i_step == max_steps)
-          stop_criterion = StopCriterion::max_steps;
-
-        img[i_y, i_x] = stop_criterion_color(
-          camera, util::sph_to_Car(state.X), stop_criterion);
-        stop_criteria[i_y, i_x] = std::to_underlying(stop_criterion);
-        iteration_counts[i_y, i_x] = i_step;
+      size_t i_step = 0;
+      for (; i_step < max_steps; i_step++)
+      { const Vec3_sph& x = state.X;
+        stop_criterion = stop_event(
+          problem.metric.params, disk, domain_L, x_prev, x);
+        if (stop_criterion != StopCriterion::none)
+          break;
+        x_prev = x;
+        scheme.step(problem, state);
       }
+      if (i_step == max_steps)
+        stop_criterion = StopCriterion::max_steps;
+
+      img[i_y, i_x] = stop_criterion_color(
+        camera, util::sph_to_Car(state.X), stop_criterion);
+      stop_criteria[i_y, i_x] = std::to_underlying(stop_criterion);
+      iteration_counts[i_y, i_x] = i_step;
+    }
   }
 
   return py::make_tuple(
@@ -352,8 +335,9 @@ py::tuple render_RK4
     }
   );
   const int2 res {res_x, res_y};
-  return render</*split*/false>(metric, disk, eps, policy_fd, stepper,
-    max_steps, domain_L, camera, res);
+  const geodesic::schemes::Full scheme {stepper};
+  const geodesic::Problem problem {metric, policy_fd, eps};
+  return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
 py::tuple render_IMR
@@ -397,8 +381,9 @@ py::tuple render_IMR
     }
   );
   const int2 res {res_x, res_y};
-  return render</*split*/false>(metric, disk, eps, policy_fd, stepper,
-    max_steps, domain_L, camera, res);
+  const geodesic::schemes::Full scheme {stepper};
+  const geodesic::Problem problem {metric, policy_fd, eps};
+  return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
 py::tuple render_IMR_split
@@ -442,8 +427,9 @@ py::tuple render_IMR_split
     }
   );
   const int2 res {res_x, res_y};
-  return render</*split*/true>(metric, disk, eps, policy_fd, stepper, max_steps,
-    domain_L, camera, res);
+  const geodesic::schemes::Split scheme {stepper};
+  const geodesic::Problem problem {metric, policy_fd, eps};
+  return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
 PYBIND11_MODULE(Kerr_accretion, m)

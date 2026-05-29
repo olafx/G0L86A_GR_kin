@@ -79,13 +79,11 @@ enum class StopCriterion : int
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// `Stepper` should be a `Fn_Stepper`, concept is checked later when the
-// `Fn_RHS` is defined.
-template <bool split, typename Stepper>
+template <typename Scheme>
 py::tuple geodesics
 ( const metric::Kerr::BoyerLindquist& metric,
   const finite_difference::policies::Simple& policy_fd,
-  const Stepper& stepper,
+  const Scheme& scheme,
   int max_steps,
   double domain_L,
   const std::vector<IC>& ics
@@ -104,14 +102,16 @@ py::tuple geodesics
     #pragma omp parallel for schedule(dynamic)
     for (size_t i_geo = 0; i_geo < ics.size(); i_geo++)
     { const IC& ic = ics[i_geo];
-// Allocate the geodesic array through spacetime. The time coordinate is
+// Allocate the geodesic array through phase space. The time coordinate is
 // implicit since the integrator has a fixed time step.
-      std::vector<Vec3> geodesic;
+      std::vector<Mat23> geodesic;
       geodesic.reserve(max_steps+1);
-      geodesic.push_back(ic.state.X);
+      geodesic.push_back(ic.state);
 
 // Prepare the ODE integrator.
-      Mat23 state = ic.state;
+      const geodesic::Problem problem {metric, policy_fd, ic.eps};
+      Mat23 state_prev, state = ic.state;
+      scheme.initialize(problem, state);
       StopCriterion stop_criterion = StopCriterion::max_steps;
 
 // The ODE integrator main loop. Check for the stop event.
@@ -120,23 +120,9 @@ py::tuple geodesics
       { stop_criterion = stop_event(metric.params, domain_L, state.X);
         if (stop_criterion != StopCriterion::none)
           break;
-        if constexpr (split)
-        { auto rhs_x = [&](const Vec3& x)
-          { return geodesic::rhs_x(metric, ic.eps, x, state.V); };
-          auto rhs_u = [&](const Vec3& u)
-          { return geodesic::rhs_u(metric, ic.eps, state.X, u, policy_fd); };
-          static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_x), 3>);
-          static_assert(solve::Fn_Stepper<Stepper, decltype(rhs_u), 3>);
-          state.X = stepper(rhs_x, state.X);
-          state.V = stepper(rhs_u, state.V);
-        }
-        else
-        { auto rhs = [&](const Vec6& y)
-          { return Vec6 {geodesic::rhs(metric, ic.eps, y, policy_fd)}; };
-          static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
-          state = stepper(rhs, Vec6 {state});
-        }
-        geodesic.push_back(state.X);
+        state_prev = state;
+        scheme.step(problem, state);
+        geodesic.push_back(scheme.output(problem, state_prev, state));
       }
       if (i_step == max_steps)
         stop_criterion = StopCriterion::max_steps;
@@ -169,9 +155,9 @@ py::tuple geodesics_RK4
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::RK4 stepper {dt};
-  return geodesics</*split*/false>(metric, policy_fd, stepper,
-    max_steps, domain_L, ics);
+  const solve::RK4 stepper = {dt};
+  const geodesic::schemes::Full scheme {stepper};
+  return geodesics(metric, policy_fd, scheme, max_steps, domain_L, ics);
 }
 
 py::tuple geodesics_IMR
@@ -184,9 +170,9 @@ py::tuple geodesics_IMR
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::IMR stepper {dt, iters_IMR};
-  return geodesics</*split*/false>(metric, policy_fd, stepper,
-    max_steps, domain_L, ics);
+  const solve::IMR stepper = {dt, iters_IMR};
+  const geodesic::schemes::Full scheme {stepper};
+  return geodesics(metric, policy_fd, scheme, max_steps, domain_L, ics);
 }
 
 py::tuple geodesics_IMR_split
@@ -199,9 +185,9 @@ py::tuple geodesics_IMR_split
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::IMR stepper {dt, iters_IMR};
-  return geodesics</*split*/true>(metric, policy_fd, stepper,
-    max_steps, domain_L, ics);
+  const solve::IMR stepper = {dt, iters_IMR};
+  const geodesic::schemes::Split scheme {stepper};
+  return geodesics(metric, policy_fd, scheme, max_steps, domain_L, ics);
 }
 
 } // namespace
@@ -210,8 +196,6 @@ py::tuple geodesics_IMR_split
 
 PYBIND11_MODULE(Kerr_geodesics, m)
 {
-
-// NOTE: The `IC` and `GeodesicMeta` classes need to be defined in Python also.
 
 py::class_<IC>(m, "IC")
   .def

@@ -22,15 +22,17 @@ max_steps = 50_000
 domain_L = 20.
 h_rel = 1e-5
 h_min = 1e-6
-method = 'IMR'
+method = 'IMR_split'
 iters_IMR = 4
 assert method in ('RK4', 'IMR', 'IMR_split')
 
+# x_r, x_th, x_phi, u_r, u_th, u_phi, eps
+IC = kerr_geodesics.IC
 ics = [
-  kerr_geodesics.IC( 8.00, 0.50*np.pi, +0.00, +0.00, +0.00, +3.80, 1),
-  kerr_geodesics.IC(10.00, 0.38*np.pi, +0.00, -0.03, +0.50, +4.80, 1),
-  kerr_geodesics.IC( 6.00, 0.50*np.pi, +0.00, -0.24, +0.00, +2.50, 1),
-  kerr_geodesics.IC(12.00, 0.50*np.pi, -1.10, -1.20, +0.00, +7.50, 0),
+  IC( 8.00, 0.50*np.pi, +0.00, +0.00, +0.00, +3.80, 1),
+  IC(10.00, 0.38*np.pi, +0.00, -0.03, +0.50, +4.80, 1),
+  IC( 6.00, 0.50*np.pi, +0.00, -0.24, +0.00, +2.50, 1),
+  IC(12.00, 0.50*np.pi, -1.10, -1.20, +0.00, +7.50, 0),
 ]
 labels = [
   'timelike equatorial',
@@ -77,10 +79,10 @@ stop_criterion = [
   'horizon_entry',
   'domain_exit',
 ]
-print('i_geo  steps    len stop')
+print('i_geo  steps stop')
 for i_geo, (geo, geo_meta) in enumerate(zip(geos, geos_meta)):
   print(
-    f'{i_geo:>5} {geo_meta.steps:>6} {geo.shape[0]:>6} '
+    f'{i_geo:>5} {geo_meta.steps:>6} '
     f'{stop_criterion[geo_meta.stop_criterion]}'
   )
 
@@ -109,7 +111,8 @@ for r_h in (r_m, r_p):
 
 plt.figure(figsize=(5, 5))
 for i_geo, path in enumerate(geos):
-  path_Car = util.sph_to_Car(*path.T)
+  path_x = path[:, 0, :]
+  path_Car = util.sph_to_Car(*path_x.T)
   plt.plot(path_Car[0], path_Car[1], label=labels[i_geo])
 for rho_h, _, _, _, _ in horizons:
   plt.gca().add_patch(
@@ -127,7 +130,8 @@ plt.close()
 
 plt.figure(figsize=(5, 5))
 for i_geo, path in enumerate(geos):
-  path_Car = util.sph_to_Car(*path.T)
+  path_x = path[:, 0, :]
+  path_Car = util.sph_to_Car(*path_x.T)
   plt.plot(path_Car[0], path_Car[2], label=labels[i_geo])
 for rho_h, z_h, _, _, _ in horizons:
   plt.gca().add_patch(
@@ -149,7 +153,8 @@ plt.figure(figsize=(5, 5))
 plt.axes(projection='3d')
 plt.gca().view_init(30, -70)
 for i_geo, path in enumerate(geos):
-  path_Car = util.sph_to_Car(*path.T)
+  path_x = path[:, 0, :]
+  path_Car = util.sph_to_Car(*path_x.T)
   plt.plot(*path_Car, label=labels[i_geo])
 for _, _, xs, ys, zs in horizons:
   plt.gca().plot_surface(xs, ys, zs, color='#000000',
