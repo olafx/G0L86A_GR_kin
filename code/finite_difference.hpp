@@ -83,7 +83,6 @@ template <size_t N>
 // 
 // NOTE: We don't use this, it's just to understand how this stencil abstraction
 //   works.
-template <size_t N>
 [[nodiscard]] Stencil<2, 5> Laplacian_central
 ( Policy<2> auto&& step_policy,
   const Vec<2>& x
@@ -93,13 +92,13 @@ template <size_t N>
     step_policy(x, 1)
   };
   const Vec<2> h2 = h*h;
-  Stencil<N, 5> out;
+  Stencil<2, 5> out;
   for (size_t i = 0; i < 5; i++)
     out.xs[i] = x;
-  out.xs[1][0] = x[0]-h.x;
-  out.xs[2][0] = x[0]+h.x;
-  out.xs[3][1] = x[1]-h.y;
-  out.xs[4][1] = x[1]+h.y;
+  out.xs[1].x = x[0]-h.x;
+  out.xs[2].x = x[0]+h.x;
+  out.xs[3].y = x[1]-h.y;
+  out.xs[4].y = x[1]+h.y;
   out.ws[0] = -2/h2.x-2/h2.y;
   out.ws[1] = 1/h2.x;
   out.ws[2] = 1/h2.x;

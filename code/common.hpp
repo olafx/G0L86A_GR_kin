@@ -12,6 +12,7 @@ template <size_t N1, size_t N2, size_t N3>
 using Ten = util::Ten<double, N1, N2, N3>::V;
 
 using int2 = util::Vec<int, 2>;
+using size_t2 = util::Vec<size_t, 2>;
 using Vec2 = Vec<2>;
 using Vec3 = Vec<3>;
 using Vec3_sph = Vec3;

@@ -62,19 +62,24 @@ struct AccretionDisk
 // an image increase towards +right, the pixels along y towards down=-up.
 [[nodiscard]] Vec3 pixel_direction
 ( const Camera& camera,
-  const int2& i,
-  const int2& res
+  const size_t2& i,
+  const size_t2& res
 )
 { const double sx = ((i.x+.5)/res.x-.5)*camera.focal_ratio*res.x/res.y;
   const double sy = ((i.y+.5)/res.y-.5)*camera.focal_ratio;
   return normalized(camera.forward+sx*camera.right-sy*camera.up);
 }
 
-// Consider a point x and a direction u^i. x is described in spherical
-// coordinates, u^i in Cartesian coordinates. Convert this to u_i in
-// spherical coordinates.
+// Consider a point x and a direction u^i for some observer at x. x is described
+// in spherical coordinates, u^i in Cartesian coordinates. Convert this to u_i
+// in spherical coordinates.
 // First we compute the spherical basis vectors, then project against them
 // via the spatial metric gamma.
+//
+// NOTE: This u_i in spherical coordinates still needs to be converted to
+//   Boyer-Lindquist coordinates in principle, but for simplicity we don't do
+//   this. It is a good approximation at large distances, since Boyer-Lindquist
+//   reduces appropriately to spherical coordinates.
 [[nodiscard]] Vec3_sph direction_to_u_cov
 ( const Vec3_sph& x,
   const Vec3_Car& dir
@@ -111,6 +116,14 @@ struct AccretionDisk
 // [0, 1], it intersects. Then check if the radius of the resulting intersecting
 // point falls in the right range, and be careful of situations where x1-x0 lies
 // on the disk.
+//
+// NOTE: This uses the flat spacetime metric for r to compare against the disk
+//   radius r. This is not correct (really depending on what we even mean by the
+//   disk radius), but it is a good approximation if the inner disk radius is
+//   far away from the event horizon. (Really the disk should be defined by
+//   theta=pi/2 and r in some range, in Boyer-Lindquist coordinates. That is the
+//   correct generalization of a flat circular disk in Euclidian space. And what
+//   the generalization of that is with inclination, I have no idea.)
 [[nodiscard]] bool intersects_accretion_disk
 ( const Vec3_Car& x0,
   const Vec3_Car& x1,
@@ -233,10 +246,10 @@ py::tuple render
 ( const geodesic::Problem<Metric, Particle, EMField>& problem,
   const AccretionDisk& disk,
   const Scheme& scheme,
-  int max_steps,
+  size_t max_steps,
   double domain_L,
   const Camera& camera,
-  int2 res
+  size_t2 res
 )
 {
 // We return the main colored image, an image of stop criteria, and an image of
@@ -255,8 +268,8 @@ py::tuple render
     const Vec3_sph camera_x = util::Car_to_sph(camera.x);
 
     #pragma omp parallel for schedule(dynamic)
-    for (int i_y = 0; i_y < res.y; i_y++)
-    for (int i_x = 0; i_x < res.x; i_x++)
+    for (size_t i_y = 0; i_y < res.y; i_y++)
+    for (size_t i_x = 0; i_x < res.x; i_x++)
     {
 // Preparation for the ODE integrator.
       Mat23 state =
@@ -308,7 +321,7 @@ py::tuple render_RK4
   double h_rel,
   double h_min,
   double dt,
-  int max_steps,
+  size_t max_steps,
   double domain_L,
   double camera_dist,
   double camera_tilt,
@@ -316,8 +329,8 @@ py::tuple render_RK4
   double camera_target_y,
   double camera_target_z,
   double camera_focal_ratio,
-  int res_x,
-  int res_y
+  size_t res_x,
+  size_t res_y
 )
 { const metric::Kerr::BoyerLindquist metric
   { .params = {metric_M, metric_a}
@@ -339,7 +352,7 @@ py::tuple render_RK4
       camera_target_z
     }
   );
-  const int2 res {res_x, res_y};
+  const size_t2 res {res_x, res_y};
   const geodesic::schemes::Full scheme {stepper};
   const geodesic::Problem problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
@@ -364,8 +377,8 @@ py::tuple render_IMR
   double camera_target_y,
   double camera_target_z,
   double camera_focal_ratio,
-  int res_x,
-  int res_y
+  size_t res_x,
+  size_t res_y
 )
 { const metric::Kerr::BoyerLindquist metric
   { .params = {metric_M, metric_a}
@@ -388,7 +401,7 @@ py::tuple render_IMR
       camera_target_z
     }
   );
-  const int2 res {res_x, res_y};
+  const size_t2 res {res_x, res_y};
   const geodesic::schemes::Full scheme {stepper};
   const geodesic::Problem problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
@@ -413,8 +426,8 @@ py::tuple render_IMR_split
   double camera_target_y,
   double camera_target_z,
   double camera_focal_ratio,
-  int res_x,
-  int res_y
+  size_t res_x,
+  size_t res_y
 )
 { const metric::Kerr::BoyerLindquist metric
   { .params = {metric_M, metric_a}
@@ -437,7 +450,7 @@ py::tuple render_IMR_split
       camera_target_z
     }
   );
-  const int2 res {res_x, res_y};
+  const size_t2 res {res_x, res_y};
   const geodesic::schemes::Split scheme {stepper};
   const geodesic::Problem problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
