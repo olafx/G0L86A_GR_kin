@@ -341,9 +341,7 @@ py::tuple render_RK4
   );
   const int2 res {res_x, res_y};
   const geodesic::schemes::Full scheme {stepper};
-  const geodesic::Problem<
-    metric::Kerr::BoyerLindquist, geodesic::particle::Neutral, em::Vacuum>
-    problem {metric, em_field, policy_fd, p};
+  const geodesic::Problem problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
@@ -392,9 +390,7 @@ py::tuple render_IMR
   );
   const int2 res {res_x, res_y};
   const geodesic::schemes::Full scheme {stepper};
-  const geodesic::Problem<
-    metric::Kerr::BoyerLindquist, geodesic::particle::Neutral, em::Vacuum>
-    problem {metric, em_field, policy_fd, p};
+  const geodesic::Problem problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
@@ -443,9 +439,7 @@ py::tuple render_IMR_split
   );
   const int2 res {res_x, res_y};
   const geodesic::schemes::Split scheme {stepper};
-  const geodesic::Problem<
-    metric::Kerr::BoyerLindquist, geodesic::particle::Neutral, em::Vacuum>
-    problem {metric, em_field, policy_fd, p};
+  const geodesic::Problem problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 

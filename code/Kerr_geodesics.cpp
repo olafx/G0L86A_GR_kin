@@ -23,20 +23,6 @@ struct IC
   geodesic::particle::Charged p;
 };
 
-[[nodiscard]] geodesic::particle::Neutral make_particle
-( const IC& ic,
-  std::type_identity<geodesic::particle::Neutral>
-)
-{ return {ic.p.eps};
-}
-
-[[nodiscard]] geodesic::particle::Charged make_particle
-( const IC& ic,
-  std::type_identity<geodesic::particle::Charged>
-)
-{ return {ic.p.eps, ic.p.q_over_m};
-}
-
 // Numerical geodesic metadata.
 // `steps` is the number of integration steps, not the length of the output
 // array.
@@ -126,14 +112,10 @@ py::tuple geodesics
       geodesic.push_back(ic.state);
 
 // Prepare the ODE integrator.
-      const geodesic::Problem
-      < metric::Kerr::BoyerLindquist,
-        Particle,
-        EMField
-      > problem
-      { metric, em_field, policy_fd,
-        make_particle(ic, std::type_identity<Particle> {})
-      };
+      Particle p {.eps = ic.p.eps};
+      if constexpr (geodesic::particle::ChargedKind<Particle>)
+        p.q_over_m = ic.p.q_over_m;
+      const geodesic::Problem problem {metric, em_field, policy_fd, p};
       Mat23 state = ic.state;
       scheme.initialize(problem, state);
       Mat23 state_prev = state;
