@@ -223,9 +223,14 @@ struct AccretionDisk
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename Scheme>
+template
+< typename Metric,
+  typename Particle,
+  typename EMField,
+  typename Scheme
+>
 py::tuple render
-( const geodesic::Problem& problem,
+( const geodesic::Problem<Metric, Particle, EMField>& problem,
   const AccretionDisk& disk,
   const Scheme& scheme,
   int max_steps,
@@ -291,8 +296,6 @@ py::tuple render
   );
 }
 
-} // namespace
-
 ////////////////////////////////////////////////////////////////////////////////
 
 py::tuple render_RK4
@@ -319,6 +322,8 @@ py::tuple render_RK4
 { const metric::Kerr::BoyerLindquist metric
   { .params = {metric_M, metric_a}
   };
+  constexpr em::Vacuum em_field {};
+  const geodesic::particle::Neutral p {eps};
   const AccretionDisk disk
   { .normal = {0, sin(disk_inclination),
                   cos(disk_inclination)},
@@ -336,7 +341,9 @@ py::tuple render_RK4
   );
   const int2 res {res_x, res_y};
   const geodesic::schemes::Full scheme {stepper};
-  const geodesic::Problem problem {metric, policy_fd, eps};
+  const geodesic::Problem<
+    metric::Kerr::BoyerLindquist, geodesic::particle::Neutral, em::Vacuum>
+    problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
@@ -350,8 +357,8 @@ py::tuple render_IMR
   double h_rel,
   double h_min,
   double dt,
-  int max_steps,
-  int iters_IMR,
+  size_t max_steps,
+  size_t IMR_max_iters,
   double domain_L,
   double camera_dist,
   double camera_tilt,
@@ -365,6 +372,8 @@ py::tuple render_IMR
 { const metric::Kerr::BoyerLindquist metric
   { .params = {metric_M, metric_a}
   };
+  constexpr em::Vacuum em_field {};
+  const geodesic::particle::Neutral p {eps};
   const AccretionDisk disk
   { .normal = {0, sin(disk_inclination),
                   cos(disk_inclination)},
@@ -372,7 +381,8 @@ py::tuple render_IMR
           disk_r_outer}
   };
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::IMR stepper {dt, iters_IMR};
+  constexpr double IMR_tol = 1e-12;
+  const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
   const Camera camera = make_camera
   ( camera_dist, camera_tilt, camera_focal_ratio,
     { camera_target_x,
@@ -382,7 +392,9 @@ py::tuple render_IMR
   );
   const int2 res {res_x, res_y};
   const geodesic::schemes::Full scheme {stepper};
-  const geodesic::Problem problem {metric, policy_fd, eps};
+  const geodesic::Problem<
+    metric::Kerr::BoyerLindquist, geodesic::particle::Neutral, em::Vacuum>
+    problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
 
@@ -396,8 +408,8 @@ py::tuple render_IMR_split
   double h_rel,
   double h_min,
   double dt,
-  int max_steps,
-  int iters_IMR,
+  size_t max_steps,
+  size_t IMR_max_iters,
   double domain_L,
   double camera_dist,
   double camera_tilt,
@@ -411,6 +423,8 @@ py::tuple render_IMR_split
 { const metric::Kerr::BoyerLindquist metric
   { .params = {metric_M, metric_a}
   };
+  constexpr em::Vacuum em_field {};
+  const geodesic::particle::Neutral p {eps};
   const AccretionDisk disk
   { .normal = {0, sin(disk_inclination),
                   cos(disk_inclination)},
@@ -418,7 +432,8 @@ py::tuple render_IMR_split
           disk_r_outer}
   };
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::IMR stepper {dt, iters_IMR};
+  constexpr double IMR_tol = 1e-12;
+  const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
   const Camera camera = make_camera
   ( camera_dist, camera_tilt, camera_focal_ratio,
     { camera_target_x,
@@ -428,9 +443,15 @@ py::tuple render_IMR_split
   );
   const int2 res {res_x, res_y};
   const geodesic::schemes::Split scheme {stepper};
-  const geodesic::Problem problem {metric, policy_fd, eps};
+  const geodesic::Problem<
+    metric::Kerr::BoyerLindquist, geodesic::particle::Neutral, em::Vacuum>
+    problem {metric, em_field, policy_fd, p};
   return render(problem, disk, scheme, max_steps, domain_L, camera, res);
 }
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
 
 PYBIND11_MODULE(Kerr_accretion, m)
 {

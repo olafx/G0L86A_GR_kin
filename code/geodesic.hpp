@@ -3,23 +3,54 @@
 #include "util.hpp"
 #include "common.hpp"
 #include "finite_difference.hpp"
-#include "metric.hpp"
 #include "solve.hpp"
+#include "electromagnetic.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace geodesic
 {
 
+// Geodesics solve particle trajectories. Describe all the particle properties
+// that may vary within a given spacetime with a given electromagnetic field.
+
+namespace particle
+{
+
+struct Neutral
+{ double eps;
+};
+
+struct Charged
+{ double eps;
+  double q_over_m;
+};
+
+template <typename Particle>
+concept Kind = requires(const Particle& p)
+{ { p.eps } -> std::convertible_to<double>;
+};
+
+template <typename Particle>
+concept ChargedKind =
+  Kind<Particle> &&
+  requires(const Particle& p)
+  { { p.q_over_m } -> std::convertible_to<double>;
+  };
+
+} // namespace particle
+
+////////////////////////////////////////////////////////////////////////////////
+
 namespace detail
 {
 
 // Defining the RHS of the geodesic equation.
-// Sometimes we need dx/dt and du/dt simultaneously, sometimes separately.
+//
+// NOTE: Sometimes we need dx/dt and du/dt simultaneously, sometimes separately.
 
-template <typename MetricADM>
 [[nodiscard]] double u_0
-( const MetricADM& m,
+( const metric::MetricADMGeo& m,
   double eps,
   const Vec3& u
 )
@@ -30,95 +61,149 @@ template <typename MetricADM>
   return sqrt(u_0_)/m.alpha;
 }
 
-template <typename MetricADM>
 [[nodiscard]] Vec3 rhs_x
-( const MetricADM& m,
+( const metric::MetricADMGeo& m,
   double eps,
+  double u_0,
   const Vec3& u
 )
-{ const double u_0_ = u_0(m, eps, u);
-  Vec3 dx_dt;
+{ Vec3 dx_dt;
   for (size_t i = 0; i < 3; i++)
   { double a = 0;
     for (size_t j = 0; j < 3; j++)
       a += m.gamma_con[i][j]*u[j];
-    dx_dt[i] = a/u_0_-m.beta_con[i];
+    dx_dt[i] = a/u_0-m.beta_con[i];
   }
   return dx_dt;
 }
 
-template <typename MetricADM, typename MetricADMDerivatives>
+// This RHS of du/dt lacks the Lorentz term, that is separate.
 [[nodiscard]] Vec3 rhs_u
-( const MetricADM& m,
-  const MetricADMDerivatives& d,
+( const metric::MetricADMGeo& m,
+  const metric::MetricADMDerivativesGeo& d,
   double eps,
+  double u_0,
   const Vec3& u
 )
-{ const double u_0_ = u_0(m, eps, u);
-  Vec3 du_dt;
+{ Vec3 du_dt;
   for (size_t i = 0; i < 3; i++)
-  { const double a = -m.alpha*u_0_*d.d_alpha[i];
+  { const double a = -m.alpha*u_0*d.d_alpha[i];
     double b = 0, c = 0;
     for (size_t j = 0; j < 3; j++)
       b += u[j]*d.d_beta_con[i][j];
     for (size_t j = 0; j < 3; j++)
       for (size_t k = 0; k < 3; k++)
         c += u[j]*u[k]*d.d_gamma_con[i][j][k];
-    c /= -2*u_0_;
+    c /= -2*u_0;
     du_dt[i] = a+b+c;
   };
   return du_dt;
 }
 
+// This Lorentz term of the RHS of du/dt lacks q/m, that is separate.
+[[nodiscard]] Vec3 rhs_Lorentz
+( const metric::MetricADMGeo& m_geo,
+  const metric::MetricADMLorentz& m_Lorentz,
+  const em::Fields& em_f,
+  double u_0,
+  const Vec3& u
+)
+{ Vec3 v {0, 0, 0};
+  for (size_t j = 0; j < 3; j++)
+    for (size_t l = 0; l < 3; l++)
+      v[j] += m_geo.gamma_con[j][l]*u[l];
+  // for (size_t j = 0; j < 3; j++)
+  //   v[j] /= u_0;
+  Vec3 cross_v_B = cross(v, em_f.B);
+
+  Vec3 force;
+  for (size_t i = 0; i < 3; i++)
+  { double elec = 0;
+    for (size_t j = 0; j < 3; j++)
+      elec += m_geo.alpha*m_Lorentz.gamma_cov[i][j]*em_f.D[j];
+    // force[i] = elec+m.sqrt_gamma/u_0*cross_vel_B[i];
+    force[i] = elec-m_Lorentz.sqrt_gamma/u_0*cross_v_B[i];
+  }
+  return force;
+}
+
 } // namespace detail
 
-// Define the geodesic problem as a type. The point of this abstraction is to
-// absorb the problem parameters into the type, as to keep the same general
-// high-level interface.
+////////////////////////////////////////////////////////////////////////////////
 
+// Define the geodesic problem (including an electromagnetic field) as a type.
+//
+// The point of this abstraction is to absorb the problem parameters into the
+// type, as to keep the same general high-level interface.
+//
+// TODO: Derivatives are numerical for now since analytical has not been
+//   implemented. Need to design this all some way that both numerical and
+//   analytical derivatives can work without too much code reuse.
+
+template <typename Metric, particle::Kind Particle, typename EMField>
 struct Problem
 {
-  const metric::Kerr::BoyerLindquist& metric;
+  const Metric& metric;
+  const EMField& em_field;
   const finite_difference::policies::Simple& policy_fd;
-  double eps;
+  Particle p;
 
   [[nodiscard]] Mat23 rhs
   ( const Vec3& x,
     const Vec3& u
   ) const
-  { const auto m = metric.metric_ADM(x);
-// TODO: This is numerical for now since analytical has not been implemented.
-//   rhs will no longer need a fd_step_policy, and numerical params won't need
-//   to be passed anymore. Need to design this all some way that both numerical
-//   and analytical derivatives can work without too much code reuse.
-    const auto d = metric.metric_ADM_derivatives_numerical(policy_fd, x);
-    return
-    { detail::rhs_x(m, eps, u),
-      detail::rhs_u(m, d, eps, u)
-    };
-  }
-
-  [[nodiscard]] Mat23 rhs
-  ( const Mat23& state
-  ) const
-  { return rhs(state.X, state.V);
+  {
+    if constexpr (particle::ChargedKind<Particle>)
+    { const auto m = metric.template eval<true>(x);
+      const auto d_m = metric.eval_derivatives_numerical(policy_fd, x);
+      const double u_0 = detail::u_0(m.geo, p.eps, u);
+      Vec3 du_dt = detail::rhs_u(m.geo, d_m, p.eps, u_0, u);
+      if (p.q_over_m)
+        du_dt += p.q_over_m*detail::rhs_Lorentz(
+          m.geo, m.lorentz, em_field(m, x), u_0, u);
+      const Vec3 dx_dt = detail::rhs_x(m.geo, p.eps, u_0, u);
+      return {dx_dt, du_dt};
+    }
+    else
+    { const auto m = metric.template eval<false>(x);
+      const auto d_m = metric.eval_derivatives_numerical(policy_fd, x);
+      const double u_0 = detail::u_0(m, p.eps, u);
+      Vec3 du_dt = detail::rhs_u(m, d_m, p.eps, u_0, u);
+      const Vec3 dx_dt = detail::rhs_x(m, p.eps, u_0, u);
+      return {dx_dt, du_dt};
+    }
   }
 
   [[nodiscard]] Vec3 rhs_x
   ( const Vec3& x,
     const Vec3& u
   ) const
-  { const auto m = metric.metric_ADM(x);
-    return detail::rhs_x(m, eps, u);
+  { const auto m = metric.template eval<false>(x);
+    const double u_0 = detail::u_0(m, p.eps, u);
+    return detail::rhs_x(m, p.eps, u_0, u);
   }
 
   [[nodiscard]] Vec3 rhs_u
   ( const Vec3& x,
     const Vec3& u
   ) const
-  { const auto m = metric.metric_ADM(x);
-    const auto d = metric.metric_ADM_derivatives_numerical(policy_fd, x);
-    return detail::rhs_u(m, d, eps, u);
+  {
+    if constexpr (particle::ChargedKind<Particle>)
+    { const auto m = metric.template eval<true>(x);
+      const auto d = metric.eval_derivatives_numerical(policy_fd, x);
+      const double u_0 = detail::u_0(m.geo, p.eps, u);
+      Vec3 du_dt = detail::rhs_u(m.geo, d, p.eps, u_0, u);
+      if (p.q_over_m)
+        du_dt += p.q_over_m*detail::rhs_Lorentz(
+          m.geo, m.lorentz, em_field(m, x), u_0, u);
+      return du_dt;
+    }
+    else
+    { const auto m = metric.template eval<false>(x);
+      const auto d = metric.eval_derivatives_numerical(policy_fd, x);
+      const double u_0 = detail::u_0(m, p.eps, u);
+      return detail::rhs_u(m, d, p.eps, u_0, u);
+    }
   }
 };
 
@@ -127,34 +212,39 @@ struct Problem
 namespace schemes
 {
 
-// Define an integration scheme for the problem, using a `Stepper`. This deals
+// Define an integration scheme for the `Problem`, using a `Stepper`. This deals
 // with initialization, the way in which the `Stepper` is used for the problem,
 // and how the internal integration state is converted to an output state. This
-// abstraction also helps maintain a clean high-level generic interface.
+// abstraction helps maintain a clean high-level generic interface.
 
 template <typename Stepper>
 struct Full
 {
   Stepper stepper;
 
+  template <typename Metric, typename Particle, typename Field>
   void initialize
-  ( const Problem&,
-    Mat23&
+  ( const Problem<Metric, Particle, Field>&,
+    Mat23& state
   ) const
   {}
 
+  template <typename Metric, typename Particle, typename Field>
   void step
-  ( const Problem& problem,
+  ( const Problem<Metric, Particle, Field>& problem,
     Mat23& state
   ) const
   { auto rhs = [&](const Vec6& y)
-    { return Vec6 {problem.rhs(Mat23 {y})}; };
+    { const Mat23& y_ = y;
+      return Vec6 {problem.rhs(y_.X, y_.V)};
+    };
     static_assert(solve::Fn_Stepper<Stepper, decltype(rhs), 6>);
-    state = Mat23 {stepper(rhs, Vec6 {state})};
+    state = stepper(rhs, Vec6 {state});
   }
 
+  template <typename Metric, typename Particle, typename Field>
   [[nodiscard]] Mat23 output
-  ( const Problem&,
+  ( const Problem<Metric, Particle, Field>&,
     const Mat23&,
     const Mat23& state
   ) const
@@ -167,10 +257,11 @@ struct Split
 {
   Stepper stepper;
 
-// NOTE: Initial condition gives x^0 and u^0, compute u^(1/2) so leapfrogging
+// NOTE: Initial condition gives x^0 and u^0. Compute u^(1/2) so leapfrogging
 //   can continue.
+  template <typename Metric, typename Particle, typename Field>
   void initialize
-  ( const Problem& problem,
+  ( const Problem<Metric, Particle, Field>& problem,
     Mat23& state
   ) const
   { auto rhs_u = [&](const Vec3& u)
@@ -183,8 +274,9 @@ struct Split
 
 // NOTE: First u^(n+1/2) from u^(n-1/2) and x^(n), then x^(n+1) from x^(n) and
 //   u^(n+1/2).
+  template <typename Metric, typename Particle, typename Field>
   void step
-  ( const Problem& problem,
+  ( const Problem<Metric, Particle, Field>& problem,
     Mat23& state
   ) const
   { 
@@ -200,8 +292,9 @@ struct Split
 
 // NOTE: For output, already have x^(n), but get u^(n) estimate from u^(n+1/2)
 //   and u^(n-1/2).
+  template <typename Metric, typename Particle, typename Field>
   [[nodiscard]] Mat23 output
-  ( const Problem&,
+  ( const Problem<Metric, Particle, Field>&,
     const Mat23& state_prev,
     const Mat23& state
   ) const

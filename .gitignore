@@ -9,6 +9,7 @@
 /code/*
 !/code/finite_difference.hpp
 !/code/geodesic.hpp
+!/code/electromagnetic.hpp
 !/code/Kerr_accretion.cpp
 !/code/Kerr_accretion.py
 !/code/Kerr_geodesics.cpp
@@ -21,6 +22,7 @@
 !/code/common.hpp
 !/code/trajectoryKerrPlot.ipynb
 !/code/Kerr_geodesics_verify.ipynb
+!/code/Kerr_Wald_Solution.ipynb
 
 !/report/
 /report/*

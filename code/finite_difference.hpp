@@ -13,15 +13,16 @@ namespace finite_difference
 template <typename Fn, size_t N>
 concept Policy =
   std::invocable<const Fn&, const Vec<N>&, size_t> &&
-  std::same_as<
-    std::invoke_result_t<const Fn&, const Vec<N>&, size_t>,
-    double>;
+  std::same_as
+  < std::invoke_result_t<const Fn&, const Vec<N>&, size_t>,
+    double
+  >;
 
 // A Stencil describes how a derivative is approximated. This can represent
 // arbitrary derivatives in arbitrary dimensions in principle.
 template <size_t N, size_t K>
 struct Stencil
-{ Mat<N, K> xs;
+{ Mat<K, N> xs;
   Vec<K> ws;
 };
 

@@ -14,10 +14,41 @@ namespace metric
 // be interested in different spacetimes and different metrics within the
 // spacetime.
 
+// TODO: If we have analytical derivatives, metric derivatives will be computed
+//   together with the metric. So these datastructures will need to change, in
+//   particular MetricADMGeoLorentz.
+
+// The part of the ADM metric needed to solve a geodesic.
+  struct MetricADMGeo
+  { double alpha;
+    Vec3 beta_con;
+    Mat3 gamma_con;
+  };
+  struct MetricADMDerivativesGeo
+  { Vec3 d_alpha;
+    Mat3 d_beta_con;
+    Ten3 d_gamma_con;
+  };
+
+// The additional part of the ADM metric needed for the Lorentz force.
+  struct MetricADMLorentz
+  { Mat3 gamma_cov;
+// det(gamma_ij)^1/2
+    double sqrt_gamma;
+  };
+
+// A merged metric.
+  struct MetricADMGeoLorentz
+  { MetricADMGeo geo;
+    MetricADMLorentz lorentz;
+  };
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace Kerr
 {
+
+// The Kerr spaceetime.
 
 // Precompute some properties of the spacetime.
 struct Params
@@ -38,30 +69,21 @@ struct Params
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// The Boyer-Lindquist coordinates.
+
 struct BoyerLindquist
 {
   Params params;
 
-  struct MetricADM
-  { double alpha;
-    Vec3 beta_con;
-    Mat3 gamma_con;
-  };
-
-  struct MetricADMDerivatives
-  { Vec3 d_alpha;
-    Mat3 d_beta_con;
-    Ten3 d_gamma_con;
-  };
-
-  [[nodiscard]] MetricADM metric_ADM
+  template <bool with_Lorentz>
+  [[nodiscard]] auto eval
   ( Vec3 x
   ) const
   { const double r = x.r;
+    const double th = x.th;
     const double r2 = pow(r, 2);
     const double a = params.a;
     const double a2 = pow(a, 2);
-    const double th = x.th;
     const double sin2_th = pow(sin(th), 2);
     const double cos2_th = pow(cos(th), 2);
     const double M = params.M;
@@ -69,29 +91,40 @@ struct BoyerLindquist
     const double Del = r2-2*M*r+a2;
     const double den = (r2+a2)*Sig+2*M*a2*r*sin2_th;
 
-// Default initialize to 0 for convenience.
-    MetricADM out {};
-    out.gamma_con[0][0] = Del/Sig;
-    out.gamma_con[1][1] = 1/Sig;
-    out.gamma_con[2][2] = 1/(sin2_th*((r2+a2)+2*M*a2*r*sin2_th/Sig));
-    out.beta_con.phi = -2*M*a*r/den;
+    MetricADMGeo m_geo {};
+    m_geo.gamma_con[0][0] = Del/Sig;
+    m_geo.gamma_con[1][1] = 1/Sig;
+    m_geo.gamma_con[2][2] =
+      1/(sin2_th*((r2+a2)+2*M*a2*r*sin2_th/Sig));
+    m_geo.beta_con.phi = -2*M*a*r/den;
 // NOTE: If ever here this alpha^2 is negative, this will blow up.
-    out.alpha = sqrt(Del*Sig/den);
-    return out;
+    m_geo.alpha = sqrt(Del*Sig/den);
+
+    if constexpr (with_Lorentz)
+    { MetricADMLorentz m_Lorentz {};
+      m_Lorentz.gamma_cov[0][0] = Sig/Del;
+      m_Lorentz.gamma_cov[1][1] = Sig;
+      m_Lorentz.gamma_cov[2][2] =
+        sin2_th*((r2+a2)+2*M*a2*r*sin2_th/Sig);
+      m_Lorentz.sqrt_gamma = Sig*sqrt(sin2_th);
+      return MetricADMGeoLorentz {m_geo, m_Lorentz};
+    }
+    else
+      return m_geo;
   }
 
 // TODO: Implementing analytical derivatives.
-  [[nodiscard]] MetricADMDerivatives metric_ADM_derivatives
+  [[nodiscard]] MetricADMDerivativesGeo eval_derivatives
   ( Vec3 x
   ) const
   { std::unreachable();
   }
 
-  [[nodiscard]] MetricADMDerivatives metric_ADM_derivatives_numerical
+  [[nodiscard]] MetricADMDerivativesGeo eval_derivatives_numerical
   ( const finite_difference::Policy<3> auto& policy_fd,
     Vec3 x
   ) const
-  { MetricADMDerivatives out;
+  { MetricADMDerivativesGeo out;
 // Consider derivatives to some spatial axis i.
     for (size_t i = 0; i < 3; i++)
     {
@@ -101,9 +134,9 @@ struct BoyerLindquist
         policy_fd, x, i);
       const Mat23& xs = stencil.xs;
       const Vec2& ws = stencil.ws;
-      util::Vec<MetricADM, 2> m
-      { metric_ADM(xs[0]),
-        metric_ADM(xs[1])
+      util::Vec<MetricADMGeo, 2> m
+      { eval<false>(xs[0]),
+        eval<false>(xs[1])
       };
 // The weights and function evaluations we apply ourselves, computing:
 // - partial_i alpha

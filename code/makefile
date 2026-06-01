@@ -1,4 +1,4 @@
-# Supports Linux and macOS.
+# Supports Linux and macOS, GCC and LLVM clang.
 
 CXX ?= g++
 PYTHON ?= python

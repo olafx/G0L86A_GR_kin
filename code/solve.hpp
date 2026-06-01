@@ -25,6 +25,8 @@ concept Fn_Stepper =
     std::invoke_result_t<const Stepper&, const Fn&, const Vec<N>&>,
     Vec<N>>;
 
+////////////////////////////////////////////////////////////////////////////////
+
 // `Stepper`: 3/8 rule 4th order Runge-Kutta
 struct RK4
 {
@@ -47,10 +49,16 @@ struct RK4
 // Solved by fixed-point iteration: y_next^(k+1) = y + dt*f((y + y_next^(k))/2).
 // The metric is stationary so f has no explicit time dependence and the
 // midpoint time argument (t^n + t^{n+1})/2 drops out.
+// Iteration stops early when the update norm falls below `tol`, or after
+// at most 150 iterations regardless of `n_iter`.
+//
+// Olaf: I don't understand this max 150 feature regardless of n_iter. Just
+//   restrict n_iter to be max 150 beforehand, does the same thing.
 struct IMR
 {
   double dt;
-  int n_iter;
+  double tol;
+  size_t n_iter;
 
   template <size_t N>
   Vec<N> operator()
@@ -58,8 +66,12 @@ struct IMR
     const Vec<N>& y
   ) const
   { Vec<N> y_next = y;
-    for (int k = 0; k < n_iter; k++)
-      y_next = y+dt*rhs((y+y_next)*.5);
+    for (size_t k = 0; k < n_iter; k++)
+    { const Vec<N> y_new = y+dt*rhs((y+y_next)*.5);
+      if (norm2(y_new-y_next) < tol*tol)
+        return y_new;
+      y_next = y_new;
+    }
     return y_next;
   }
 };

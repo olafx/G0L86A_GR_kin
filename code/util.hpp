@@ -32,8 +32,8 @@ namespace util
 // - Nested formatting works as one would want it to. It does not work at all
 //   for `std::array`.
 // There's a small utility `Ten` class to produce tensors, e.g.
-// `Ten<int, 2, 2>::V` is `Vec<Vec<int, 2>, 2>`. So it's a 'type factory', not
-// an actual type.
+// `Ten<int, 2, 3>::V` is `Vec<Vec<int, 3>, 2>`. So it's a 'type factory', not
+// an actual type. Dimensions follow row-major order.
 // 
 // NOTE: Can reinterpret cast these as is convenient, at least for
 //   `is_trivially_default_constructible` underlying types I suppose.
@@ -57,7 +57,7 @@ struct WrapTen<A>
 
 template <typename A, size_t N, size_t... Ns>
 struct WrapTen<A, N, Ns...>
-{ using V = typename WrapTen<Vec<A, N>, Ns...>::V;
+{ using V = Vec<typename WrapTen<A, Ns...>::V, N>;
 };
 
 } // namespace detail

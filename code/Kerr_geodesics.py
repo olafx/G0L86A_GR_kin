@@ -26,13 +26,13 @@ method = 'IMR_split'
 iters_IMR = 4
 assert method in ('RK4', 'IMR', 'IMR_split')
 
-# x_r, x_th, x_phi, u_r, u_th, u_phi, eps
+# x_r, x_th, x_phi, u_r, u_th, u_phi, eps, q_over_m
 IC = kerr_geodesics.IC
 ics = [
-  IC( 8.00, 0.50*np.pi, +0.00, +0.00, +0.00, +3.80, 1),
-  IC(10.00, 0.38*np.pi, +0.00, -0.03, +0.50, +4.80, 1),
-  IC( 6.00, 0.50*np.pi, +0.00, -0.24, +0.00, +2.50, 1),
-  IC(12.00, 0.50*np.pi, -1.10, -1.20, +0.00, +7.50, 0),
+  IC( 8.00, 0.50*np.pi, +0.00, +0.00, +0.00, +3.80, 1, 0),
+  IC(10.00, 0.38*np.pi, +0.00, -0.03, +0.50, +4.80, 1, 0),
+  IC( 6.00, 0.50*np.pi, +0.00, -0.24, +0.00, +2.50, 1, 0),
+  IC(12.00, 0.50*np.pi, -1.10, -1.20, +0.00, +7.50, 0, 0),
 ]
 labels = [
   'timelike equatorial',
@@ -45,7 +45,7 @@ labels = [
 
 match method:
   case 'RK4':
-    geos, geos_meta = kerr_geodesics.geodesics_RK4(
+    geos, geos_meta = kerr_geodesics.geodesics_RK4_vacuum(
       M, a,
       dt,
       max_steps,
@@ -54,7 +54,7 @@ match method:
       ics,
     )
   case 'IMR':
-    geos, geos_meta = kerr_geodesics.geodesics_IMR(
+    geos, geos_meta = kerr_geodesics.geodesics_IMR_vacuum(
       M, a,
       dt,
       max_steps, iters_IMR,
@@ -63,7 +63,7 @@ match method:
       ics,
     )
   case 'IMR_split':
-    geos, geos_meta = kerr_geodesics.geodesics_IMR_split(
+    geos, geos_meta = kerr_geodesics.geodesics_IMR_split_vacuum(
       M, a,
       dt,
       max_steps, iters_IMR,
@@ -79,10 +79,10 @@ stop_criterion = [
   'horizon_entry',
   'domain_exit',
 ]
-print('i_geo  steps stop')
+print('i_geo     steps stop')
 for i_geo, (geo, geo_meta) in enumerate(zip(geos, geos_meta)):
   print(
-    f'{i_geo:>5} {geo_meta.steps:>6} '
+    f'{i_geo:>5} {geo_meta.steps:>9} '
     f'{stop_criterion[geo_meta.stop_criterion]}'
   )
 

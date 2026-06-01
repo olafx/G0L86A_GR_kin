@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 dir_this = Path(__file__).resolve().parent
-path_out = dir_this/'out'
-sys.path.insert(0, str(path_out))
+dir_out = dir_this/'out'
+sys.path.insert(0, str(dir_out))
 import Kerr_accretion as kerr_accretion
 
 ################################################################################
@@ -98,8 +98,8 @@ for criterion in np.unique(stop_criteria):
 
 ################################################################################
 
-plt.imsave(path_out/'Kerr_acc_1.png', colors)
+plt.imsave(dir_out/'Kerr_acc_1.png', colors)
 
 cmap = plt.get_cmap('gray')
 norm = plt.Normalize(iteration_counts.min(), iteration_counts.max())
-plt.imsave(path_out/'Kerr_acc_2.png', cmap(norm(iteration_counts)))
+plt.imsave(dir_out/'Kerr_acc_2.png', cmap(norm(iteration_counts)))

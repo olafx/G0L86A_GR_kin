@@ -3,6 +3,7 @@
 #include "solve.hpp"
 #include "geodesic.hpp"
 #include "metric.hpp"
+#include "electromagnetic.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -15,11 +16,26 @@ namespace py = pybind11;
 // frame and at some event. The object's identity is sufficiently characterized
 // by whether it has mass or not (`eps`). Its rest reference frame is
 // characterized by a velocity (boost) since the object is pointlike. The event
-// is characterized only by a position since the metric is time-independent.
+// is characterized only by a position since the metric is time-independent. And
+// it has a ratio q/m relevant for the Lorentz force.
 struct IC
 { Mat23 state;
-  double eps;
+  geodesic::particle::Charged p;
 };
+
+[[nodiscard]] geodesic::particle::Neutral make_particle
+( const IC& ic,
+  std::type_identity<geodesic::particle::Neutral>
+)
+{ return {ic.p.eps};
+}
+
+[[nodiscard]] geodesic::particle::Charged make_particle
+( const IC& ic,
+  std::type_identity<geodesic::particle::Charged>
+)
+{ return {ic.p.eps, ic.p.q_over_m};
+}
 
 // Numerical geodesic metadata.
 // `steps` is the number of integration steps, not the length of the output
@@ -79,12 +95,13 @@ enum class StopCriterion : int
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename Scheme>
+template <geodesic::particle::Kind Particle, typename Scheme, typename EMField>
 py::tuple geodesics
 ( const metric::Kerr::BoyerLindquist& metric,
+  const EMField& em_field,
   const finite_difference::policies::Simple& policy_fd,
   const Scheme& scheme,
-  int max_steps,
+  size_t max_steps,
   double domain_L,
   const std::vector<IC>& ics
 )
@@ -109,9 +126,17 @@ py::tuple geodesics
       geodesic.push_back(ic.state);
 
 // Prepare the ODE integrator.
-      const geodesic::Problem problem {metric, policy_fd, ic.eps};
-      Mat23 state_prev, state = ic.state;
+      const geodesic::Problem
+      < metric::Kerr::BoyerLindquist,
+        Particle,
+        EMField
+      > problem
+      { metric, em_field, policy_fd,
+        make_particle(ic, std::type_identity<Particle> {})
+      };
+      Mat23 state = ic.state;
       scheme.initialize(problem, state);
+      Mat23 state_prev = state;
       StopCriterion stop_criterion = StopCriterion::max_steps;
 
 // The ODE integrator main loop. Check for the stop event.
@@ -145,49 +170,118 @@ py::tuple geodesics
   return py::make_tuple(geodesics, geodesics_meta);
 }
 
-py::tuple geodesics_RK4
+////////////////////////////////////////////////////////////////////////////////
+
+py::tuple geodesics_RK4_vacuum
 ( double M, double a,
   double dt,
-  int max_steps,
+  size_t max_steps,
   double domain_L,
   double h_rel, double h_min,
   const std::vector<IC>& ics
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
+  const em::Vacuum em_field {};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::RK4 stepper = {dt};
+  const solve::RK4 stepper {dt};
   const geodesic::schemes::Full scheme {stepper};
-  return geodesics(metric, policy_fd, scheme, max_steps, domain_L, ics);
+  return geodesics<geodesic::particle::Neutral>(
+    metric, em_field, policy_fd, scheme, max_steps, domain_L, ics);
 }
 
-py::tuple geodesics_IMR
+py::tuple geodesics_RK4_Wald
 ( double M, double a,
   double dt,
-  int max_steps, int iters_IMR,
+  size_t max_steps,
   double domain_L,
   double h_rel, double h_min,
-  const std::vector<IC>& ics
+  const std::vector<IC>& ics,
+  double Wald_B_z, double Wald_B_x, double Wald_Q
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
+  const em::Wald<metric::Kerr::BoyerLindquist> em_field
+    {{Wald_B_z, Wald_B_x, Wald_Q}, metric.params};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::IMR stepper = {dt, iters_IMR};
+  const solve::RK4 stepper {dt};
   const geodesic::schemes::Full scheme {stepper};
-  return geodesics(metric, policy_fd, scheme, max_steps, domain_L, ics);
+  return geodesics<geodesic::particle::Charged>(
+    metric, em_field, policy_fd, scheme, max_steps, domain_L, ics);
 }
 
-py::tuple geodesics_IMR_split
+py::tuple geodesics_IMR_vacuum
 ( double M, double a,
   double dt,
-  int max_steps, int iters_IMR,
+  size_t max_steps, size_t IMR_max_iters,
   double domain_L,
   double h_rel, double h_min,
   const std::vector<IC>& ics
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
+  const em::Vacuum em_field {};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
-  const solve::IMR stepper = {dt, iters_IMR};
+  constexpr double IMR_tol = 1e-12;
+  const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
+  const geodesic::schemes::Full scheme {stepper};
+  return geodesics<geodesic::particle::Neutral>(
+    metric, em_field, policy_fd, scheme, max_steps, domain_L, ics);
+}
+
+py::tuple geodesics_IMR_Wald
+( double M, double a,
+  double dt,
+  size_t max_steps, size_t IMR_max_iters,
+  double domain_L,
+  double h_rel, double h_min,
+  const std::vector<IC>& ics,
+  double Wald_B_z, double Wald_B_x, double Wald_Q_charge
+)
+{ const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
+  const em::Wald<metric::Kerr::BoyerLindquist> em_field
+    {{Wald_B_z, Wald_B_x, Wald_Q_charge}, metric.params};
+  const finite_difference::policies::Simple policy_fd {h_rel, h_min};
+  constexpr double IMR_tol = 1e-12;
+  const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
+  const geodesic::schemes::Full scheme {stepper};
+  return geodesics<geodesic::particle::Charged>(
+    metric, em_field, policy_fd, scheme, max_steps, domain_L, ics);
+}
+
+py::tuple geodesics_IMR_split_vacuum
+( double M, double a,
+  double dt,
+  size_t max_steps, size_t IMR_max_iters,
+  double domain_L,
+  double h_rel, double h_min,
+  const std::vector<IC>& ics
+)
+{ const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
+  const em::Vacuum em_field {};
+  const finite_difference::policies::Simple policy_fd {h_rel, h_min};
+  constexpr double IMR_tol = 1e-12;
+  const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
   const geodesic::schemes::Split scheme {stepper};
-  return geodesics(metric, policy_fd, scheme, max_steps, domain_L, ics);
+  return geodesics<geodesic::particle::Neutral>(
+    metric, em_field, policy_fd, scheme, max_steps, domain_L, ics);
+}
+
+py::tuple geodesics_IMR_split_Wald
+( double M, double a,
+  double dt,
+  size_t max_steps, size_t IMR_max_iters,
+  double domain_L,
+  double h_rel, double h_min,
+  const std::vector<IC>& ics,
+  double Wald_B_z, double Wald_B_x, double Wald_Q
+)
+{ const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
+  const em::Wald<metric::Kerr::BoyerLindquist> em_field
+    {{Wald_B_z, Wald_B_x, Wald_Q}, metric.params};
+  const finite_difference::policies::Simple policy_fd {h_rel, h_min};
+  constexpr double IMR_tol = 1e-12;
+  const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
+  const geodesic::schemes::Split scheme {stepper};
+  return geodesics<geodesic::particle::Charged>(
+    metric, em_field, policy_fd, scheme, max_steps, domain_L, ics);
 }
 
 } // namespace
@@ -207,14 +301,15 @@ py::class_<IC>(m, "IC")
         double u_r,
         double u_th,
         double u_phi,
-        double eps
+        double eps,
+        double q_over_m
       )
       { return IC
         { .state =
           { {x_r, x_th, x_phi},
             {u_r, u_th, u_phi}
           },
-          .eps = eps,
+          .p = {eps, q_over_m},
         };
       }
     ),
@@ -224,7 +319,8 @@ py::class_<IC>(m, "IC")
     py::arg("u_r"),
     py::arg("u_th"),
     py::arg("u_phi"),
-    py::arg("eps")
+    py::arg("eps"),
+    py::arg("q_over_m")
   );
 
 py::class_<GeodesicMeta>(m, "GeodesicMeta")
@@ -232,7 +328,7 @@ py::class_<GeodesicMeta>(m, "GeodesicMeta")
   .def_readonly("stop_criterion", &GeodesicMeta::stop_criterion);
 
 m.def
-( "geodesics_RK4", &geodesics_RK4,
+( "geodesics_RK4_vacuum", &geodesics_RK4_vacuum,
   py::arg("M"),
   py::arg("a"),
   py::arg("dt"),
@@ -244,12 +340,27 @@ m.def
 );
 
 m.def
-( "geodesics_IMR", &geodesics_IMR,
+( "geodesics_RK4_Wald", &geodesics_RK4_Wald,
   py::arg("M"),
   py::arg("a"),
   py::arg("dt"),
   py::arg("max_steps"),
-  py::arg("iters_IMR"),
+  py::arg("domain_L"),
+  py::arg("h_rel"),
+  py::arg("h_min"),
+  py::arg("ics"),
+  py::arg("Wald_B_z"),
+  py::arg("Wald_B_x"),
+  py::arg("Wald_Q")
+);
+
+m.def
+( "geodesics_IMR_vacuum", &geodesics_IMR_vacuum,
+  py::arg("M"),
+  py::arg("a"),
+  py::arg("dt"),
+  py::arg("max_steps"),
+  py::arg("IMR_max_iters"),
   py::arg("domain_L"),
   py::arg("h_rel"),
   py::arg("h_min"),
@@ -257,16 +368,48 @@ m.def
 );
 
 m.def
-( "geodesics_IMR_split", &geodesics_IMR_split,
+( "geodesics_IMR_Wald", &geodesics_IMR_Wald,
   py::arg("M"),
   py::arg("a"),
   py::arg("dt"),
   py::arg("max_steps"),
-  py::arg("iters_IMR"),
+  py::arg("IMR_max_iters"),
+  py::arg("domain_L"),
+  py::arg("h_rel"),
+  py::arg("h_min"),
+  py::arg("ics"),
+  py::arg("Wald_B_z"),
+  py::arg("Wald_B_x"),
+  py::arg("Wald_Q")
+);
+
+m.def
+( "geodesics_IMR_split_vacuum", &geodesics_IMR_split_vacuum,
+  py::arg("M"),
+  py::arg("a"),
+  py::arg("dt"),
+  py::arg("max_steps"),
+  py::arg("IMR_max_iters"),
   py::arg("domain_L"),
   py::arg("h_rel"),
   py::arg("h_min"),
   py::arg("ics")
+);
+
+m.def
+( "geodesics_IMR_split_Wald", &geodesics_IMR_split_Wald,
+  py::arg("M"),
+  py::arg("a"),
+  py::arg("dt"),
+  py::arg("max_steps"),
+  py::arg("IMR_max_iters"),
+  py::arg("domain_L"),
+  py::arg("h_rel"),
+  py::arg("h_min"),
+  py::arg("ics"),
+  py::arg("Wald_B_z"),
+  py::arg("Wald_B_x"),
+  py::arg("Wald_Q")
 );
 
 }
