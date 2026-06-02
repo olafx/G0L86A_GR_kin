@@ -106,7 +106,7 @@ struct BoyerLindquist
       m_Lorentz.gamma_cov[1][1] = Sig;
       m_Lorentz.gamma_cov[2][2] =
         sin2_th*((r2+a2)+2*M*a2*r*sin2_th/Sig);
-      m_Lorentz.sqrt_gamma = Sig*sqrt(sin2_th);
+      m_Lorentz.sqrt_gamma = Sig*sin(th)/m_geo.alpha;
       return MetricADMGeoLorentz {m_geo, m_Lorentz};
     }
     else
