@@ -49,22 +49,22 @@ namespace detail
 //
 // NOTE: Sometimes we need dx/dt and du/dt simultaneously, sometimes separately.
 
-[[nodiscard]] double u_0
+[[nodiscard]] double u_0_con
 ( const metric::MetricADMGeo& m,
   double eps,
   const Vec3& u
 )
-{ double u_0_ = eps;
+{ double u_0_con_ = eps;
   for (size_t i = 0; i < 3; i++)
     for (size_t j = 0; j < 3; j++)
-      u_0_ += u[i]*u[j]*m.gamma_con[i][j];
-  return sqrt(u_0_)/m.alpha;
+      u_0_con_ += u[i]*u[j]*m.gamma_con[i][j];
+  return sqrt(u_0_con_)/m.alpha;
 }
 
 [[nodiscard]] Vec3 rhs_x
 ( const metric::MetricADMGeo& m,
   double eps,
-  double u_0,
+  double u_0_con,
   const Vec3& u
 )
 { Vec3 dx_dt;
@@ -72,7 +72,7 @@ namespace detail
   { double a = 0;
     for (size_t j = 0; j < 3; j++)
       a += m.gamma_con[i][j]*u[j];
-    dx_dt[i] = a/u_0-m.beta_con[i];
+    dx_dt[i] = a/u_0_con-m.beta_con[i];
   }
   return dx_dt;
 }
@@ -82,19 +82,19 @@ namespace detail
 ( const metric::MetricADMGeo& m,
   const metric::MetricADMDerivativesGeo& d,
   double eps,
-  double u_0,
+  double u_0_con,
   const Vec3& u
 )
 { Vec3 du_dt;
   for (size_t i = 0; i < 3; i++)
-  { const double a = -m.alpha*u_0*d.d_alpha[i];
+  { const double a = -m.alpha*u_0_con*d.d_alpha[i];
     double b = 0, c = 0;
     for (size_t j = 0; j < 3; j++)
       b += u[j]*d.d_beta_con[i][j];
     for (size_t j = 0; j < 3; j++)
       for (size_t k = 0; k < 3; k++)
         c += u[j]*u[k]*d.d_gamma_con[i][j][k];
-    c /= -2*u_0;
+    c /= -2*u_0_con;
     du_dt[i] = a+b+c;
   };
   return du_dt;
@@ -105,7 +105,7 @@ namespace detail
 ( const metric::MetricADMGeo& m_geo,
   const metric::MetricADMLorentz& m_Lorentz,
   const em::Fields& em_f,
-  double u_0,
+  double u_0_con,
   const Vec3& u
 )
 { Vec3 v {0, 0, 0};
@@ -113,7 +113,7 @@ namespace detail
     for (size_t l = 0; l < 3; l++)
       v[j] += m_geo.gamma_con[j][l]*u[l];
   // for (size_t j = 0; j < 3; j++)
-  //   v[j] /= u_0;
+  //   v[j] /= u_0_con_;
   Vec3 cross_v_B = cross(v, em_f.B);
 
   Vec3 force;
@@ -121,8 +121,8 @@ namespace detail
   { double elec = 0;
     for (size_t j = 0; j < 3; j++)
       elec += m_geo.alpha*m_Lorentz.gamma_cov[i][j]*em_f.D[j];
-    // force[i] = elec+m.sqrt_gamma/u_0*cross_vel_B[i];
-    force[i] = elec-m_Lorentz.sqrt_gamma/u_0*cross_v_B[i];
+    // force[i] = elec+m.sqrt_gamma/u_0_con_*cross_vel_B[i];
+    force[i] = elec-m_Lorentz.sqrt_gamma/u_0_con*cross_v_B[i];
   }
   return force;
 }
@@ -156,20 +156,20 @@ struct Problem
     if constexpr (particle::ChargedKind<Particle>)
     { const auto m = metric.template eval<true>(x);
       const auto d_m = metric.eval_derivatives_numerical(policy_fd, x);
-      const double u_0 = detail::u_0(m.geo, p.eps, u);
-      Vec3 du_dt = detail::rhs_u(m.geo, d_m, p.eps, u_0, u);
+      const double u_0_con_ = detail::u_0_con(m.geo, p.eps, u);
+      Vec3 du_dt = detail::rhs_u(m.geo, d_m, p.eps, u_0_con_, u);
       if (p.q_over_m)
         du_dt += p.q_over_m*detail::rhs_Lorentz(
-          m.geo, m.lorentz, em_field(m, x), u_0, u);
-      const Vec3 dx_dt = detail::rhs_x(m.geo, p.eps, u_0, u);
+          m.geo, m.lorentz, em_field(m, x), u_0_con_, u);
+      const Vec3 dx_dt = detail::rhs_x(m.geo, p.eps, u_0_con_, u);
       return {dx_dt, du_dt};
     }
     else
     { const auto m = metric.template eval<false>(x);
       const auto d_m = metric.eval_derivatives_numerical(policy_fd, x);
-      const double u_0 = detail::u_0(m, p.eps, u);
-      Vec3 du_dt = detail::rhs_u(m, d_m, p.eps, u_0, u);
-      const Vec3 dx_dt = detail::rhs_x(m, p.eps, u_0, u);
+      const double u_0_con_ = detail::u_0_con(m, p.eps, u);
+      Vec3 du_dt = detail::rhs_u(m, d_m, p.eps, u_0_con_, u);
+      const Vec3 dx_dt = detail::rhs_x(m, p.eps, u_0_con_, u);
       return {dx_dt, du_dt};
     }
   }
@@ -179,8 +179,8 @@ struct Problem
     const Vec3& u
   ) const
   { const auto m = metric.template eval<false>(x);
-    const double u_0 = detail::u_0(m, p.eps, u);
-    return detail::rhs_x(m, p.eps, u_0, u);
+    const double u_0_con_ = detail::u_0_con(m, p.eps, u);
+    return detail::rhs_x(m, p.eps, u_0_con_, u);
   }
 
   [[nodiscard]] Vec3 rhs_u
@@ -191,18 +191,18 @@ struct Problem
     if constexpr (particle::ChargedKind<Particle>)
     { const auto m = metric.template eval<true>(x);
       const auto d = metric.eval_derivatives_numerical(policy_fd, x);
-      const double u_0 = detail::u_0(m.geo, p.eps, u);
-      Vec3 du_dt = detail::rhs_u(m.geo, d, p.eps, u_0, u);
+      const double u_0_con_ = detail::u_0_con(m.geo, p.eps, u);
+      Vec3 du_dt = detail::rhs_u(m.geo, d, p.eps, u_0_con_, u);
       if (p.q_over_m)
         du_dt += p.q_over_m*detail::rhs_Lorentz(
-          m.geo, m.lorentz, em_field(m, x), u_0, u);
+          m.geo, m.lorentz, em_field(m, x), u_0_con_, u);
       return du_dt;
     }
     else
     { const auto m = metric.template eval<false>(x);
       const auto d = metric.eval_derivatives_numerical(policy_fd, x);
-      const double u_0 = detail::u_0(m, p.eps, u);
-      return detail::rhs_u(m, d, p.eps, u_0, u);
+      const double u_0_con_ = detail::u_0_con(m, p.eps, u);
+      return detail::rhs_u(m, d, p.eps, u_0_con_, u);
     }
   }
 };
