@@ -38,585 +38,57 @@
 
 
 \section*{Introduction}
-Test.\cite{Bacchini_2018}\cite{Bacchini_2019}
 
-\section{Geodesics}
+Investigating the behavior of particles in a background of curved spacetime requires being able to model their geodesics. For some known curved spacetime metrics, like the Schwarzschild metric and the Kerr metric, analytical orbits are known. However, most particle trajectories cannot be known analytically and have to be solved numerically. A scenario where this is needed is the modeling of plasmas near a black hole using kinetic codes like particle-in-cell (PIC). A common numerical framework for solving particle orbits in general relativity (GR) involves splitting the metric into spatial slices parameterized by time. This formalism is called the Arnowitt-Deser-Misner (ADM) formalism. Using this formalism, we implement an integration scheme that explicitly conserves the energy of the particle \cite{Bacchini_2018}\cite{Bacchini_2019} while solving its orbit. To run PIC simulations in GR, it is also necessary to solve the Maxwell equations in curved spacetime. We don't implement the full Vlasov-Maxwell, but instead limit ourselves to the Vlasov-Poisson system in which charges are approximated as static. We then apply the implemented method to the two-stream instability in the presence of a black hole.\\
+\\
+In section ..., we introduce the equations that are needed for solving geodesics in the ADM formalism. In section ..., we discuss the Maxwell equations in curved spacetime and give an analytical solution. In section ..., we discuss how curved spacetime affects the dynamics of plasma. This knowledge is then applied to the two-stream instability. In section ..., we discuss orbits around Schwarzschild and Kerr black holes for which analytic formulae exist. In section ..., we explain the integration scheme that is used for evolving particles along their geodesics. In section ..., we give an overview of the algorithm that is used for simulating particles with the Vlasov-Poisson system in curved spacetime, for one-dimensional simulations. In section ..., the results of our simulations are shown and discussed.
 
-The geodesic equation in general relativity is
-\begin{equation}
-\label{eq:geodesic_gr}
-    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = 0
-\end{equation}
-where $\tau$ is the proper time along the geodesic and $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols. This equation dictates the path followed by both massive and massless particles, given the spacetime metric and the initial conditions of the particles.
+\section{Geodesics in the ADM formalism}
 
-
-\subsection{The 3+1 formalism}
-
-A helpful way to numerically simulate the trajectories of particles in general relativity is by using the Arnowitt-Deser-Misner (ADM) formalism. In this formalism, the metric is written as
+Any spacetime metric $g_{\mu\nu}$ can be rewritten as \cite{rezzolla2013}
 \begin{equation}
     g_{\mu\nu} = 
     \begin{pmatrix}
     -\alpha^2+\beta_k\gamma^{kl}\beta_l & \beta_i\\
     \beta_j & \gamma_{ij}
-    \end{pmatrix}
-\end{equation}
-with $\gamma^{ij}$ defined as the inverse of $\gamma_{ij}$, both of which are symmetric because $g_{\mu\nu}$ is symmetric. We will use the notation $\beta^i \equiv \gamma^{ij} \beta_j$. The inverse metric $g^{\mu\nu}$ must satisfy the simple identity $g^{\mu\nu} g_{\nu\rho} = {\delta^\mu}_\rho$. The inverse metric that satisfies this identity is
-\begin{equation}
-    g^{\mu\nu} = 
-    \begin{pmatrix}
-    -1/\alpha^2 & \beta^i/\alpha^2\\
-    \beta^j/\alpha^2 & \gamma^{ij}-\beta^i\beta^j/\alpha^2
     \end{pmatrix}.
 \end{equation}
-This is checked in the following equation:
+Here $\alpha$ is the lapse function, $\beta_i$ is the shift vector, and $\gamma_{ij}$ is the spatial metric. We use the (-,+,+,+) metric convention, as well as $c=1$ for the speed of light. The decomposition is also referred to as the 3+1 split of the metric. The coordinate time $t \equiv x^0$ parameterizes 3D slices of space that have a metric $\gamma_{ij}(t)$. These slices are spacelike hypersurfaces $\Sigma_t$ on which the time coordinate $t$ is constant. The ADM formalism allows for particles and fields to live on the 3D slices of foliated space. The evolution of the particles and fields can then be parameterized by $t$. Computationally, this makes it much easier to model particle trajectories than using a 4D approach. Both massless and massive particles follow geodesics, which are constrained by the set of four equations
 \begin{equation}
-\begin{aligned}
-    g^{\mu\nu} g_{\nu\rho} &= \begin{pmatrix}
-    -1/\alpha^2 & \beta^j/\alpha^2\\
-    \beta^i/\alpha^2 & \gamma^{ij}-\beta^i\beta^j/\alpha^2
-    \end{pmatrix}
-    \begin{pmatrix}
-    -\alpha^2+\beta^l\beta_l & \beta_k\\
-    \beta_j & \gamma_{jk}
-    \end{pmatrix}\\
-    &= \begin{pmatrix}
-    1-\beta^l\beta_l/\alpha^2+\beta^j\beta_j/\alpha^2 & -\beta_k/\alpha^2+\beta^j\gamma_{jk}/\alpha^2\\
-    -\beta_i+\beta_i\beta^l\beta_l/\alpha^2+\gamma^{ij}\beta_j-\beta^i\beta^j\beta_j/\alpha^2 & \beta^i\beta_k/\alpha^2+\gamma^{ij}\gamma_{jk}-\beta^i\beta^j\gamma_{jk}/\alpha^2
-    \end{pmatrix}\\
-    &= \begin{pmatrix}
-    1 & 0\\
-    0 & {\delta^i}_k
-    \end{pmatrix}.
-\end{aligned}
+    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = 0.
 \end{equation}
-
-The task is to write the geodesic equation in the 3+1 formalism. To this end, let $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$ be the contravariant four-velocity of the particle. We also make use of the notation $t \equiv x^0$. To start, let us derive an expression for $\frac{\text{d}x^i}{\text{d}t}$:
+Here $\tau$ is the proper time along the geodesic and $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols. The contravariant four-velocity of the particle is defined as $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$. From the definition of the proper time along the geodesic, it can be shown that $u^0$ is constrained by the relation
 \begin{equation}
-\label{eq:dx/dt}
-\begin{aligned}
-    \frac{\text{d}x^i}{\text{d}t} &= \frac{\text{d}\tau}{\text{d}t} \frac{\text{d}x^i}{\text{d}\tau} = \frac{u^i}{u^0} = g^{i\mu} \frac{u_\mu}{u^0} = g^{i0} \frac{u_0}{u^0} + g^{ij} \frac{u_j}{u^0}\\
-    &= \frac{\beta^iu_0}{\alpha^2u^0} + \gamma^{ij}\frac{u_j}{u^0} - \frac{\beta^i\beta^ju_j}{\alpha^2u^0}\\
-    &= \gamma^{ij}\frac{u_j}{u^0} + \beta^i\frac{u_0-\beta^ju_j}{\alpha^2}\frac{1}{u^0}\\
-    &= \gamma^{ij}\frac{u_j}{u^0} - \beta^i\frac{u^0}{u^0}\\
-    &= \gamma^{ij}\frac{u_j}{u^0} - \beta^i.
-\end{aligned}
+    u^0 = \frac{\sqrt{\epsilon + u_i\gamma^{ij}u_j}}{\alpha}
 \end{equation}
-It is also possible to derive an expression for $u^0$ in function of $u_i$. The proper time along the trajectory of the geodesic adheres to the integral
+where $\epsilon = 0$ for massless particles and $\epsilon = 1$ for massive particles. This equation can also be rewritten as $u^\mu u_\mu = -\epsilon$, showing that the norm of the four-velocity $u_\mu$ is conserved. The definition of the four-velocity can be rewritten to get an equation for evolving the particle's position:
 \begin{equation}
-    \tau = \int \sqrt{-g_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\lambda} \frac{\text{d}x^\nu}{\text{d}\lambda}} \text{d}\lambda
+    \frac{\text{d}x^i}{\text{d}t} = \gamma^{ij}\frac{u_j}{u^0} - \beta^i.
 \end{equation}
-with $\lambda$ a parameter that parameterizes the geodesic. We can choose $\lambda=t$. Along a lightlike geodesic, the proper time does not increase and thus the left hand side of the equation is equal to a constant. Taking the derivative with respect to $t$, the above expression becomes
+The geodesic equation can be rewritten and expanded using the ADM formalism, resulting in an equation for evolving the particle's momentum:
 \begin{equation}
-    \epsilon\frac{\text{d}\tau}{\text{d}t} = \sqrt{-g_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}t} \frac{\text{d}x^\nu}{\text{d}t}}.
-\end{equation}
-The parameter $\epsilon$ is equal to $1$ for massive particles, which move along timelike curves, and equal to $0$ for massless particles, which move along lightlike curves. Taking the square and using equation \eqref{eq:dx/dt}, this expression further becomes
-\begin{equation}
-\begin{aligned}
-    \epsilon\frac{1}{(u^0)^2} = \epsilon\Big(\frac{\text{d}\tau}{\text{d}t}\Big)^2 &= -g_{00} - 2g_{0i}\frac{\text{d}x^i}{\text{d}t} - g_{ij} \frac{\text{d}x^i}{\text{d}t} \frac{\text{d}x^j}{\text{d}t}\\
-    &= \alpha^2 - \beta^i\beta_i - 2\beta_i\Big(\gamma^{ij}\frac{u_j}{u^0} - \beta^i\Big) - \gamma_{ij}\Big(\gamma^{ik}\frac{u_k}{u^0} - \beta^i\Big)\Big(\gamma^{jl}\frac{u_l}{u^0} - \beta^j\Big)\\
-    &= \alpha^2 - \beta^i\beta_i - \Big(2\beta^i\frac{u_i}{u^0} - 2\beta^i\beta_i\Big) - \Big(\frac{u_j}{u^0} - \beta_j\Big)\Big(\gamma^{jl}\frac{u_l}{u^0} - \beta^j\Big)\\
-    &= \alpha^2 - \beta^i\beta_i - \Big(2\beta^i\frac{u_i}{u^0} - 2\beta^i\beta_i\Big) - \Big(\frac{u_j\gamma^{jl}u_l}{(u^0)^2} - 2\beta^j\frac{u_j}{u^0} + \beta_j\beta^j\Big)\\
-    &= \alpha^2 - \frac{u_j\gamma^{jl}u_l}{(u^0)^2}\\
-    \Rightarrow (u^0)^2 &= \frac{\epsilon + u_i\gamma^{ij}u_j}{\alpha^2}\\
-    \Rightarrow u^0 &= \frac{\sqrt{\epsilon + u_i\gamma^{ij}u_j}}{\alpha}.
-\end{aligned}
-\end{equation}
-Before equation \eqref{eq:geodesic_gr} can be expanded using the ADM formalism, there is a relation between $u_0$ and $u^0$ that can be derived and that will be quite useful:
-\begin{equation}
-\label{eq:u_0}
-\begin{aligned}
-    u^0 &= g^{0\mu}u_\mu = -\frac{u_0}{\alpha^2} + \frac{\beta^iu_i}{\alpha^2}\\
-    \Rightarrow u_0 &= \beta^iu_i - \alpha^2u^0.
-\end{aligned}
-\end{equation}
-Another useful equation is one relating $u^i$ and $u_i$:
-\begin{equation}
-\label{eq:u^i}
-\begin{aligned}
-    u^i &= g^{i\mu}u_\mu = g^{i0}u_0 + g^{ij}u_j = \frac{\beta^i}{\alpha^2}\big(\beta^ju_j - \alpha^2u^0\big) + \Big(\gamma^{ij} - \frac{\beta^i\beta^j}{\alpha^2}\Big)u_j\\
-    \Rightarrow u^i &= \gamma^{ij}u_j - \beta^iu^0.
-\end{aligned}
-\end{equation}
-The daunting task of expanding the geodesic equation can now be begun. The geodesic equation can be rewritten in the following way:
-\begin{equation}
-\label{eq:geodesic_derivation_part_0}
-\begin{aligned}
-    \frac{\text{d}u^\rho}{\text{d}\tau} &= - \Gamma^\rho_{\mu\nu} u^\mu u^\nu\\
-    \Rightarrow u^0 \frac{\text{d}u^\rho}{\text{d}t} &= - (u^0)^2\Gamma^\rho_{00} - 2u^0\Gamma^\rho_{0j} u^j - \Gamma^\rho_{jk} u^ju^k\\
-    \Rightarrow g_{i\rho}\frac{\text{d}u^\rho}{\text{d}t} &= - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k\\
-    \Rightarrow \frac{\text{d}u_i}{\text{d}t} - u^\rho\frac{\text{d}g_{i\rho}}{\text{d}t} &= - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k \quad\text{(using the product rule of derivatives)}.
-\end{aligned}
-\end{equation}
-The term $u^\rho\frac{\text{d}g_{i\rho}}{\text{d}t}$ on the left-hand side can be expanded by using $\frac{\text{d}g_{i\rho}}{\text{d}t} = \frac{\text{d}x^\mu}{\text{d}t} \frac{\partial g^{i\rho}}{\partial\mu}$. The derivation of the geodesic equation can then be continued:
-\begin{equation}
-\label{eq:geodesic_derivation_part_1}
-\begin{aligned}
-    \frac{\text{d}u_i}{\text{d}t} - u^\rho\frac{u^\mu}{u^0}\partial_\mu g_{i\rho} &= - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k\\
-    \Rightarrow \frac{\text{d}u_i}{\text{d}t} &= u^0\partial_0g_{i0} + u^j\partial_0g_{ij} + u^j\partial_j g_{i0} + \frac{u^k u^j}{u^0}\partial_k g_{ij}\\
-    &\quad - u^0g_{i\rho}\Gamma^\rho_{00} - 2g_{i\rho}\Gamma^\rho_{0j} u^j - \frac{1}{u^0}g_{i\rho}\Gamma^\rho_{jk} u^ju^k\\
-    &= u^0\partial_0\beta_i + \big(\gamma^{jk}u_k - \beta^ju^0\big)\partial_0\gamma_{ij} + \big(\gamma^{jk}u_k - \beta^ju^0\big)\partial_j\beta_i\\
-    &\quad + \frac{1}{u^0}\big(\gamma^{jl}u_l - \beta^ju^0\big)\big(\gamma^{km}u_m - \beta^ku^0\big)\partial_k\gamma_{ij}\\
-    &\quad - u^0g_{i\rho}\Gamma^\rho_{00} - 2\big(\gamma^{jk}u_k - \beta^ju^0\big)g_{i\rho}\Gamma^\rho_{0j}\\
-    &\quad - \frac{1}{u^0}\big(\gamma^{jl}u_l - \beta^ju^0\big)\big(\gamma^{km}u_m - \beta^ku^0\big)g_{i\rho}\Gamma^\rho_{jk} \quad\text{(using equation \eqref{eq:u^i})}\\
-    &= u^0\big[\partial_0\beta_i - \beta^j\partial_0\gamma_{ij} - \beta^j\partial_j\beta_i + \beta^j\beta^k\partial_k\gamma_{ij} - g_{i\rho}\Gamma^\rho_{00} + 2\beta^jg_{i\rho}\Gamma^\rho_{0j} - \beta^j\beta^kg_{i\rho}\Gamma^\rho_{jk}\big]\\
-    &\quad + u_j\big[\gamma^{jk}\partial_0\gamma_{ik} + \gamma^{jk}\partial_k\beta_i - \gamma^{jl}\beta^k\partial_k\gamma_{il} - \gamma^{jl}\beta^k\partial_l\gamma_{ik} - 2\gamma^{jk}g_{i\rho}\Gamma^\rho_{0k} + 2\beta^k\gamma^{jl}g_{i\rho}\Gamma^\rho_{kl}\big]\\
-    &\quad + \frac{u_ju_k}{u^0}\big[\gamma^{jl}\gamma^{km}\partial_m\gamma_{il} -\gamma^{jl}\gamma^{km}g_{i\rho}\Gamma^\rho_{lm}\big].
-\end{aligned}
-\end{equation}
-The right-hand side of the last line of this equation consists of three parts. Before expanding these three parts one by one, it is instructive to first look at what $g_{i\rho}\Gamma^\rho_{\mu\nu}$ is. Using the formula for the Christoffel symbols gives the following result:
-\begin{equation}
-    g_{i\rho}\Gamma^\rho_{\mu\nu} = \frac{1}{2}g_{i\rho}g^{\rho\sigma}\big(\partial_\mu g_{\nu\sigma} + \partial_\nu g_{\mu\sigma} - \partial_\sigma g_{\mu\nu}\big) = \frac{1}{2} \big(\partial_\mu g_{\nu i} + \partial_\nu g_{\mu i} - \partial_i g_{\mu\nu}\big).
-\end{equation}
-Splitting this equation into the three cases $g_{i\rho}\Gamma^\rho_{00}$, $g_{i\rho}\Gamma^\rho_{0j}$, and $g_{i\rho}\Gamma^\rho_{jk}$ we find that
-\begin{equation}
-\begin{aligned}
-    \rightarrow g_{i\rho}\Gamma^\rho_{00} &= \frac{1}{2} \big(2\partial_0 g_{0i} - \partial_i g_{00}\big) = \partial_0\beta_i + \frac{1}{2}\partial_i(\alpha^2 - \beta^j\beta_j)\\
-    \rightarrow g_{i\rho}\Gamma^\rho_{0j} &= \frac{1}{2} \big(\partial_0 g_{ij} + \partial_j g_{0i} - \partial_i g_{0j}\big) = \frac{1}{2}\big(\partial_0\gamma_{ij} + \partial_j\beta_i - \partial_i\beta_j\big)\\
-    \rightarrow g_{i\rho}\Gamma^\rho_{jk} &= \frac{1}{2} \big(\partial_j g_{ik} + \partial_k g_{ij} - \partial_i g_{jk}\big) = \frac{1}{2} \big(\partial_j \gamma_{ik} + \partial_k \gamma_{ij} - \partial_i \gamma_{jk}\big).
-\end{aligned}
-\end{equation}
-We now expand the first part of the final line of equation \eqref{eq:geodesic_derivation_part_1} (the terms proportional to $u^0$). In the following derivation, colored terms within the same line that have the same color cancel each other out:
-\begin{equation}
-\begin{aligned}
-    &u^0\big[\partial_0\beta_i - \beta^j\partial_0\gamma_{ij} - \beta^j\partial_j\beta_i + \beta^j\beta^k\partial_k\gamma_{ij} - g_{i\rho}\Gamma^\rho_{00} + 2\beta^jg_{i\rho}\Gamma^\rho_{0j} - \beta^j\beta^kg_{i\rho}\Gamma^\rho_{jk}\big]\\
-    &= u^0\Big[\textcolor{blue}{\partial_0\beta_i} - \textcolor{green}{\beta^j\partial_0\gamma_{ij}} - \textcolor{purple}{\beta^j\partial_j\beta_i} + \textcolor{red}{\beta^j\beta^k\partial_k\gamma_{ij}} - \textcolor{blue}{\partial_0\beta_i} - \frac{1}{2}\partial_i(\alpha^2 - \beta^j\beta_j) + \beta^j\big(\textcolor{green}{\partial_0\gamma_{ij}} + \textcolor{purple}{\partial_j\beta_i} - \partial_i\beta_j\big)\\
-    &\quad\;\;-\beta^j\beta^k\Big(\textcolor{red}{\partial_j \gamma_{ik}} - \frac{1}{2}\partial_i \gamma_{jk}\Big)\Big]\\
-    &= u^0 \big[-\alpha\partial_i\alpha + \frac{1}{2}\beta^j\partial_i\beta_j - \frac{1}{2}\beta_j\partial_i\beta^j - \frac{1}{2}\beta^j\beta^k\partial_i\gamma_{jk}\big]\\
-    &= u^0 \big[-\alpha\partial_i\alpha + \textcolor{blue}{\frac{1}{2}\beta^j\gamma_{jk}\partial_i\beta^k} + \textcolor{green}{\frac{1}{2}\beta^j\beta^k\partial_i\gamma_{jk}} - \textcolor{blue}{\frac{1}{2}\beta_j\partial_i\beta^j} - \textcolor{green}{\frac{1}{2}\beta^j\beta^k\partial_i\gamma_{jk}}\big]\\
-    &= -\alpha u^0\partial_i\alpha.
-\end{aligned}
-\end{equation}
-The second part of equation \eqref{eq:geodesic_derivation_part_1} (the terms proportional to $u^j$) become
-\begin{equation}
-\begin{aligned}
-    &u_j\big[\gamma^{jk}\partial_0\gamma_{ik} + \gamma^{jk}\partial_k\beta_i - \gamma^{jl}\beta^k\partial_k\gamma_{il} - \gamma^{jl}\beta^k\partial_l\gamma_{ik} - 2\gamma^{jk}g_{i\rho}\Gamma^\rho_{0k} + 2\beta^k\gamma^{jl}g_{i\rho}\Gamma^\rho_{kl}\big]\\
-    &= u_j\Big[\textcolor{blue}{\gamma^{jk}\partial_0\gamma_{ik}} + \textcolor{green}{\gamma^{jk}\partial_k\beta_i} - \textcolor{purple}{\gamma^{jl}\beta^k\partial_k\gamma_{il}} - \textcolor{red}{\gamma^{jl}\beta^k\partial_l\gamma_{ik}} - \gamma^{jk}\big(\textcolor{blue}{\partial_0\gamma_{ik}} + \textcolor{green}{\partial_k\beta_i} - \partial_i\beta_k\big) + \beta^k\gamma^{jl}\big(\textcolor{purple}{\partial_k \gamma_{il}} + \textcolor{red}{\partial_l \gamma_{ik}} - \partial_i \gamma_{kl}\big)\Big]\\
-    &= u_j \big[\gamma^{jk}\partial_i(\beta^l\gamma_{kl}) - \beta^k\gamma^{jl}\partial_i \gamma_{kl}\big]\\
-    &= u_j\partial_i\beta^j.
-\end{aligned}
-\end{equation}
-The final part of equation \eqref{eq:geodesic_derivation_part_1} (the terms proportional to $\frac{1}{u^0}u^ju^k$) is
-\begin{equation}
-\begin{aligned}
-    &\frac{u_ju_k}{u^0}\big[\gamma^{jl}\gamma^{km}\partial_m\gamma_{il} -\gamma^{jl}\gamma^{km}g_{i\rho}\Gamma^\rho_{lm}\big]\\
-    &= \frac{u_ju_k}{u^0}\gamma^{jl}\gamma^{km}\Big[\textcolor{blue}{\partial_m\gamma_{il}} - \textcolor{blue}{\partial_l \gamma_{im}} + \frac{1}{2}\partial_i\gamma_{lm}\Big]\\
-    &= \frac{u_ju_k}{2u^0}\gamma^{jl}\gamma^{km}\partial_i\gamma_{lm}\\
-    &= \frac{u_ju_k}{2u^0}\gamma^{jl} \big[\partial_i(\gamma^{km}\gamma_{lm}) - \gamma_{lm}\partial_i\gamma^{km}\big]\\
-    &= -\frac{u_ju_k}{2u^0}\partial_i\gamma^{jk} \quad\text{(using $\partial_i{\delta^k}_l = 0$)}.
-\end{aligned}
-\end{equation}
-((The details of the last step need to be resolved.)) The final result of this subsection is achieved by putting the three pieces back together. The geodesic equation in the ADM formalism is thus
-\begin{equation}
-\label{eq:geodesic_3+1}
     \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_ju_k}{2u^0}\partial_i\gamma^{jk}.
 \end{equation}
+Given initial conditions $x^i$ and $u_i$, the last three equations are sufficient to be able to evolve both massive and massless particles through the spacetime with metric $g_{\mu\nu}$.
 
 
-\subsection{The Electromagnetic force}
+\section{Maxwell equations in curved spacetime}
 
-When adding the electromagnetic force, the geodesic equation becomes
-\begin{equation}
-\label{eq:geodesic_gr_lorentz}
-    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = \frac{q}{m}g_{\mu\nu}F^{\rho\mu}\frac{\text{d}x^\nu}{\text{d}\tau}
-\end{equation}
-where $F^{\mu\nu}$ is the electromagnetic field tensor. Building on the work done in the previous subsection, this geodesic equation can be written in the ADM formalism:
-\begin{equation}
-\begin{aligned}
-    u^0\frac{\text{d}u^\rho}{\text{d}t} &= -\Gamma^\rho_{\mu\nu} u^\mu u^\nu + \frac{q}{m}g_{\mu\nu}F^{\rho\mu}u^\nu\\
-    \Rightarrow g_{i\rho}\frac{\text{d}u^\rho}{\text{d}t} &= -g_{i\rho}\Gamma^\rho_{\mu\nu} \frac{u^\mu u^\nu}{u^0} + \frac{q}{m}g_{i\rho}g_{\mu\nu}F^{\rho\mu} \frac{u^\nu}{u^0}\\
-    \Rightarrow \frac{\text{d}u_i}{\text{d}t} &= -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_j u_k}{2u^0}\partial_i\gamma^{jk} + \frac{q}{m}F_{i\mu}\frac{u^\mu}{u^0}.
-\end{aligned}
-\end{equation}
-The electromagnetic field tensor might not always be easy to obtain, in which case it might be better to write the geodesic equation in terms of the electric and magnetic field vectors. To do this, we use the following definitions:
-\begin{equation}
-\begin{aligned}
-    D^i &= \alpha F^{0i}\\
-    H_i &= \frac{1}{2}\alpha \sqrt{\gamma}\,\varepsilon_{ijk}F^{jk}\\
-    E_i &= F_{i0}\\
-    B^i &= \frac{1}{2}\sqrt{\gamma}^{-1}\varepsilon^{ijk}F_{jk}.
-\end{aligned}
-\end{equation}
-Here $\gamma$ is the determinant of $\gamma_{ij}$ and $\varepsilon_{ijk}$ is the Levi-Civita symbol. Multiplying by $\varepsilon_{ilm}$ and using the property $\varepsilon_{ilm}\varepsilon^{ijk} = {\delta_l}^j {\delta_m}^k - {\delta_l}^k {\delta_m}^j$, the defining relation of $B^i$ becomes
-\begin{equation}
-\begin{aligned}
-    2\sqrt{\gamma}\,\varepsilon_{ilm}B^i &= \big({\delta_l}^j {\delta_m}^k - {\delta_l}^k {\delta_m}^j\big) F_{jk}\\
-    \Rightarrow \sqrt{\gamma}\,\varepsilon_{ijk}B^i &= F_{jk} \quad\text{(using $F_{\mu\nu} = -F_{\nu\mu}$)}.
-\end{aligned}
-\end{equation}
-The electromagnetic term in the geodesic equation can then be written as
-\begin{equation}
-\begin{aligned}
-    \frac{q}{m}F_{i\mu}\frac{u^\mu}{u^0} &= \frac{q}{m}F_{i0} + \frac{q}{m}F_{ij}\frac{u^j}{u^0}\\
-    &= \frac{q}{m}F_{i0} - \frac{q}{m}F_{ij}\beta^j + \frac{q}{m}F_{ij}\frac{\gamma^{jl}u_l}{u^0} \quad\text{(using equation \eqref{eq:u^i})}\\
-    &= \frac{q}{m}F_{i0} - \frac{q}{m}F_{ij}\beta^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
-    &= -\frac{q}{m}\alpha^2\big(F_{i0}g^{00} + F_{ij}g^{j0}\big) + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
-    &= -\frac{q}{m}\alpha^2{F_i}^0 + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
-    &= -\frac{q}{m}\alpha^2\big(g_{i0}F^{00} + g_{ij}F^{j0}\big) + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k\\
-    &= \frac{q}{m}\alpha^2g_{ij}F^{0j} + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k \quad \text{(using $F^{00} = 0$ and $F^{j0} = -F^{0j}$)}\\
-    &= \frac{q}{m}\alpha\gamma_{ij}D^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k
-\end{aligned}
-\end{equation}
-The geodesic equation in the ADM formalism in terms of $D^i$ and $B^i$ is thus
-\begin{equation}
-    \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_j u_k}{2u^0}\partial_i\gamma^{jk} + \frac{q}{m}\alpha\gamma_{ij}D^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k.
-\end{equation}
-
-
-\subsection{The Kerr metric in spherical coordinates}
-
-The Kerr metric describes a rotating black hole in general relativity. In spherical coordinates, the metric can be written as
-\begin{equation}
-    \text{d}s^2 = -\Big(1 - \frac{2Mr}{\rho^2}\Big)\text{d}t^2 - \frac{4Mra\sin^2\theta}{\rho^2}\text{d}\phi\text{d}t + \frac{\rho^2}{\Delta}\text{d}r^2 + \rho^2\text{d}\theta^2 + \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta\,\text{d}\phi^2
-\end{equation}
-with $\;\rho^2 \equiv r^2 + a^2 \cos^2\theta\;$ and $\;\Delta \equiv r^2 - 2Mr + a^2$. We see that, in spherical coordinates, the spatial part of the metric is diagonal:
-\begin{equation}
-    \gamma_{ij} = \begin{pmatrix}
-    \gamma_{rr} & \gamma_{r\theta} & \gamma_{r\phi}\\
-    \gamma_{\theta r} & \gamma_{\theta\theta} & \gamma_{\theta\phi}\\
-    \gamma_{\phi r} & \gamma_{\phi\theta} & \gamma_{\phi\phi}\\
-    \end{pmatrix} = \begin{pmatrix}
-    \frac{\rho^2}{\Delta} & 0 & 0\\
-    0 & \rho^2 & 0\\
-    0 & 0 & \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta
-    \end{pmatrix}.
-\end{equation}
-The metric $\gamma^{ij}$ with the indices up is obtained by taking the inverse, which is easy to do since we have chosen coordinates in which the metric is diagonal:
-\begin{equation}
-    \gamma^{ij} = \begin{pmatrix}
-    \frac{\Delta}{\rho^2} & 0 & 0\\
-    0 & \frac{1}{\rho^2} & 0\\
-    0 & 0 & \frac{\rho^2}{\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big)\sin^2\theta}
-    \end{pmatrix}.
-\end{equation}
-We can also see that $\beta_i$ is
-\begin{equation}
-    \beta_i = \begin{pmatrix}
-    \beta_r\\
-    \beta_\theta\\
-    \beta_\phi
-    \end{pmatrix} = \begin{pmatrix}
-    0\\
-    0\\
-    -\frac{2Mra\sin^2\theta}{\rho^2}
-    \end{pmatrix}.
-\end{equation}
-$\beta^i$ with an upper index can be obtained by multiplying $\beta_j$ with $\gamma^{ij}$:
-\begin{equation}
-    \beta^i = \begin{pmatrix}
-    0\\
-    0\\
-    \beta_\phi \gamma^{\phi\phi}
-    \end{pmatrix} = \begin{pmatrix}
-    0\\
-    0\\
-    -\frac{2Mra}{\sigma^2}
-    \end{pmatrix}.
-\end{equation}
-Here we introduce the notation $\sigma^2 \equiv \rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta$. Finding $\alpha^2$ for the Kerr metric requires a bit more work. Comparing the Kerr metric to the decomposition of the metric in the ADM formalism, we find that
-\begin{equation}
-\begin{aligned}
-    -\alpha^2 + \beta_i\gamma^{ij}\beta_j &= -\Big(1 - \frac{2Mr}{\rho^2}\Big)\\
-    \Rightarrow \alpha^2 &= \Big(1 - \frac{2Mr}{\rho^2}\Big) + \beta_\phi^2\gamma^{\phi\phi}\\
-    &= \Big(1 - \frac{2Mr}{\rho^2}\Big) + \frac{4M^2r^2a^2\sin^4\theta}{\rho^4 \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta}\\
-    &= \Big(1 - \frac{2Mr}{\rho^2}\Big) + \frac{4M^2r^2a^2\sin^2\theta}{\rho^2\Big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\Big)}\\
-    &= \frac{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta - 2Mr\big(r^2 + a^2\big)}{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta}\\
-    &= \frac{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta - 2Mr\big(\rho^2 + a^2\sin^2\theta\big)}{\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta} \quad\text{(using $\rho^2 = r^2 + a^2\cos^2\theta$)}\\
-    &= \frac{\rho^2\Delta}{\sigma^2}.
-\end{aligned}
-\end{equation}
-To simulate the particle trajectories, we also need the spatial derivatives of $\alpha^2$, $\beta^i$, and $\gamma^{ij}$. The derivative $\partial_r\alpha^2$ is
-\begin{equation}
-\begin{aligned}
-    \partial_r\alpha^2 &= \frac{\Delta}{\sigma^2}\partial_r\rho^2 + \frac{\rho^2}{\sigma^2}\partial_r\Delta - \frac{\rho^2\Delta}{\sigma^4}\partial_r\sigma^2\\
-    &= \frac{\Delta}{\sigma^2}(2r) + \frac{\rho^2}{\sigma^2}(2r-2M) - \frac{\rho^2\Delta}{\sigma^4}\big(2r\rho^2 + 2r^3 + 2ra^2 + 2Ma^2\sin^2\theta\big)\\
-    &= \frac{\Delta}{\sigma^2}(2r) + \frac{\rho^2}{\sigma^2}(2r-2M) - \frac{\rho^2\Delta}{\sigma^4}\big(4r^3 + 2ra^2\cos^2\theta + 2ra^2 + 2Ma^2\sin^2\theta\big)\\
-    &= \frac{2}{\sigma^4}\Big[\Delta\sigma^2r + \rho^2\sigma^2(r-M) - \rho^2\Delta\big(2r^3 + ra^2\cos^2\theta + ra^2 + Ma^2\sin^2\theta\big)\Big]\\
-    &= \frac{2}{\sigma^4}\Big[\big(\rho^2r^2 + \textcolor{blue}{\rho^2a^2} + 2Mra^2\sin^2\theta\big)\Delta r + \rho^2\sigma^2(r-M) - \rho^2\Delta\big(2r^3 + ra^2\cos^2\theta + \textcolor{blue}{ra^2} + Ma^2\sin^2\theta\big)\Big]\\
-    &= \frac{2}{\sigma^4}\Big[\big(-\rho^2r^3 - \rho^2ra^2\cos^2\theta + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)\Delta + \rho^2\sigma^2(r-M)\Big]\\
-    &= \frac{2}{\sigma^4}\Big[\big(-\rho^2r^3 - \rho^2ra^2\cos^2\theta + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)\big(r^2 - 2Mr + a^2\big)\\
-    &\qquad + \rho^2\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big)(r-M)\Big]\\
-    &= \frac{2}{\sigma^4}\Big[\big(-\textcolor{purple}{r^5 - r^3a^2\cos^2\theta} - \textcolor{blue}{r^3a^2\cos^2\theta - ra^4\cos^4\theta} + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)r^2\\
-    &\qquad - \big(-r^5 - \textcolor{yellow}{r^3a^2\cos^2\theta} - r^3a^2\cos^2\theta - ra^4\cos^4\theta + Mr^2a^2\sin^2\theta - \textcolor{cyan}{Ma^4\sin^2\theta\cos^2\theta}\big)2Mr\\
-    &\qquad + \big(-\textcolor{green}{r^5 - r^3a^2\cos^2\theta} - \textcolor{red}{r^3a^2\cos^2\theta - ra^4\cos^4\theta} + Mr^2a^2\sin^2\theta - Ma^4\sin^2\theta\cos^2\theta\big)a^2\\
-    &\qquad + \big(\textcolor{purple}{r^4 + r^2a^2\cos^2\theta} + \textcolor{green}{r^2a^2 + a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)r^3\\
-    &\qquad + \big(\textcolor{blue}{r^4 + r^2a^2\cos^2\theta} + \textcolor{red}{r^2a^2 + a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)ra^2\cos^2\theta\\
-    &\qquad - \big(r^4 + \textcolor{yellow}{r^2a^2\cos^2\theta} + r^2a^2 + a^4\cos^2\theta + 2Mra^2\sin^2\theta\big)Mr^2\\
-    &\qquad - \big(\textcolor{yellow}{r^4} + r^2a^2\cos^2\theta + r^2a^2 + a^4\cos^2\theta + \textcolor{cyan}{2Mra^2\sin^2\theta}\big)Ma^2\cos^2\theta\Big]\\
-    &= \frac{2M}{\sigma^4}\Big[r^6 + r^4a^2(2\sin^2\theta + \cos^2\theta) - 4Mr^3a^2\sin^2\theta + r^2a^4(\sin^2\theta - \cos^2\theta) - a^6\cos^2\theta\Big].
-\end{aligned}
-\end{equation}
-The derivative $\partial_\theta\alpha^2$ is
-\begin{equation}
-\begin{aligned}
-    \partial_\theta\alpha^2 &= \frac{\Delta}{\sigma^2}\partial_\theta\rho^2 - \frac{\rho^2\Delta}{\sigma^4}\partial_\theta\sigma^2\\
-    &= \frac{\Delta}{\sigma^4}\big[\sigma^2\partial_\theta\rho^2 - \rho^2\partial_\theta\sigma^2\big]\\
-    &= \frac{\Delta}{\sigma^4}\Big[-2a^2\sin\theta\cos\theta\big(\textcolor{purple}{r^4} + \textcolor{blue}{r^2a^2\cos^2\theta} + \textcolor{cyan}{r^2a^2} + \textcolor{green}{a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)\\
-    &\qquad - r^2\big(-\textcolor{purple}{2r^2a^2\sin\theta\cos\theta} - \textcolor{cyan}{2a^4\sin\theta\cos\theta} + 4Mra^2\sin\theta\cos\theta\big)\\
-    &\qquad - a^2\cos^2\theta\big(-\textcolor{blue}{2r^2a^2\sin\theta\cos\theta} - \textcolor{green}{2a^4\sin\theta\cos\theta} + 4Mra^2\sin\theta\cos\theta\big)\Big]\\
-    &= \frac{\Delta}{\sigma^4}\Big[-4Mra^4\sin\theta\cos\theta - 4Mr^3a^2\sin\theta\cos\theta\Big] = -4Mra^2(r^2 + a^2)\sin\theta\cos\theta\frac{\Delta}{\sigma^4}.
-\end{aligned}
-\end{equation}
-The derivative $\partial_\phi\alpha^2$ is equal to zero. The metric does not depend on the coordinate $\phi$. The spatial derivatives of the non-zero component of $\beta^i$ are
-\begin{equation}
-\begin{aligned}
-    \rightarrow \partial_r\beta^\phi &= -\frac{2Ma}{\sigma^2} + \frac{2Mra}{\sigma^4}\partial_r\sigma^2\\
-    &= -\frac{2Ma}{\sigma^4}\Big[\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big) - r\big(r^2\partial_r\rho^2 + 2r\rho^2 + a^2\partial_r\rho^2 + 2Ma^2\sin^2\theta\big)\Big]\\
-    &= -\frac{2Ma}{\sigma^4}\Big[\big(r^4 + r^2a^2\cos^2\theta + r^2a^2 + a^4\cos^2\theta + \textcolor{blue}{2Mra^2\sin^2\theta}\big) - r\big(4r^3 + 2ra^2\cos^2\theta + 2ra^2 + \textcolor{blue}{2Ma^2\sin^2\theta}\big)\Big]\\
-    &= -\frac{2Ma}{\sigma^4}\big[-3r^4 - r^2a^2\cos^2\theta - r^2a^2 + a^4\cos^2\theta\big]\\
-    \rightarrow \partial_\theta\beta^\phi &= \frac{2Mra}{\sigma^4} \partial_\theta\sigma^2\\
-    &= \frac{2Mra}{\sigma^4}\big[r^2\partial_\theta\rho^2 + a^2\partial_\theta\rho^2 + 4Mra^2\sin\theta\cos\theta\big]\\
-    &= \frac{2Mra}{\sigma^4}\big[-2r^2a^2\sin\theta\cos\theta - 2a^4\sin\theta\cos\theta + 4Mra^2\sin\theta\cos\theta\big]\\
-    &= -\frac{4Mra^3\Delta}{\sigma^4}\sin\theta\cos\theta\\
-    \rightarrow \partial_\phi\beta^\phi &= 0
-\end{aligned}
-\end{equation}
-The spatial derivatives of $\gamma^{rr}$ are
-\begin{equation}
-\begin{aligned}
-    \rightarrow \partial_r\gamma^{rr} &= \frac{1}{\rho^4}\big[\rho^2\partial_r\Delta - \Delta\partial_r\rho^2\big]\\
-    &= \frac{1}{\rho^4}\Big[\big(r^2 + a^2\cos^2\theta\big)(2r - 2M) - \big(r^2 - 2Mr + a^2\big)2r\Big]\\
-    &= \frac{2}{\rho^4}\Big[ra^2\cos^2\theta + Mr^2 - Ma^2\cos^2\theta - ra^2\Big]\\
-    &= \frac{2}{\rho^4}\Big[(r-M)a^2\cos^2\theta + (Mr-a^2)r\Big]\\
-    \rightarrow \partial_\theta\gamma^{rr} &= -\frac{\Delta}{\rho^4}\partial_\theta\rho^2\\
-    &= \frac{2a^2\Delta}{\rho^4}\sin\theta\cos\theta\\
-    \rightarrow \partial_\phi\gamma^{rr} &= 0.
-\end{aligned}
-\end{equation}
-The spatial derivatives of $\gamma^{\theta\theta}$ are
-\begin{equation}
-\begin{aligned}
-    \rightarrow \partial_r\gamma^{\theta\theta} &= -\frac{1}{\rho^4}\partial_r\rho^2\\
-    &= -\frac{2r}{\rho^4}\\
-    \rightarrow \partial_\theta\gamma^{\theta\theta} &= -\frac{1}{\rho^4}\partial_\theta\rho^2\\
-    &= \frac{2a^2}{\rho^4}\sin\theta\cos\theta\\
-    \rightarrow \partial_\phi\gamma^{\theta\theta} &= 0.
-\end{aligned}
-\end{equation}
-The spatial derivatives of $\gamma^{\phi\phi}$ are
-\begin{equation}
-\begin{aligned}
-    \rightarrow \partial_r\gamma^{\phi\phi} &= \frac{1}{\sigma^4\sin^2\theta}\big[\sigma^2\partial_r\rho^2 - \rho^2\partial_r\sigma^2\big]\\
-    &= \frac{1}{\sigma^4\sin^2\theta} \Big[2r\big(\rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta\big) - \rho^2\big(4r^3 + 2ra^2\cos^2\theta + 2ra^2 + 2Ma^2\sin^2\theta\big)\Big]\\
-    &= \frac{1}{\sigma^4\sin^2\theta} \Big[2r\big(r^4 + \textcolor{purple}{r^2a^2\cos^2\theta + r^2a^2} + \textcolor{blue}{a^4\cos^2\theta} + 2Mra^2\sin^2\theta\big)\\
-    &\qquad\qquad\quad - r^2\big(4r^3 + \textcolor{purple}{2ra^2\cos^2\theta + 2ra^2} + 2Ma^2\sin^2\theta\big)\\
-    &\qquad\qquad\quad - a^2\cos^2\theta\big(4r^3 + 2ra^2\cos^2\theta + \textcolor{blue}{2ra^2} + 2Ma^2\sin^2\theta\big)\Big]\\
-    &= -\frac{2}{\sigma^4\sin^2\theta} \Big[r^2\big(r^3 - Ma^2\sin^2\theta\big) + a^2\cos^2\theta\big(2r^3 + ra^2\cos^2\theta + Ma^2\sin^2\theta\big)\Big]\\
-    \rightarrow \partial_\theta\gamma^{\phi\phi} &= \frac{1}{\sigma^4\sin^3\theta}\big[\sigma^2\sin\theta\,\partial_\theta\rho^2 - \rho^2\sin\theta\,\partial_\theta\sigma^2 - 2\rho^2\sigma^2\cos\theta\big]\\
-    &= \frac{\partial_\theta\alpha^2}{\Delta\sin^2\theta} - \frac{2\rho^2\cos\theta}{\sigma^2\sin^3\theta}\\
-    &= -4Mra^2(r^2 + a^2)\frac{\cos\theta}{\sigma^4\sin\theta} - \frac{2\rho^2\cos\theta}{\sigma^2\sin^3\theta}\\
-    &= -\frac{2\cos\theta}{\sigma^4\sin^3\theta}\Big[2Mra^2\sin^2\theta\,(r^2 + a^2) + \rho^2\sigma^2\Big]\\
-    \rightarrow \partial_\phi\gamma^{\phi\phi} &= 0.
-\end{aligned}
-\end{equation}
-To summarize, the components of the metric and their non-zero derivatives are:
-\begin{equation}
-\begin{aligned}
-    &\alpha^2 = \frac{\rho^2\Delta}{\sigma^2},\qquad \beta^i = \begin{pmatrix}
-    0\\
-    0\\
-    -\frac{2Mra}{\sigma^2}
-    \end{pmatrix},\qquad \gamma^{ij} = \begin{pmatrix}
-    \frac{\Delta}{\rho^2} & 0 & 0\\
-    0 & \frac{1}{\rho^2} & 0\\
-    0 & 0 & \frac{\rho^2}{\sigma^2\sin^2\theta}
-    \end{pmatrix},\\
-    &\partial_r\alpha^2 = \frac{2M}{\sigma^4}\Big[r^6 + r^4a^2(2\sin^2\theta + \cos^2\theta) - 4Mr^3a^2\sin^2\theta + r^2a^4(\sin^2\theta - \cos^2\theta) - a^6\cos^2\theta\Big],\\
-    &\partial_\theta\alpha^2 = -4Mra^2(r^2 + a^2)\sin\theta\cos\theta\frac{\Delta}{\sigma^4},\\
-    &\partial_r\beta^\phi = -\frac{2Ma}{\sigma^4}\big[-3r^4 - r^2a^2\cos^2\theta - r^2a^2 + a^4\cos^2\theta\big],\\
-    &\partial_\theta\beta^\phi = -\frac{4Mra^3\Delta}{\sigma^4}\sin\theta\cos\theta,\\
-    &\partial_r\gamma^{rr} = \frac{2}{\rho^4}\Big[(r-M)a^2\cos^2\theta + (Mr-a^2)r\Big],\hspace{30pt} \partial_\theta\gamma^{rr} = \frac{2a^2\Delta}{\rho^4}\sin\theta\cos\theta,\\
-    &\partial_r\gamma^{\theta\theta} = -\frac{2r}{\rho^4},\hspace{165pt} \partial_\theta\gamma^{\theta\theta} = \frac{2a^2}{\rho^4}\sin\theta\cos\theta,\\
-    &\partial_r\gamma^{\phi\phi} = -\frac{2}{\sigma^4\sin^2\theta} \Big[r^2\big(r^3 - Ma^2\sin^2\theta\big) + a^2\cos^2\theta\big(2r^3 + ra^2\cos^2\theta + Ma^2\sin^2\theta\big)\Big],\\
-    &\partial_\theta\gamma^{\phi\phi} = -\frac{2\cos\theta}{\sigma^4\sin^3\theta}\Big[2Mra^2\sin^2\theta\,(r^2 + a^2) + \rho^2\sigma^2\Big].
-\end{aligned}
-\end{equation}
-
-
-\subsection{The Kerr metric in Kerr-Schild coordinates}
-
-The Kerr-Schild form of the Kerr metric is
-\begin{equation}
-    g_{\mu\nu} = \eta_{\mu\nu} + f k_\mu k_\nu \quad\text{with}\quad f\equiv\frac{2Mr^3}{r^4+a^2z^2} \quad\text{and}\quad k_\mu = \Big(1,\; \frac{rx+ay}{r^2+a^2},\; \frac{ry-ax}{r^2+a^2},\; \frac{z}{r}\Big)
-\end{equation}
-where $r$ is defined by the relation $\frac{x^2+y^2}{r^2+a^2} + \frac{z^2}{r^2} = 1$. In the limit that $a \to 0$, these coordinates become standard Cartesian coordinates. The formula for the parameter $r$ can be rewritten as
-\begin{equation}
-    r^2 = \frac{1}{2}\Big(x^2 + y^2 + z^2 - a^2 + \sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}\,\Big)
-\end{equation}
-A helpful quantity to derive is
-\begin{equation}
-\begin{aligned}
-    k_i\delta^{ij}k_j &= k_1^2 + k_2^2 + k_3^2\\
-    &= \frac{(rx+ay)^2}{(r^2+a^2)^2} + \frac{(ry-ax)^2}{(r^2+a^2)^2} + \frac{z^2}{r^2}\\
-    &= \frac{(rx+ay)^2 + (ry-ax)^2}{(r^2+a^2)^2} + 1 - \frac{x^2+y^2}{r^2+a^2} \quad\text{(using the definition of $r$)}\\
-    &= 1 + \frac{(r^2+a^2)(x^2+y^2) - (r^2+a^2)(x^2+y^2)}{(r^2+a^2)^2r^2}\\
-    &= 1.
-\end{aligned}
-\end{equation}
-The four-vector $k_\mu$ is thus a null-vector. The spatial component $\gamma_{ij}$ and its inverse $\gamma^{ij}$ are
-\begin{equation}
-\begin{aligned}
-    \gamma_{ij} &= \delta_{ij} + f k_i k_j\\
-    \gamma^{ij} &= \frac{1}{\gamma} \text{adj}(\gamma_{ij}) \quad\text{(where we take the adjugate matrix)}\\
-    &= \frac{1}{\gamma}\begin{pmatrix}
-    (1+fk_2^2)(1+fk_3^2)-f^2k_2^2k_3^3 & -(1+fk_3^2)fk_1k_2+f^2k_1k_2k_3^2 & f^2k_1k_2^2k_3-(1+fk_2^2)fk_1k_3\\
-    -(1+fk_3^2)fk_1k_2+f^2k_1k_2k_3^2 & (1+fk_1^2)(1+fk_3^2)-f^2k_1^2k_3^3 & -(1+fk_1^2)fk_2k_3+f^2k_1^2k_2k_3\\
-    f^2k_1k_2^2k_3-(1+fk_2^2)fk_1k_3 & -(1+fk_1^2)fk_2k_3+f^2k_1^2k_2k_3 & (1+fk_1^2)(1+fk_2^2)-f^2k_1^2k_2^3
-    \end{pmatrix}\\
-    &= \frac{1}{\gamma}\begin{pmatrix}
-    1+f(k_2^2+k_3^2) & -fk_1k_2 & -fk_1k_3\\
-    -fk_1k_2 & 1+f(k_1^2+k_3^2) & -fk_2k_3\\
-    -fk_1k_3 & -fk_2k_3 & 1+f(k_1^2+k_2^2)
-    \end{pmatrix}\\
-    &= \frac{1}{\gamma}\big[(1+fk_lk^l)\delta^{ij} - fk^ik^j\big]\\
-    &= \frac{1}{\gamma}\big[(1+f)\delta^{ij} - fk^ik^j\big].
-\end{aligned}
-\end{equation}
-In the last line of this equation, we introduce $k^i$ with an upper index, of which the components are identical to $k_i$. More formally, we use $k^\mu \equiv \eta^{\mu\nu}k_\nu$. The determinant $\gamma$ can be computed as well:
-\begin{equation}
-\begin{aligned}
-    \gamma &= \gamma_{11}(\gamma_{22}\gamma_{33}-\gamma_{23}\gamma_{32}) - \gamma_{12}(\gamma_{21}\gamma_{33}-\gamma_{23}\gamma_{31}) + \gamma_{13}(\gamma_{21}\gamma_{32}-\gamma_{22}\gamma_{32})\\
-    &= (1+fk_1^2)\big(1+f(k_2^2+k_3^2)\big) + f^2k_1^2k_2^2 - f^2k_1^2k_3^2\\
-    &= 1 + fk_ik^i\\
-    &= 1 + f.
-\end{aligned}
-\end{equation}
-The components $\beta_i$ and $\beta^i$ of the metric are
-\begin{equation}
-\begin{aligned}
-    \beta_i &= fk_i\\
-    \beta^i &= f\gamma^{ij}k_j\\
-    &= f\Big[\delta^{ij} - \frac{f}{1+f}k^ik^j\Big]k_j\\
-    &= \frac{fk^i}{1+f}.
-\end{aligned}
-\end{equation}
-The final component of the metric, $\alpha^2$, is
-\begin{equation}
-\begin{aligned}
-    \alpha^2 &= -g_{00} + \beta_i\beta^i\\
-    &= 1 - f + \frac{f^2k_ik^i}{1+f}\\
-    &= 1 - \frac{f}{1+f}\\
-    &= \frac{1}{1+f}.
-\end{aligned}
-\end{equation}
-To numerically solve the trajectories of particles in this metric, we again need the spatial derivatives of $\alpha^2$, $\beta^i$, and $\gamma^{ij}$. To start, spatial derivatives of $\alpha^2$ are
-\begin{equation}
-    \partial_i\alpha^2 = -\frac{\partial_if}{(1+f)^2}
-\end{equation}
-with
-\begin{equation}
-\begin{aligned}
-    \partial_if &= 2M\partial_i\Big(\frac{r^3}{r^4+a^2z^2}\Big)\\
-    &= \frac{2Mr^2}{(r^4+a^2z^2)^2}\Big[(-r^4+3a^2z^2)\partial_ir - 2ra^2z\partial_iz\Big]\\
-    &= -2Mr^2\frac{(r^4-3a^2z^2)}{(r^4+a^2z^2)^2}\begin{pmatrix}
-        \partial_xr\\
-        \partial_yr\\
-        \partial_zr
-    \end{pmatrix} - 2Mr^2\frac{2ra^2}{(r^4+a^2z^2)^2}\begin{pmatrix}
-        0\\
-        0\\
-        z
-    \end{pmatrix}
-\end{aligned}
-\end{equation}
-and
-\begin{equation}
-\begin{aligned}
-    \partial_ir &= \begin{pmatrix}
-        \partial_xr\\
-        \partial_yr\\
-        \partial_zr
-    \end{pmatrix}\\
-    &= \frac{2\big(x^2 + y^2 - z^2 - a^2\big) + \sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}}{\sqrt{\big(x^2 + y^2 + z^2 - a^2\big)^2 + 4a^2z^2}}\begin{pmatrix}
-        x\\
-        y\\
-        z
-    \end{pmatrix}\\
-    &= \frac{2r^2 + x^2 + y^2 - 3z^2 - a^2}{2r^2 - x^2 - y^2 - z^2 + a^2}\begin{pmatrix}
-        x\\
-        y\\
-        z
-    \end{pmatrix}
-\end{aligned}
-\end{equation}
-The spatial derivatives of $\beta^i$ are
-\begin{equation}
-\begin{aligned}
-    \partial_j\beta^i &= \frac{(1+f)k^i\partial_jf + (1+f)f\partial_jk^i - fk^i\partial_jf}{(1+f)^2}\\
-    &= \frac{k^i\partial_jf + (1+f)f\partial_jk^i}{(1+f)^2}
-\end{aligned}
-\end{equation}
-with
-\begin{equation}
-\begin{aligned}
-    \partial_jk^i &= \begin{pmatrix}
-        \partial_xk_1 & \partial_xk_2 & \partial_xk_3\\
-        \partial_yk_1 & \partial_yk_2 & \partial_yk_3\\
-        \partial_zk_1 & \partial_zk_2 & \partial_zk_3
-    \end{pmatrix}\\
-    &= \begin{pmatrix}
-        \frac{r(r^2+a^2)+(-xr^2+xa^2-2ray)\partial_xr}{(r^2+a^2)^2} & \frac{-a(r^2+a^2)+(-yr^2+ya^2+2rax)\partial_xr}{(r^2+a^2)^2} & -\frac{z\partial_xr}{r^2}\\
-        \frac{a(r^2+a^2) + (-xr^2+xa^2-2ray)\partial_yr}{(r^2+a^2)^2} & \frac{r(r^2+a^2) + (-yr^2+ya^2+2rax)\partial_yr}{(r^2+a^2)^2} & -\frac{z\partial_yr}{r^2}\\
-        \frac{(-xr^2+xa^2-2ray)\partial_zr}{(r^2+a^2)^2} & \frac{(-yr^2+ya^2+2rax)\partial_zr}{(r^2+a^2)^2} & \frac{r - z\partial_zr}{r^2}
-    \end{pmatrix}\\
-    &= \begin{pmatrix}
-        \frac{r}{r^2+a^2} & \frac{-a}{r^2+a^2} & 0\\
-        \frac{a}{r^2+a^2} & \frac{r}{r^2+a^2} & 0\\
-        0 & 0 & \frac{1}{r}
-    \end{pmatrix} + \begin{pmatrix}
-        \partial_xr\\
-        \partial_yr\\
-        \partial_zr
-    \end{pmatrix} \times \begin{pmatrix}
-        \frac{-xr^2+xa^2-2ray}{(r^2+a^2)^2} & \frac{-yr^2+ya^2+2rax}{(r^2+a^2)^2} & -\frac{z}{r^2}
-    \end{pmatrix}.
-\end{aligned}
-\end{equation}
-We continue by calculating the spatial derivatives of $\gamma^{ij}$:
-\begin{equation}
-\begin{aligned}
-    \partial_l\gamma^{ij} &= \partial_l\Big[\delta^{ij} - \frac{f}{1+f}k^ik^j\Big]\\
-    &= -\frac{\partial_lf}{(1+f)^2}k^ik^j - \frac{f}{1+f}(k^i\partial_lk^j + k^j\partial_lk^i)
-\end{aligned}
-\end{equation}
-To summarize, the components of the metric in Kerr-Schild coordinates and their non-zero derivatives are:
-\begin{equation}
-\begin{aligned}
-    &\alpha^2 = \frac{1}{1+f},\qquad \beta^i = \frac{fk^i}{1+f},\qquad \gamma^{ij} = \delta^{ij} - \frac{fk^ik^j}{1+f}\\
-    &\partial_i\alpha^2 = -\frac{\partial_if}{(1+f)^2},\qquad \partial_j\beta^i = \frac{k^i\partial_jf + (1+f)f\partial_jk^i}{(1+f)^2}\\
-    &\partial_l\gamma^{ij} = -\frac{\partial_lf}{(1+f)^2}k^ik^j - \frac{f}{1+f}(k^i\partial_lk^j + k^j\partial_lk^i)\\
-    \text{with}\quad &\partial_if = -2Mr^2\frac{(r^4-3a^2z^2)}{(r^4+a^2z^2)^2}\partial_ir - 2Mr^2\frac{2ra^2}{(r^4+a^2z^2)^2}\begin{pmatrix}
-        0\\
-        0\\
-        z
-    \end{pmatrix}\\
-    \text{and}\quad &\partial_ir = \frac{2r^2 + x^2 + y^2 - 3z^2 - a^2}{2r^2 - x^2 - y^2 - z^2 + a^2}x_i\\
-    \text{and}\quad &\partial_jk^i = \begin{pmatrix}
-        \frac{r}{r^2+a^2} & \frac{-a}{r^2+a^2} & 0\\
-        \frac{a}{r^2+a^2} & \frac{r}{r^2+a^2} & 0\\
-        0 & 0 & \frac{1}{r}
-    \end{pmatrix} + \partial_jr \times \begin{pmatrix}
-        \frac{-xr^2+xa^2-2ray}{(r^2+a^2)^2} & \frac{-yr^2+ya^2+2rax}{(r^2+a^2)^2} & -\frac{z}{r^2}
-    \end{pmatrix}.
-\end{aligned}
-\end{equation}
-
-
-\section{Sourceless Maxwell equations in curved spacetime}
-
-In the ADM formalism, spacetime is sliced into spacelike hypersurfaces $\Sigma_t$ on which the time coordinate $t$ is constant. The electric and magnetic fields are 3-vectors that live within these hypersurfaces, but can also be seen as 4-vectors that are tangent to these hypersurfaces \cite{Alcubierre2009}. The 4-vector $n_\mu = (-\alpha, 0, 0, 0)$ is a unit vector that is tangential to $\Sigma_t$ \cite{Alcubierre2009}, satisfying the relation $n_\mu n^\mu = -1$. The electric and magnetic fields $E^\mu$ and $B^\mu$, written as 4-vectors, must be perpendicular to $n_\mu$. Therefore, the zeroth components $E^0$ and $B^0$ must be zero. A projection operator that projects 4-vectors onto $\Sigma_t$ can be defined as
+The electric and magnetic fields are 3-vectors that live on the spacelike hypersurfaces $\Sigma_t$. However, these fields can also be seen as 4-vectors that are tangent to $\Sigma_t$ \cite{Alcubierre2009}. The 4-vector $n_\mu = (-\alpha, 0, 0, 0)$ is a unit vector that is perpendicular to $\Sigma_t$ \cite{Alcubierre2009} and that satisfies the relation $n_\mu n^\mu = -1$. The electric and magnetic fields $E^\mu$ and $B^\mu$, written as 4-vectors, must be perpendicular to $n_\mu$. Therefore, the zeroth components $E^0$ and $B^0$ must be zero. A projection operator that projects 4-vectors onto $\Sigma_t$ can be defined as
 \begin{equation}
     {h_\mu}^\nu \equiv {\delta_\mu}^\nu + n_\mu n^\nu.
 \end{equation}
-With this projection operator, the Maxwell equations can be written in the language of the ADM formalism. The Maxwell equations without sources become \cite{Alcubierre2009}
+With this projection operator, the Maxwell equations can be written in the language of the ADM formalism. Let $j^\mu$ be the four-current, with $\rho \equiv -n_\mu j^ \mu$ the charge. The Maxwell equations then are
+\cite{Alcubierre2009}
 \begin{equation}
 \begin{aligned}
-    &{h_\mu}^\nu \nabla_\nu E^\mu = 0\\
+    &{h_\mu}^\nu \nabla_\nu E^\mu = 4\pi\rho\\
     &{h_\mu}^\nu \nabla_\nu B^\mu = 0\\
-    &\alpha {h^i}_\nu (n^\rho \partial_\rho E^\nu - E^\rho \partial_\rho n^\nu) = \epsilon^{ijk} \partial_j (\alpha B_k) + \alpha K E^i\\
+    &\alpha {h^i}_\nu (n^\rho \partial_\rho E^\nu - E^\rho \partial_\rho n^\nu) = \epsilon^{ijk} \partial_j (\alpha B_k) + \alpha K E^i - 4\pi\alpha {h^i}_\mu j^\mu\\
     &\alpha {h^i}_\nu (n^\rho \partial_\rho B^\nu - B^\rho \partial_\rho n^\nu) = -\epsilon^{ijk} \partial_j (\alpha E_k) + \alpha K B^i
 \end{aligned}
 \end{equation}
-where $K \equiv -\nabla_\mu n^\mu$ is the trace of the extrinsic curvature of $\Sigma_t$.
+where $K \equiv -\nabla_\mu n^\mu$ is the trace of the extrinsic curvature of $\Sigma_t$. As an example, we set $j^\mu = 0$ and use the above equations to derive an analytic solution in a scenario with a relatively simple spacetime metric.
 
 \subsection{An analytic solution}
 
@@ -627,89 +99,67 @@ This subsection considers a simple curved metric for which an analytic wave solu
         0 & 1-2\Phi & 0 & 0\\
         0 & 0 & 1-2\Phi & 0\\
         0 & 0 & 0 & 1-2\Phi
-    \end{pmatrix}.
+    \end{pmatrix}
 \end{equation}
-This metric is a solution of the linearized Einstein field equations in the absence of anisotropic pressure \cite{1995ApJ}. In other words, as long as the scalar $|\Phi|$ is much smaller than $1$, this metric is an approximate solution of the Einstein field equations. In the presence of anisotropic pressure, the metric is parameterized by two scalars instead of only $\Phi$. The scalar $\Phi$ can be interpreted as the gravitational potential \cite{1995ApJ}. Because the metric is diagonal, the trace of the extrinsic curvature vanishes:
+with $\Phi(x^\mu)$ a scalar function. This metric is a solution of the linearized Einstein field equations in the absence of anisotropic pressure \cite{1995ApJ}. In other words, as long as the scalar $|\Phi|$ is much smaller than $1$, this metric is an approximate solution of the Einstein field equations. In the presence of anisotropic pressure, the metric is parameterized by two scalars instead of only $\Phi$. The scalar $\Phi$ can be interpreted as the gravitational potential \cite{1995ApJ}. Because the metric is diagonal, the trace of the extrinsic curvature vanishes ($K = 0$), and the spatial part of the projection operator is ${h_i}^j = {\delta_i}^j$. The Maxwell equations thus simplify:
 \begin{equation}
 \begin{aligned}
-    K &= -\nabla_\mu (g^{\mu\nu} n_\nu) = -\nabla_0 (g^{00} n_0) = -\nabla_0 \Big(\frac{1}{\alpha}\Big) = -\partial_0 \Big(\frac{1}{\alpha}\Big) - \frac{1}{\alpha} \Gamma_{00}^0\\
-    &= \frac{1}{\alpha^2} \partial_0\alpha - \frac{1}{2\alpha} g^{00} \partial_0 g_{00} = \frac{1}{\alpha^2} \partial_0\alpha + \frac{1}{2\alpha^3} \partial_0 (-\alpha^2) = \frac{1}{\alpha^2} \partial_0\alpha - \frac{1}{\alpha^2} \partial_0\alpha = 0.
+    &\nabla_i E^i = 0 \qquad&&\partial_t E^i = \epsilon^{ijk} \partial_j (\alpha B_k)\\
+    &\nabla_i B^i = 0 \qquad&&\partial_t B^i = -\epsilon^{ijk} \partial_j (\alpha E_k).
 \end{aligned}
-\end{equation}
-Because the metric is diagonal, the spatial part of the projection operator is ${h_i}^j = {\delta_i}^j$. The Maxwell equations thus simplify:
-\begin{equation}
-\begin{aligned}
-    &\nabla_i E^i = 0\\
-    &\nabla_i B^i = 0\\
-    &\partial_t E^i = \epsilon^{ijk} \partial_j (\alpha B_k)\\
-    &\partial_t B^i = -\epsilon^{ijk} \partial_j (\alpha E_k).
-\end{aligned}
-\end{equation}
-The first of the Maxwell equations can be expanded using the formulas for the covariant derivative and Christoffel symbols:
-\begin{equation}
-\begin{aligned}
-    \nabla_i E^i &= \partial_i E^i + \Gamma_{ij}^i E^j\\
-    &= \partial_i E^i + \frac{1}{2} E^j g^{ik} \big(\partial_i g_{jk} + \partial_j g_{ik} - \partial_k g_{ij}\big)\\
-    &= \partial_i E^i + \frac{1}{2} E^j g^{ik} \partial_j g_{ik} = 0.
-\end{aligned}
-\end{equation}
-Here we used that $g^{ik}$ is only nonzero if $i=k$. Similarly, the second Maxwell equation can be written as
-\begin{equation}
-    \partial_i B^i + \frac{1}{2} B^j g^{ik} \partial_j g_{ik} = 0.
 \end{equation}
 We consider wave solutions of the electric and magnetic fields using the following ansatz:
 \begin{equation}
 \begin{aligned}
-    &E^i = \big(0, E_0 e^{i(k(x)x-\omega t)}, 0\big)\\
-    &B^i = \big(0, 0, B_0 e^{i(k(x)x-\omega t)}\big)\\
-    &\partial_y \Phi(x) = 0\\
-    &\partial_z \Phi(x) = 0.
+    &\partial_y \Phi(x) = 0 \qquad&&E^i = \big(0, E_0 e^{i(k(x)x-\omega t)}, 0\big)\\
+    &\partial_z \Phi(x) = 0 \qquad&&B^i = \big(0, 0, B_0 e^{i(k(x)x-\omega t)}\big).
 \end{aligned}
 \end{equation}
-The physical interpretation behind this ansatz is that of a photon diving into or climbing out of a gravitational well. The wave-vector $k_i = (k(x), 0, 0)$ is allowed to be a function of $x$, while $\omega$ is chosen to be a constant. This ansatz already satisfies the first two Maxwell equations. Filling in this ansatz into the remaining Maxwell equations, we get the following nontrivial relations:
+The physical interpretation behind this ansatz is that of a photon diving straight into or climbing out of a gravitational well. This ansatz already satisfies two of the Maxwell equations. Filling in this ansatz into the remaining Maxwell equations gives the following constraints:
 \begin{equation}
-\begin{aligned}
-    &\begin{cases}
-        \partial_t E^y = \epsilon^{yxz} \partial_x(\alpha g_{zz} B^z)\\
-        \partial_t B^z = -\epsilon^{zxy} \partial_x(\alpha g_{yy} E^y)
-    \end{cases}\\
-    \Rightarrow\, &\begin{cases}
-        -i\omega E_0 = -\big(\partial_x A + iA\partial_x(kx)\big) B_0\\
-        -i\omega B_0 = -\big(\partial_x A + iA\partial_x(kx)\big) E_0
-    \end{cases} \quad\text{with}\quad A \equiv \alpha g_{yy} = \alpha g_{zz}\\
-    \Rightarrow\, &\begin{cases}
-        E_0 = B_0\\
-        \omega^2 = \big(A\partial_x(kx) - i\partial_xA\big)^2
-    \end{cases}\\
-    \Rightarrow\, &\hspace{7pt} \omega = A\partial_x(kx) - i\partial_xA \quad\text{without loss of generality}\\
-    \Rightarrow\, &\hspace{7pt} kx = \int \frac{\omega + i\partial_xA}{A} \text{d}x = \omega \int \frac{\text{d}x}{A} + i\log{A}.
-\end{aligned}
+E_0 = B_0 \qquad\text{and}\qquad kx = \omega \int \frac{\text{d}x}{A} + i\log{A} \quad\text{with}\quad A \equiv \sqrt{1 + 2\Phi}(1 - 2\Phi).
 \end{equation}
-The solutions for the nonzero components of the electric and magnetic fields are thus
+In the limit that spacetime is flat and $\Phi \to 0$, the obtained solutions for the electromagnetic waves become
 \begin{equation}
-\label{eq:EM_waves_theory}
-\begin{aligned}
-    &E^y = E_0 e^{i\omega(\int\frac{\text{d}x}{A}-t) - \log{A}}\\
-    &B^z = B_0 e^{i\omega(\int\frac{\text{d}x}{A}-t) - \log{A}}.
-\end{aligned}
+    E^y = E_0 e^{i\omega(x-t)}, \qquad B^z = B_0 e^{i\omega(x-t)}
 \end{equation}
-For the metric of the Newtonian gauge, we get $A = \sqrt{1+2\Phi}(1-2\Phi)$. In the limit that spacetime is flat and $\Phi \to 0$, the obtained solutions for the electromagnetic waves become
-\begin{equation}
-\begin{aligned}
-    &E^y = E_0 e^{i\omega(x-t)}\\
-    &B^z = B_0 e^{i\omega(x-t)}
-\end{aligned}
-\end{equation}
-which are the familiar solutions we expect to find in flat spacetime. As the waves enter a gravitational well and $\Phi$ becomes negative, $A$ becomes larger than $1$. As a result, two things happen: the amplitude of the wave changes and the wavelength decreases. The decreasing of the wavelength shows that the light is gravitationally blueshifted. Equation \eqref{eq:EM_waves_theory} can be used to verify the result of numerical codes that solve the Maxwell equations in a curved spacetime.\\
+which are the familiar solutions we expect to find in flat spacetime. As the waves enter a gravitational well and $\Phi$ becomes negative, $A$ becomes larger than $1$. As a result, two things happen: the amplitude of the wave changes and the wavelength decreases. The decreasing of the wavelength shows that the light is gravitationally blueshifted.\\
 \\
 As an example, we consider $\Phi = -a \exp{(-x^2/2)}$. $\Phi$ cannot become smaller than $-0.5$, otherwise the metric components change sign. The resulting solution is shown in figure \ref{fig:gravitational_redshift}.
 
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=\hsize]{figures/gravitational_redshift.png}
-    \caption{The gravitational potential $\Phi = -a \exp{(-x^2/2)}$ with $a = 0.45$ and the corresponding electric field strength at some fixed moment in time. The frequency of the electric wave is $\omega = 10$.}
+    \caption{The gravitational potential $\Phi = -a \exp{(-x^2/2)}$ with $a = 0.45$ and the corresponding electric field strength at some fixed moment in time. The frequency of the wave is $\omega = 10$ (the units of which are fixed by the units of $x$ and the speed of light).}
     \label{fig:gravitational_redshift}
 \end{figure}
+
+
+\section{Two-stream instability in curved spacetime}
+
+We consider a cold two-stream instability in a diagonal metric, where the streams are moving in the $x_1$-direction with velocities $v_0$ and $-v_0$. At each point, local coordinates $\tilde{t} = \sqrt{-g_{00}} t$ and $\tilde{x}_1 = \sqrt{g_{11}} x_1$ can be chosen so that, in the frame of these local coordinates, spacetime is locally flat. At every point in spacetime, the physics in local coordinates should be the same. In local coordinates, the two-stream instability reduces to the two-stream instability from special relativity. From the perspective of an observer at infinity, the speed of the flow of time at the point $x_\mu$ is altered by a factor $\sqrt{-g_{00}(x_\mu)}$. This effect is gravitational time dilation, and it alters the speed at which instabilities in the two-stream instability grow. We consider the case of a Schwarzschild black hole, for which $\sqrt{-g_{00}} = \sqrt{1 - 2GM/r}$. The closer to the black hole we look, the slower the two-stream instability grows. We assume that the length scale at which the two-stream instability occurs is much smaller than the length scale on which the spacetime metric changes.\\
+\\
+In the local coordinates, the instability occurs at wave numbers $\tilde{k} = k / \sqrt{g_{11}}$ for which $\tilde{k}^2\tilde{v}_0^2\tilde\gamma_0^3 < \tilde\omega_{p,0}^2$. Here $\tilde{v}_0 = v_0 \sqrt{g_{11}/g_{00}}$ is the speed of the streams in local coordinates, $\tilde\gamma_0 \equiv \gamma(\tilde{v}_0)$ is the corresponding Lorentz factor, and $\tilde\omega_{p,0} = \omega_{p,0}\sqrt{g_{00}}$ is the plasma frequency in local coordinates. From this, we can find an expression for the critical wave number $k_\text{crit}$ in global coordinates: $k^2_\text{crit} v_0^2 \tilde{\gamma}_0^3 = \omega_{p,0}^2$. This equation shows that the curved spacetime only alters the critical wave number through the Lorentz factor. The expression for the critical wave number is altered by a factor $\tilde{\gamma}_0^3 / \gamma_0^3 = \sqrt{1 - v_0^2} / \sqrt{1 - \frac{g_{11}}{-g_{00}} v_0^2}$ compared to the case in flat spacetime. In Figure \ref{fig:k_crit_modification}, the modifying factor $\tilde{\gamma}_0^3 / \gamma_0^3$ is plotted for several values of $v_0$. The presence of the black hole increases $k_\text{crit}$, allowing the instability to occur at smaller length scales than it would in flat spacetime. Both going closer to the black hole and having a larger speed $v_0$ cause a decrease in the factor $\tilde{\gamma}_0^3 / \gamma_0^3$. Figure \ref{fig:k_crit_modification} shows that, for every speed $v_0$, there is a radial distance $r$ at which the modification factor reaches zero. Below that distance, the speed $v_0$ becomes nonphysical, because $\tilde{v}_0$ exceeds the speed of light. This is demonstrated in Figure \ref{fig:accessible_region}, which shows the region of phase space that is accessible by massive particles moving on radial trajectories.\\
+
+\begin{figure}[ht!]
+\centering
+\begin{minipage}{.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/k_crit_modification.png}
+  \caption{The factor $\tilde{\gamma}_0^3 / \gamma_0^3$ near a Schwarzschild black hole as a function of the radial coordinate, for several values of the speed $v_0$.\\\,\\\,}
+  \label{fig:k_crit_modification}
+\end{minipage}%
+\quad
+\begin{minipage}{.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/accessible_region.png}
+  \caption{The accessible region of the radial part of phase space near a Schwarzschild black hole, shown as a blue region. The grey curves are geodesics of massive particles moving radially away from and towards the black hole.}
+  \label{fig:accessible_region}
+\end{minipage}
+\end{figure}
+
+\noindent
+As the two-stream instability evolves, the gravity of the black hole will cause the speed and density of both streams to change. In general, it will no longer be true that the two streams have the same speed (in absolute values). At each position $x_\mu$, it will still be possible to change to a frame of reference where the streams have speeds $v_0$ and $-v_0$, but in general the densities of the streams will still be different. As a result, the two-stream instability will no longer adhere to the formula $\tilde{k}^2_\text{crit} \tilde{v}_0^2 \tilde{\gamma}_0^3 = \tilde{\omega}_{p,0}^2$.
 
 
 % olaf: Some brainstorming:
@@ -749,93 +199,6 @@ As an example, we consider $\Phi = -a \exp{(-x^2/2)}$. $\Phi$ cannot become smal
 % (Should see electron holes.)
 % (What else do we expect, how will it differ?)
 % (I suppose this is like an AGN/quasar jet model.)
-
-\section*{ADM $3+1$ split}
-
-\begin{align}
-  \label{eq:ADM_line_elem}
-  ds^2=-\alpha^2dt^2+(\beta_idt+dx_i)(\beta^idt+dx^i)
-\end{align}
-or
-\begin{align}
-  g_{\mu\nu}=\begin{pmatrix} -\alpha^2+\beta^2 & \beta_i \\ \beta_j & \gamma_{ij} \end{pmatrix}
-\end{align}
-Relation to general metric:
-\begin{align}
-  \label{eq:metric_to_ADM:al}
-  \alpha^2&=\beta^2-g_{00}\\
-  \beta_i&=g_{0i}\\
-  \gamma_{ij}&=g_{ij}
-\end{align}
-
-Geodesics are given by
-\begin{align}
-  dx^i/dt&=\gamma^{ij}u_j/u^0-\beta^i\\
-  du_i/dt&=-\alpha u^0\partial_i\alpha+u_k\partial_i\beta^k-u_ju_k(\partial_i\gamma^{jk})/(2u^0)
-\end{align}
-where
-\begin{align}
-  u^0=(\gamma^{jk}u_ju_k+\epsilon)^{1/2}/\alpha
-\end{align}
-with $\epsilon=0$ for lightlike and $\epsilon=1$ for timelike geodesics.
-
-\section*{Kerr spacetime in Boyer-Lindquist coordinates}
-
-\textit{This can almost trivially be extended to Boyer-Lindquist coordinates for a Kerr-Newman spacetime.}
-
-Let $a=J/M$ be the Kerr parameter for angular momentum $J$ and mass $M$. Defining also the usual $\Sigma$ and $\Delta$, the Kerr metric in Boyer-Lindquist coordinates is given by
-\begin{align}
-  \Sigma&=r^2+a^2\cos^2\theta\\
-  \Delta&=r(r-2M)+a^2\\
-  \label{eq:Kerr_metric}
-  ds^2&=-(dt-a\sin^2\theta d\phi)^2\Delta/\Sigma+(adt-(r^2+a^2)d\phi)^2\sin^2\theta/\Sigma+dr^2\Sigma/\Delta+\Sigma d\theta^2.
-\end{align}
-In the limit that $J,M\to0$, this reduces to
-\begin{align}
-  ds^2=-dt^2+dr^2+r^2d\Omega_2^2,
-\end{align}
-a flat spacetime with spatial slices in `spherical coordinates', this importantly gives $(r,\theta,\phi)$ their usual meaning.\\
-Comparing \eqref{eq:Kerr_metric} to \eqref{eq:ADM_line_elem}, we can read off the $3{+}1$ split, and perform some simplifications.\footnote{One can implement the solver such that $g_{\mu\nu}$ is specified and compute the $3{+}1$ split numerically, but this may be numerically unstable due to catastrophic cancellation in \eqref{eq:metric_to_ADM:al}, who knows. Simplifying seems worthwhile.}
-\begin{align}
-  \gamma_{rr}&=\Sigma/\Delta\\
-  \gamma_{\theta\theta}&=\Sigma\\
-  \gamma_{\phi\phi}&=\big((r^2+a^2)^2-\Delta a^2\sin^2\theta\big)\sin^2\theta/\Sigma\\
-  &=\sin^2\theta\big((r^2+a^2)+(2Ma^2r\sin^2\theta)/\Sigma\big)\\
-  \gamma_{r\theta}&=\gamma_{r\phi}=\gamma_{\theta\phi}=0\\
-  \sqrt\gamma&=\sqrt{\gamma_{rr}\gamma_{\theta\theta}\gamma_{\phi\phi}}=\Sigma\sin\theta/\alpha
-\end{align}
-\begin{align}
-  \gamma^{rr}&=\Delta/\Sigma\\
-  \gamma^{\theta\theta}&=1/\Sigma\\
-  \gamma^{\phi\phi}&=1/\Big(\sin^2\theta\big((r^2+a^2)+(2Ma^2r\sin^2\theta)/\Sigma\big)\Big)\\
-  \gamma^{r\theta}&=\gamma^{r\phi}=\gamma^{\theta\phi}=0
-\end{align}
-\begin{align}
-  \beta_r&=\beta_\theta=0\\
-  2\beta_\phi&=2a\sin^2\theta\,\Delta/\Sigma-2a(r^2+a^2)\sin^2\theta/\Sigma\\
-  &=2a\sin^2\theta\,(\Delta-r^2-a^2)/\Sigma\\
-  \beta_\phi&=-2Mar\sin^2\theta/\Sigma
-\end{align}
-\begin{align}
-  \beta^r&=\beta^\theta=0\\
-  \beta^\phi&=\gamma^{\phi i}\beta_i=\gamma^{\phi\phi}\beta_\phi\\
-  &=\frac{-2Mar}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}
-\end{align}
-\begin{align}
-  \beta^2&=\beta_i\beta^i=\beta_\phi\beta^\phi\\
-  &=\frac{4M^2a^2r^2\sin^2\theta}{(r^2+a^2)\Sigma^2+2Ma^2r\Sigma\sin^2\theta}
-\end{align}
-\begin{equation}
-\begin{split}
-  -\alpha^2+\beta^2&=-\Delta/\Sigma+a^2\sin^2\theta/\Sigma\\
-  \alpha^2&=\beta^2+\Delta/\Sigma-a^2\sin^2\theta/\Sigma\\
-  &=\frac{4M^2a^2r^2\sin^2\theta}{(r^2+a^2)\Sigma^2+2Ma^2r\Sigma\sin^2\theta}+\frac{\Sigma-2Mr}\Sigma\\
-  &=\frac{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta-2Mr(r^2+a^2)}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
-  &=\frac{(r^2+a^2)\Sigma-2Mr^3-2Mra^2\cos^2\theta}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
-  &=\frac{(r^2+a^2)\Sigma-2Mr\Sigma}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}\\
-  &=\frac{\Delta\Sigma}{(r^2+a^2)\Sigma+2Ma^2r\sin^2\theta}
-\end{split}
-\end{equation}
 
 \section*{Particle Trajectories in Curved Spacetime}
 In this section, we will discuss the qualitative nature of the trajectories of both massless and massive particles in the vicinity of black holes. The case under consideration will be that of the Kerr Black Hole, which can be trivially extended to the Schwarzschild solution as well. Our analysis will only cover particles in the region outside the outermost event horizon.
