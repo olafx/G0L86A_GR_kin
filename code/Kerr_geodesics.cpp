@@ -182,7 +182,7 @@ py::tuple geodesics_RK4_Wald
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const em::Wald<metric::Kerr::BoyerLindquist> em_field
-    {{Wald_B_z, Wald_B_x, Wald_Q}, metric.params};
+    {{Wald_B_z, Wald_B_x, Wald_Q, h_rel, h_min}, metric.params};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
   const solve::RK4 stepper {dt};
   const geodesic::schemes::Full scheme {stepper};
@@ -219,7 +219,7 @@ py::tuple geodesics_IMR_Wald
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const em::Wald<metric::Kerr::BoyerLindquist> em_field
-    {{Wald_B_z, Wald_B_x, Wald_Q_charge}, metric.params};
+    {{Wald_B_z, Wald_B_x, Wald_Q_charge, h_rel, h_min}, metric.params};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
   constexpr double IMR_tol = 1e-12;
   const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
@@ -257,7 +257,7 @@ py::tuple geodesics_IMR_split_Wald
 )
 { const metric::Kerr::BoyerLindquist metric {.params = {M, a}};
   const em::Wald<metric::Kerr::BoyerLindquist> em_field
-    {{Wald_B_z, Wald_B_x, Wald_Q}, metric.params};
+    {{Wald_B_z, Wald_B_x, Wald_Q, h_rel, h_min}, metric.params};
   const finite_difference::policies::Simple policy_fd {h_rel, h_min};
   constexpr double IMR_tol = 1e-12;
   const solve::IMR stepper {dt, IMR_tol, IMR_max_iters};
