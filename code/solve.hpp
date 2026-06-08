@@ -9,20 +9,20 @@ namespace solve
 
 // We only consider autonomous ODEs for now, so y'=f(y). `Fn_RHS` is such a
 // function f.
-template <typename Fn, size_t N>
+template <typename F, size_t N>
 concept Fn_RHS =
-  std::invocable<const Fn&, const Vec<N>&> &&
+  std::invocable<const F&, const Vec<N>&> &&
   std::same_as<
-    std::invoke_result_t<const Fn&, const Vec<N>&>,
+    std::invoke_result_t<const F&, const Vec<N>&>,
     Vec<N>>;
 
 // A `Stepper` is a function with some params, an invocable struct.
-template <typename Stepper, typename Fn, size_t N>
+template <typename Stepper, typename F, size_t N>
 concept Fn_Stepper =
-  Fn_RHS<Fn, N> &&
-  std::invocable<const Stepper&, const Fn&, const Vec<N>&> &&
+  Fn_RHS<F, N> &&
+  std::invocable<const Stepper&, const F&, const Vec<N>&> &&
   std::same_as<
-    std::invoke_result_t<const Stepper&, const Fn&, const Vec<N>&>,
+    std::invoke_result_t<const Stepper&, const F&, const Vec<N>&>,
     Vec<N>>;
 
 ////////////////////////////////////////////////////////////////////////////////

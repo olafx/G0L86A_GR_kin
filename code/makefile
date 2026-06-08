@@ -66,9 +66,9 @@ ifneq ($(strip $(INC_PYBIND11)),)
 FLAGS_PYBIND11 := -I$(INC_PYBIND11)
 endif
 
-all: Kerr_geodesics Kerr_accretion
+all: Kerr_geodesics Kerr_accretion GR_redshift two_stream_Poisson
 
-.PHONY: all clean Kerr_geodesics Kerr_accretion
+.PHONY: all clean Kerr_geodesics Kerr_accretion GR_redshift two_stream_Poisson
 
 clean:
 	rm -rf $(OUT_DIR)
@@ -82,4 +82,12 @@ $(OUT_DIR)/Kerr_geodesics$(PY_EXT): Kerr_geodesics.cpp | $(OUT_DIR)
 
 Kerr_accretion: $(OUT_DIR)/Kerr_accretion$(PY_EXT)
 $(OUT_DIR)/Kerr_accretion$(PY_EXT): Kerr_accretion.cpp | $(OUT_DIR)
+	$(CXX) $(CXX_FLAGS) $(PY_MOD_FLAGS) $(OMP_FLAGS) -I$(INC_PY) $(FLAGS_PYBIND11) $< -o $@ $(CXXSTDLIB_LD_FLAGS) $(FLAGS_LD_PY)
+
+GR_redshift: $(OUT_DIR)/GR_redshift$(PY_EXT)
+$(OUT_DIR)/GR_redshift$(PY_EXT): GR_redshift.cpp | $(OUT_DIR)
+	$(CXX) $(CXX_FLAGS) $(PY_MOD_FLAGS) $(OMP_FLAGS) -I$(INC_PY) $(FLAGS_PYBIND11) $< -o $@ $(CXXSTDLIB_LD_FLAGS) $(FLAGS_LD_PY)
+
+two_stream_Poisson: $(OUT_DIR)/two_stream_Poisson$(PY_EXT)
+$(OUT_DIR)/two_stream_Poisson$(PY_EXT): two_stream_Poisson.cpp | $(OUT_DIR)
 	$(CXX) $(CXX_FLAGS) $(PY_MOD_FLAGS) $(OMP_FLAGS) -I$(INC_PY) $(FLAGS_PYBIND11) $< -o $@ $(CXXSTDLIB_LD_FLAGS) $(FLAGS_LD_PY)

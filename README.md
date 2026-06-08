@@ -52,3 +52,22 @@ OMP_NUM_THREADS=42 ./Kerr_accretion.py # on 42
 make Kerr_accretion
 ./Kerr_accretion.py # on 1 thread
 ```
+
+### `GR_redshift`
+
+Vacuum 1D-3V Maxwell redshift test on a radial Schwarzschild grid.
+```bash
+cd code
+OMP=1 make GR_redshift
+./GR_redshift.py # on all threads
+```
+
+### `two_stream_Poisson`
+
+Electron-positron two-stream instability on a radial Schwarzschild grid, for the
+Vlasov-Poisson model.
+```bash
+cd code
+OMP=1 make two_stream_Poisson
+./two_stream_Poisson.py # on all threads
+```

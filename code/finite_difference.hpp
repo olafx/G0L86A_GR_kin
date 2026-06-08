@@ -10,11 +10,11 @@ namespace finite_difference
 
 // We overcomplicate picking a step h a bit here if in the future there are
 // additional constraints.
-template <typename Fn, size_t N>
+template <typename F, size_t N>
 concept Policy =
-  std::invocable<const Fn&, const Vec<N>&, size_t> &&
+  std::invocable<const F&, const Vec<N>&, size_t> &&
   std::same_as
-  < std::invoke_result_t<const Fn&, const Vec<N>&, size_t>,
+  < std::invoke_result_t<const F&, const Vec<N>&, size_t>,
     double
   >;
 

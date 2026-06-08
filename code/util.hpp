@@ -941,4 +941,68 @@ to_py_array
   return {shape, strides, reinterpret_cast<Scalar*>(data), owner};
 }
 
+// Non-owning 1-D NumPy view into C++ storage.
+//
+// NOTE: C++ keeps ownership.
+// NOTE: `owner` is attached as the NumPy base object so Python keeps it alive.
+// NOTE: The wrapping NumPy array must be not be resized/reallocated.
+template <typename Scalar>
+py::array_t<std::remove_const_t<Scalar>>
+to_py_array_ref
+( Scalar* data,
+  size_t n,
+  py::ssize_t stride,
+  py::handle owner
+)
+{ using RawScalar = std::remove_const_t<Scalar>;
+  return
+  { {static_cast<py::ssize_t>(n)},
+    {stride},
+    reinterpret_cast<const RawScalar*>(data),
+    owner
+  };
+}
+// With an assumed stride.
+template <typename Scalar>
+py::array_t<std::remove_const_t<Scalar>>
+to_py_array_ref
+( Scalar* data,
+  size_t n,
+  py::handle owner
+)
+{ return to_py_array_ref(
+    data, n, static_cast<py::ssize_t>(sizeof(Scalar)), owner);
+}
+
+// Non-owning n-D NumPy view into C++ storage.
+//
+// NOTE: C++ keeps ownership.
+// NOTE: `owner` is attached as the NumPy base object so Python keeps it alive.
+// NOTE: The wrapping NumPy array must be not be resized/reallocated.
+template <typename Vec, typename Extents>
+py::array_t<std::remove_const_t<typename VecTraits<Vec>::Scalar>>
+to_py_array_ref
+( std::mdspan<Vec, Extents, std::layout_right> x,
+  py::handle owner
+)
+{ using Traits = VecTraits<Vec>;
+  using Scalar = typename Traits::Scalar;
+  using RawScalar = std::remove_const_t<Scalar>;
+  constexpr size_t rank = Extents::rank()+Traits::rank;
+  std::array<py::ssize_t, rank> shape {}, strides {};
+  auto stride = static_cast<py::ssize_t>(sizeof(Vec));
+  for (size_t i = Extents::rank(); i-- > 0;)
+  { shape[i] = static_cast<py::ssize_t>(x.extent(i));
+    strides[i] = stride;
+    stride *= shape[i];
+  }
+  detail::vec_traits_py<Vec>(shape, strides, Extents::rank());
+  return
+  { shape,
+    strides,
+    reinterpret_cast<const RawScalar*>(x.data_handle()),
+    owner
+  };
+}
+
 } // namespace util

@@ -267,7 +267,7 @@ py::tuple render
 
     const Vec3_sph camera_x = util::Car_to_sph(camera.x);
 
-    #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
     for (size_t i_y = 0; i_y < res.y; i_y++)
     for (size_t i_x = 0; i_x < res.x; i_x++)
     {

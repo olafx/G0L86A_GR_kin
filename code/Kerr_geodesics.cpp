@@ -102,7 +102,7 @@ py::tuple geodesics
     py::gil_scoped_release release;
 
 // Iterate over each geodesic initial condition.
-    #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
     for (size_t i_geo = 0; i_geo < ics.size(); i_geo++)
     { const IC& ic = ics[i_geo];
 // Allocate the geodesic array through phase space. The time coordinate is
