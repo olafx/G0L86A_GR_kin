@@ -371,17 +371,11 @@ The particle is free to move in the $\theta$ and $\phi$ planes, provided that th
     \label{eq:u_condition}
 \end{equation}
 
-Hence, we have to look for ranges of the latitudinal variable, $u$, such that the solutions satisfy the above the conditions. At the boundaries of this range, the particle will have a turning point in the $\theta$ direction and will reverse its motion. Therefore, the motion in the $\theta$ direction is oscillatory between these two turning points. The particle continues to bounce between the ends of this range while orbiting the black hole. We can look at the restrictions and allowed motions, that these conditions impose, in a little more detail. 
+Hence, we have to look for ranges of the latitudinal variable, $u$, such that the solutions satisfy the above the conditions. At the boundaries of this range, the particle will have a turning point in the $\theta$ direction and will reverse its motion. Therefore, the motion in the $\theta$ direction is oscillatory between these two turning points. The particle continues to bounce between the ends of this range while orbiting the black hole. \textbf{Hence, the particle oscillates latitudinally with a latitude of $|u|=u_{max}$ - given by analysis of the roots of $V(u)$.}
 
-\subsubsection{Lightlike Trajectories}
+\textbf{Mino Time.} The coupled geodesic equations (\eqref{eq:geodesic_equations}) can be separated by introducing a new parameter - Mino time - via $\Sigma\,d/d\tau = d/d\lambda$. This allows us to derive analytic solutions describing the particle solutions \cite{teoTimelikeSpherical}. These analytical solutions have been compared against our particle pusher for the case of a massive particle in extremal Kerr spacetime ($a=M=1$). The spherical orbit is located at $r/M=1.2$ with Carter constant $Q/M^2=0.5$. These parameters yield $E=0.7169$ and $\Phi/M=1.4357$. Both the analytical trajectory and the numerical curve are shown in Figure~\ref{fig:spherical_orbit_3d}, integrated with coordinate-time step $\Delta t = 0.05\,M$. We see that the IMR scheme is able to reproduce the latitudinal oscillations quite effectively with the maximum RMS error for $\theta$ being $3.81\times 10^{-6}$ radians.
 
-For photons ($\mu=0$), the equations allow us to factor out the energy and write the remaining constants of motion as - $\mathcal{Q}=Q/E^2$, $\varPhi=\Phi/E$. Conditions \eqref{eq:r_condition} and \eqref{eq:u_condition} fix the values of $\mathcal{Q}$ and $\varPhi$, that are wholly determined by the radius at which we choose the orbit. Physical motion is permitted when $\mathcal{Q}\geq 0$: for $\mathcal{Q}>0$ the photon oscillates latitudinally up to a $|u|=u_0$ - given by analysis of the roots of $V(u)$; for $\mathcal{Q}=0$ the orbit starts and stays in the equatorial plane with no latitudinal oscillations.
-
-\subsubsection{Timelike Trajectories}
-
-For massive particles, the energy $E$ and angular momentum $\Phi$ are determined by two free parameters now - $r$ and $Q$. This defines an accessible parameter space created by three critical curves $Q_{\mathrm{ms}}(r)$, $Q_{\mathrm{mb}}(r)$, and $Q_\mathrm{o}(r)$ separating stable/unstable, bound/unbound, and prograde/retrograde orbits respectively. These critical curves are once again derived from roots of the RHS of Eq.\,\,\eqref{eq:radial_potential} and \eqref{eq:theta_potential}. The regimes of the particle motion are encapsulated completely using the partitions of this parameter space.\cite{teoTimelikeSpherical}\medskip
-
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.55\linewidth]{figures/spherical_orbit_3d.png}
     \caption{Spherical orbit at $r/M=1.2$ in extremal Kerr spacetime ($a=M=1$, $Q/M^2=0.5$). Gold: analytical solution via Mino-time. Magenta (dashed): IMR numerical integration.}
@@ -390,7 +384,7 @@ For massive particles, the energy $E$ and angular momentum $\Phi$ are determined
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{0.85\linewidth}
+    \begin{subfigure}{0.8\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/WaldV2_RKA3_3d.png}
     \end{subfigure}
@@ -402,8 +396,6 @@ For massive particles, the energy $E$ and angular momentum $\Phi$ are determined
     \caption{Orbit RKA3 in the Wald field around a Kerr black hole ($a=0.9M$, $B_z=2$, $q/m=1$). The RK4 gyration radius collapses due to numerical energy dissipation while the IMR scheme preserves the orbit.}
     \label{fig:wald_3d}
 \end{figure}
-
-\textbf{Mino Time.} The coupled geodesic equations (\eqref{eq:geodesic_equations}) can be separated by introducing a new parameter - Mino time - via $\Sigma\,d/d\tau = d/d\lambda$. This allows us to derive analytic solutions describing the particle solutions \cite{teoTimelikeSpherical}. These analytical solutions have been compared against our particle pusher for the case of a massive particle in extremal Kerr spacetime ($a=M=1$). The spherical orbit is located at $r/M=1.2$ with Carter constant $Q/M^2=0.5$. These parameters yield $E=0.7169$ and $\Phi/M=1.4357$. Both the analytical trajectory and the numerical curve are shown in Figure~\ref{fig:spherical_orbit_3d}, integrated with coordinate-time step $\Delta t = 0.05\,M$. We see that the IMR scheme is able to reproduce the latitudinal oscillations quite effectively with the maximum RMS error for $\theta$ being $3.81\times 10^{-6}$ radians.
 
 \subsection{Wald Solution}
 
