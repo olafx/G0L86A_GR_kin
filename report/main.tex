@@ -24,7 +24,7 @@
 
 \begin{document}
 
-\title{\fontfamily{lmr} \Huge  Analysis of Particle Kinetics in Curved Space-time}
+\title{\vspace{-30pt}\fontfamily{lmr} \Huge  Analysis of Particle Kinetics in Curved Space-time}
 
 \author{\Large Olaf Willocx, Lars Meulenijzer, Areen Raj}
 \date{2026}
@@ -32,20 +32,18 @@
 \maketitle
 
 \begin{center} 
-\vspace{-15pt} 
+\vspace{-15pt}
 \Large \textit{Selected Topics in Mathematics II\textnormal{ (G0L86A), KU Leuven}}
 \end{center}
 
 
 \thispagestyle{empty}
-\vspace{40pt}
+\vspace{20pt}
 
 
 \section*{Introduction}
 
-Investigating the behavior of particles in a background of curved spacetime requires being able to model their geodesics. For some known curved spacetime metrics, like the Schwarzschild metric and the Kerr metric, analytical orbits are known. However, most particle trajectories cannot be known analytically and have to be solved numerically. A scenario where this is needed is the modeling of plasmas near a black hole using kinetic codes like particle-in-cell (PIC). A common numerical framework for solving particle orbits in general relativity (GR) involves splitting the metric into spatial slices parameterized by time. This formalism is called the Arnowitt-Deser-Misner (ADM) formalism. Using this formalism, we implement an integration scheme that explicitly conserves the energy of the particle \cite{Bacchini_2018}\cite{Bacchini_2019} while solving its orbit. To run PIC simulations in GR, it is also necessary to solve the Maxwell equations in curved spacetime. We don't implement the full Vlasov-Maxwell, but instead limit ourselves to the Vlasov-Poisson system in which charges are approximated as static. We then apply the implemented method to the two-stream instability in the presence of a black hole.\\
-\\
-In section ..., we introduce the equations that are needed for solving geodesics in the ADM formalism. In section ..., we discuss the Maxwell equations in curved spacetime and give an analytical solution. In section ..., we discuss how curved spacetime affects the dynamics of plasma. This knowledge is then applied to the two-stream instability. In section ..., we discuss orbits around Schwarzschild and Kerr black holes for which analytic formulae exist. In section ..., we explain the integration scheme that is used for evolving particles along their geodesics. In section ..., we give an overview of the algorithm that is used for simulating particles with the Vlasov-Poisson system in curved spacetime, for one-dimensional simulations. In section ..., the results of our simulations are shown and discussed.
+Investigating the behavior of particles in a background of curved spacetime requires being able to model their geodesics. For some known curved spacetime metrics, like the Schwarzschild metric and the Kerr metric, analytical orbits are known. However, most particle trajectories cannot be known analytically and have to be solved numerically. A scenario where this is needed is the modeling of plasmas near a black hole using kinetic codes like particle-in-cell (PIC). A common numerical framework for solving particle orbits in general relativity (GR) involves splitting the metric into spatial slices parameterized by time. This formalism is called the Arnowitt-Deser-Misner (ADM) formalism. Using this formalism, we implement an integration scheme that explicitly conserves the energy of the particle \cite{Bacchini_2018}\cite{Bacchini_2019} while solving its orbit. To run PIC simulations in GR, it is also necessary to solve the Maxwell equations in curved spacetime. We don't implement the full Vlasov-Maxwell, but instead limit ourselves to the Vlasov-Poisson system in which charges are approximated as static. We then apply the implemented method to the two-stream instability in the presence of a black hole.
 
 \section{Geodesics in the ADM formalism}
 
@@ -57,42 +55,62 @@ Any spacetime metric $g_{\mu\nu}$ can be rewritten as \cite{rezzolla2013}
     \beta_j & \gamma_{ij}
     \end{pmatrix}.
 \end{equation}
-Here $\alpha$ is the lapse function, $\beta_i$ is the shift vector, and $\gamma_{ij}$ is the spatial metric. We use the (-,+,+,+) metric convention, as well as $c=1$ for the speed of light. The decomposition is also referred to as the 3+1 split of the metric. The coordinate time $t \equiv x^0$ parameterizes 3D slices of space that have a metric $\gamma_{ij}(t)$. These slices are spacelike hypersurfaces $\Sigma_t$ on which the time coordinate $t$ is constant. The ADM formalism allows for particles and fields to live on the 3D slices of foliated space. The evolution of the particles and fields can then be parameterized by $t$. Computationally, this makes it much easier to model particle trajectories than using a 4D approach. Both massless and massive particles follow geodesics, which are constrained by the set of four equations
+We use the (-,+,+,+) metric convention, and set $c=1$ for the speed of light. This 3+1 split of the metric into separate spatial and temporal components is the ADM formalism. The coordinate time $t \equiv x^0$ parameterizes 3D slices of space that have a metric $\gamma_{ij}(t)$. The geodesic equations for charged particles are
 \begin{equation}
-    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = 0.
+\label{eq:geodesic}
+    \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = \frac{q}{m}g_{\mu\nu}F^{\rho\mu}\frac{\text{d}x^\nu}{\text{d}\tau}.
 \end{equation}
-Here $\tau$ is the proper time along the geodesic and $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols. The contravariant four-velocity of the particle is defined as $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$. From the definition of the proper time along the geodesic, it can be shown that $u^0$ is constrained by the relation
+Here $\tau$ is the proper time along the geodesic, $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols, and $F^{\mu\nu}$ is the electromagnetic field tensor. The contravariant four-velocity of the particle is defined as $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$. From the definition of $u_\mu$ and the geodesic equations, we derived the following three equations:
 \begin{equation}
+\label{eq:geodesic_adm1}
+    \frac{\text{d}x^i}{\text{d}t} = \gamma^{ij}\frac{u_j}{u^0} - \beta^i
+\end{equation}
+\begin{equation}
+\label{eq:geodesic_adm2}
     u^0 = \frac{\sqrt{\epsilon + u_i\gamma^{ij}u_j}}{\alpha}
 \end{equation}
-where $\epsilon = 0$ for massless particles and $\epsilon = 1$ for massive particles. This equation can also be rewritten as $u^\mu u_\mu = -\epsilon$, showing that the norm of the four-velocity $u_\mu$ is conserved. The definition of the four-velocity can be rewritten to get an equation for evolving the particle's position:
 \begin{equation}
-    \frac{\text{d}x^i}{\text{d}t} = \gamma^{ij}\frac{u_j}{u^0} - \beta^i.
+\label{eq:geodesic_adm3}
+    \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_ju_k}{2u^0}\partial_i\gamma^{jk} + \frac{q}{m}\alpha\gamma_{ij}D^j + \frac{q}{m}\sqrt{\gamma}\,\varepsilon_{ijk}\frac{\gamma^{jl}u_l}{u^0}B^k
 \end{equation}
-The geodesic equation can be rewritten and expanded using the ADM formalism, resulting in an equation for evolving the particle's momentum:
+where $\epsilon = 0$ for massless particles and $\epsilon = 1$ for massive particles. The electric and magnetic fields are related to the electromagnetic field tensor by $D^i = \alpha F^{0i}$ and $B^i = \frac{1}{2}\sqrt{\gamma}^{-1}\varepsilon^{ijk}F_{jk}$.
+
+
+\section{Kerr spacetime in Boyer-Lindquist coordinates}
+
+The Kerr metric describes a rotating black hole in general relativity. Let $a=J/M$ be the Kerr parameter for angular momentum $J$ and mass $M$. In Boyer-Lindquist coordinates, the metric can be written as
 \begin{equation}
-    \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_ju_k}{2u^0}\partial_i\gamma^{jk}.
+    \text{d}s^2 = -\Big(1 - \frac{2Mr}{\rho^2}\Big)\text{d}t^2 - \frac{4Mra\sin^2\theta}{\rho^2}\text{d}\phi\text{d}t + \frac{\rho^2}{\Delta}\text{d}r^2 + \rho^2\text{d}\theta^2 + \Big(r^2 + a^2 + \frac{2Mra^2\sin^2\theta}{\rho^2}\Big)\sin^2\theta\,\text{d}\phi^2
 \end{equation}
-Given initial conditions $x^i$ and $u_i$, the last three equations are sufficient to be able to evolve both massive and massless particles through the spacetime with metric $g_{\mu\nu}$.
+with $\;\rho^2 \equiv r^2 + a^2 \cos^2\theta\;$ and $\;\Delta \equiv r^2 - 2Mr + a^2$. In the limit that $J,M\to0$, this reduces to the flat metric in spherical coordinates
+\begin{align}
+  \text{d}s^2=-\text{d}t^2+\text{d}r^2+r^2\text{d}\Omega_2^2.
+\end{align}
+We calculate analytical expressions for the 3+1 split of this metric, as well as all the first derivatives of $\alpha$, $\beta^i$, and $\gamma^{ij}$. The expressions for the derivatives are verified by comparing them to numerical derivatives. We make use of the notation $\sigma^2 \equiv \rho^2r^2 + \rho^2a^2 + 2Mra^2\sin^2\theta$. The 3+1 components of the metric and their non-zero derivatives are:
+\begin{equation}
+\begin{aligned}
+    &\alpha^2 = \frac{\rho^2\Delta}{\sigma^2},\qquad \beta^i = \begin{pmatrix}
+    0\\
+    0\\
+    -\frac{2Mra}{\sigma^2}
+    \end{pmatrix},\qquad \gamma^{ij} = \begin{pmatrix}
+    \frac{\Delta}{\rho^2} & 0 & 0\\
+    0 & \frac{1}{\rho^2} & 0\\
+    0 & 0 & \frac{\rho^2}{\sigma^2\sin^2\theta}
+    \end{pmatrix},\\
+    &\partial_r\alpha^2 = \frac{2M}{\sigma^4}\Big[r^6 + r^4a^2(2\sin^2\theta + \cos^2\theta) - 4Mr^3a^2\sin^2\theta + r^2a^4(\sin^2\theta - \cos^2\theta) - a^6\cos^2\theta\Big],\\
+    &\partial_\theta\alpha^2 = -4Mra^2(r^2 + a^2)\sin\theta\cos\theta\frac{\Delta}{\sigma^4},\\
+    &\partial_r\beta^\phi = -\frac{2Ma}{\sigma^4}\big[-3r^4 - r^2a^2\cos^2\theta - r^2a^2 + a^4\cos^2\theta\big],\\
+    &\partial_\theta\beta^\phi = -\frac{4Mra^3\Delta}{\sigma^4}\sin\theta\cos\theta,\\
+    &\partial_r\gamma^{rr} = \frac{2}{\rho^4}\Big[(r-M)a^2\cos^2\theta + (Mr-a^2)r\Big],\hspace{30pt} \partial_\theta\gamma^{rr} = \frac{2a^2\Delta}{\rho^4}\sin\theta\cos\theta,\\
+    &\partial_r\gamma^{\theta\theta} = -\frac{2r}{\rho^4},\hspace{165pt} \partial_\theta\gamma^{\theta\theta} = \frac{2a^2}{\rho^4}\sin\theta\cos\theta,\\
+    &\partial_r\gamma^{\phi\phi} = -\frac{2}{\sigma^4\sin^2\theta} \Big[r^2\big(r^3 - Ma^2\sin^2\theta\big) + a^2\cos^2\theta\big(2r^3 + ra^2\cos^2\theta + Ma^2\sin^2\theta\big)\Big],\\
+    &\partial_\theta\gamma^{\phi\phi} = -\frac{2\cos\theta}{\sigma^4\sin^3\theta}\Big[2Mra^2\sin^2\theta\,(r^2 + a^2) + \rho^2\sigma^2\Big].
+\end{aligned}
+\end{equation}
 
 
 \section{Maxwell equations in curved spacetime}
-
-The electric and magnetic fields are 3-vectors that live on the spacelike hypersurfaces $\Sigma_t$. However, these fields can also be seen as 4-vectors that are tangent to $\Sigma_t$ \cite{Alcubierre2009}. The 4-vector $n_\mu = (-\alpha, 0, 0, 0)$ is a unit vector that is perpendicular to $\Sigma_t$ \cite{Alcubierre2009} and that satisfies the relation $n_\mu n^\mu = -1$. The electric and magnetic fields $E^\mu$ and $B^\mu$, written as 4-vectors, must be perpendicular to $n_\mu$. Therefore, the zeroth components $E^0$ and $B^0$ must be zero. A projection operator that projects 4-vectors onto $\Sigma_t$ can be defined as
-\begin{equation}
-    {h_\mu}^\nu \equiv {\delta_\mu}^\nu + n_\mu n^\nu.
-\end{equation}
-With this projection operator, the Maxwell equations can be written in the language of the ADM formalism. Let $j^\mu$ be the four-current, with $\rho \equiv -n_\mu j^ \mu$ the charge. The Maxwell equations then are
-\cite{Alcubierre2009}
-\begin{equation}
-\begin{aligned}
-    &{h_\mu}^\nu \nabla_\nu E^\mu = 4\pi\rho\\
-    &{h_\mu}^\nu \nabla_\nu B^\mu = 0\\
-    &\alpha {h^i}_\nu (n^\rho \partial_\rho E^\nu - E^\rho \partial_\rho n^\nu) = \epsilon^{ijk} \partial_j (\alpha B_k) + \alpha K E^i - 4\pi\alpha {h^i}_\mu j^\mu\\
-    &\alpha {h^i}_\nu (n^\rho \partial_\rho B^\nu - B^\rho \partial_\rho n^\nu) = -\epsilon^{ijk} \partial_j (\alpha E_k) + \alpha K B^i
-\end{aligned}
-\end{equation}
-where $K \equiv -\nabla_\mu n^\mu$ is the trace of the extrinsic curvature of $\Sigma_t$. As an example, we set $j^\mu = 0$ and use the above equations to derive an analytic solution in a scenario with a relatively simple spacetime metric.
 
 \subsection{Electromagnetic waves in curved spacetime}
 
@@ -128,9 +146,9 @@ Plugging this in gives $d\tau=\alpha dt$.
 So $\omega=-\alpha^{-1}\partial_t\theta$.
 Consider now the same wave measured at two different times $t$, its redshift will be the ratio of $\alpha$'s.
 
-\subsection{An analytic solution}
+\section{Analytical solution to the Maxwell equations}
 
-This subsection considers a simple curved metric for which an analytic wave solution of the Maxwell equations can be found. The spacetime metric that is considered is the static metric of the Newtonian gauge
+We consider the Maxwell equations in curved spacetime \cite{Alcubierre2009} without sources ($j^\mu = 0$) and with the spacetime background
 \begin{equation}
     g_{\mu\nu} = \begin{pmatrix}
         -(1+2\Phi) & 0 & 0 & 0\\
@@ -139,21 +157,15 @@ This subsection considers a simple curved metric for which an analytic wave solu
         0 & 0 & 0 & 1-2\Phi
     \end{pmatrix}
 \end{equation}
-with $\Phi(x^\mu)$ a scalar function. This metric is a solution of the linearized Einstein field equations in the absence of anisotropic pressure \cite{1995ApJ}. In other words, as long as the scalar $|\Phi|$ is much smaller than $1$, this metric is an approximate solution of the Einstein field equations. In the presence of anisotropic pressure, the metric is parameterized by two scalars instead of only $\Phi$. The scalar $\Phi$ can be interpreted as the gravitational potential \cite{1995ApJ}. Because the metric is diagonal, the trace of the extrinsic curvature vanishes ($K = 0$), and the spatial part of the projection operator is ${h_i}^j = {\delta_i}^j$. The Maxwell equations thus simplify:
+where $\Phi(x^i)$ a scalar function. This is the static metric of the Newtonian gauge. As long as $|\Phi| \ll 1$, this metric is an approximate solution of the Einstein field equations \cite{1995ApJ}. Because the metric is diagonal, the Maxwell equations simplify:
 \begin{equation}
-\begin{aligned}
-    &\nabla_i E^i = 0 \qquad&&\partial_t E^i = \epsilon^{ijk} \partial_j (\alpha B_k)\\
-    &\nabla_i B^i = 0 \qquad&&\partial_t B^i = -\epsilon^{ijk} \partial_j (\alpha E_k).
-\end{aligned}
+    \nabla_i E^i = 0 \qquad \nabla_i B^i = 0 \qquad \partial_t E^i = \epsilon^{ijk} \partial_j (\alpha B_k) \qquad \partial_t B^i = -\epsilon^{ijk} \partial_j (\alpha E_k).
 \end{equation}
 We consider wave solutions of the electric and magnetic fields using the following ansatz:
 \begin{equation}
-\begin{aligned}
-    &\partial_y \Phi(x) = 0 \qquad&&E^i = \big(0, E_0 e^{i(k(x)x-\omega t)}, 0\big)\\
-    &\partial_z \Phi(x) = 0 \qquad&&B^i = \big(0, 0, B_0 e^{i(k(x)x-\omega t)}\big).
-\end{aligned}
+    \partial_y \Phi(x) = 0 \qquad \partial_z \Phi(x) = 0 \qquad E^i = \big(0, E_0 e^{i(k(x)x-\omega t)}, 0\big) \qquad B^i = \big(0, 0, B_0 e^{i(k(x)x-\omega t)}\big).
 \end{equation}
-The physical interpretation behind this ansatz is that of a photon diving straight into or climbing out of a gravitational well. This ansatz already satisfies two of the Maxwell equations. Filling in this ansatz into the remaining Maxwell equations gives the following constraints:
+The physical interpretation behind this ansatz is that of a photon diving straight into or climbing out of a gravitational well. This ansatz already satisfies the first two Maxwell equations. Filling in this ansatz into the remaining Maxwell equations gives the following constraints:
 \begin{equation}
 E_0 = B_0 \qquad\text{and}\qquad kx = \omega \int \frac{\text{d}x}{A} + i\log{A} \quad\text{with}\quad A \equiv \sqrt{1 + 2\Phi}(1 - 2\Phi).
 \end{equation}
