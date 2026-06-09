@@ -98,8 +98,8 @@ where $K \equiv -\nabla_\mu n^\mu$ is the trace of the extrinsic curvature of $\
 
 We will show two aspects of electromagnetic waves in curved spacetime:
 \begin{itemize}
-  \item The redshift ratio is the lapse function ratio between points of emission and observation.
-  \item The amplitude of \textit{divergenceless} plane waves is fixed, other than for lensing effects.
+  \item The redshift is the lapse function ratio between points of emission and observation.
+  \item The amplitude of \textit{divergenceless} plane waves is fixed, other than due to lensing effects.
 \end{itemize}
 
 \noindent
@@ -115,18 +115,18 @@ Due to the aformentioned WKB-approximation then,
   0&=\nabla^\mu\theta\nabla_\mu\theta\text{ and separately}\\
   0&=2\nabla^\mu\overline\psi\nabla_\mu\phi+\overline\psi\nabla^\mu\nabla_\mu\phi=\nabla^\mu(\overline\psi^2\nabla_\mu\theta).
 \end{align}
-The former is the Klein-Gordon equation, says the field is massless.
+Both are equations from optics: an eikonal equation, and the amplitude transport equation.
 If furthermore the wave is divergenceless, if $\nabla^\mu\nabla_\mu\phi=0$, then $\nabla^\mu\phi\nabla_\mu\overline\psi=0$.
 That is, the amplitude is fixed moving with the wave, and $\overline\psi$ only changes due to lensing.
 
 \noindent
 Take again this plane wave $\psi$.
 We may sensibly define the local frequency to be $\omega$ such that $\partial_\tau\psi=i\omega\psi$.
-which means $\omega=-\partial_\tau\theta$ under the WKB-approximation.
+which means $\omega=-\partial_\tau\theta$ under the WKB approximation.
 Now the Eulerian observer in the ADM split by definition moves as $\partial_\tau x^\mu=n^\mu$, with $n_\mu=(-\alpha,\mathbf0)$.
 Plugging this in gives $d\tau=\alpha dt$.
 So $\omega=-\alpha^{-1}\partial_t\theta$.
-Consider now the same wave measured at two different times $t$, its redshift will be the ratio of $\alpha$s.
+Consider now the same wave measured at two different times $t$, its redshift will be the ratio of $\alpha$'s.
 
 \subsection{An analytic solution}
 
@@ -183,8 +183,8 @@ Of particular interest are subdomains where the spatial component of geodesics a
 This restricts us to radial lines.
 If we simply assume there is no variation along $\theta$ and $\phi$, we have a radial foliation with `spherical' symmetry.
 So we must adjust the metric's volume elements \textit{for electromagnetic calculations} from $\sqrt{\gamma}$ to $\sqrt{\gamma_{rr}}$, reducing $\gamma_{\theta\theta}$ and $\gamma_{\phi\phi}$ to $1$.
-Similar reductions must be made to the orthogonal elements in Maxwell's equations.
-This gives us a `thin flux tube' subdomain, e.g. around $\hat{\mathbf x}$, with divergenceless plane waves, behaving like a $1{+}1$ Euclidian spacetime with gravity.
+Similar reductions must be made of the orthogonal elements in Maxwell's equations.
+This gives us a `thin flux tube' subdomain, e.g. around $\hat{\mathbf x}$, carrying divergenceless plane waves, behaving like a $1{+}1$ Euclidian spacetime with gravity.
 
 \subsubsection{Setup \& results}
 
@@ -202,7 +202,7 @@ and the wavepacket not posessing a fully definite wavelength.
 \begin{figure}
   \centering
   \includegraphics[width=.6\linewidth]{figures/GR_redshift_probe_omega.png}
-  \caption{Superimposed profiles of the same wavepacket measured by different observers at different times, comparing measured and predicted redshift. Notice also the fixed amplitude. Set up along a thin flux tube in a Schwarzschild spacetime.}
+  \caption{Superimposed profiles of the same wavepacket measured by different observers at different times, comparing measured and predicted redshift. Notice also the fixed amplitude. Set up along a thin flux tube in a Schwarzschild spacetime. Here $r_\text S=2$.}
   \label{fig:redshift}
 \end{figure}
 
@@ -396,6 +396,60 @@ For massive particles, the energy $E$ and angular momentum $\Phi$ are determined
 \subsection{Wald Solution}
 
 As a validation for the charged-particle pusher, we reproduce the RKA3 orbit of the Wald Solution described in \cite{Bacchini_2019}: for a massive particle with $q/m=1$ in near-extremal Kerr spacetime ($a=0.9\,M$). The top panel of Figure~\ref{fig:wald_3d} shows the 3D trajectories integrated with RK4 and IMR over $t=1000\,M$ with coordinate-time step $\Delta t = 1.0\,M$. The RK4 orbit undergoes unphysical energy dissipation, causing the gyration to damp and eventually stop. While the IMR scheme preserves the gyration throughout - due to its symplectic nature. The results show qualitative agreement with Bacchini et. al, 2019 (bottom panel).
+
+\section{Vlasov-Poisson PIC 2-stream instability in a thin Schwarzschild flux tube}
+
+Our PIC setup is again based on \cite{entity1} and \cite{entity2}.
+We have obtained satisfactory results from a 1D-1V Vlasov-Poisson PIC model, so did not opt for a 1D-3V Vlasov-Maxwell model.
+In principle it is not much more difficult; we have the cell-, face-, particle-gather and deposition functionality,
+we have the symplectic leapfrog stepper (via IMR with Picard iteration), and we have the free Maxwell solver.
+But there are some quirks for metrics with a nonzero shift $\beta^i$. E.g. $E^i$ would depend on $B^i$, which clearly does not play well with the Yee lattice.
+So this requires interpolation, linear in the fixed $\Delta x$ grid of the Schwarzschild spacetime, which seems somewhat arbitrary.
+The Schwarzschild metric has $\beta^i=0$, but its $t$-coordinate diverges during horizon entry.
+The Kerr-Schild metric fixes this.
+We computed the Kerr-Schild and Cartesian Kerr-Schild ADM splits, including derivatives. (We actually rely on finite differences however, so that it may in principle couple to the Einstein equation.)
+The electric field $D^r$ we compute directly by depositing particles onto the cells and integrating $\rho$.
+This means we cannot easily compute total electric potential energy for analysis. But we do have total kinetic energy in the Eulerian frame, and electromagnetic field energy.
+
+We opted for canonical $b_0$-spline densities for the pseudoparticles. We also implemented $b_1$-spline densities, which seem to produce less noise, but then again we have this question of what linear interpolation even means.
+So we settled for 1D-1V Vlasov-Poisson PIC, specialized for this radial Schwarzschild metric with the 1D reduction from before, and use $b_0$ density pseudoparticles.
+
+The model was tested with a Euclidian electron-proton two-stream instability setup, with immobile ions.
+This produced the expected BGK electron holes.
+We experimented here with boundary conditions, trying to keep the particles in the domain and the charge neutral.
+But re-inserting particles is a bit tricky, it drives the system.
+(Especially in a Schwarzschild spacetime it makes little sense, it drives energy into the system.)
+In the end we had better results simply immobilizing particles on the edge.
+
+Our setup is based on the video shown during the lecture.
+We deduced it is most likely an electron-positron two-stream instability in a Kerr-Schild metric, with boundary conditions absorbing particles.
+The particles initially have a uniform spatial distribution in $r$, but accordingly vary in mass through the \textit{reduced} metric volume element.
+First the local velocities are sampled, according to a Maxwellian centered around the respective beams, and an additional perturbation mode is applied also.
+Then these are transformed into the covariant $u_i$.
+Figure \ref{fig:PIC} shows a snapshot of a run.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}{0.8\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/000084.png}
+  \end{subfigure}
+  \vspace{0.5em}
+  \begin{subfigure}{0.6\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/two_stream_Poisson_K.png}
+  \end{subfigure}
+  \caption{
+    Phase portrait and Eulerian kinetic energy snapshot of a two-stream setup with $M=0.005$ and beam density $n=0.01$.
+    2048 cells with 32 p\.p\.c\., CFL number $0.2$, $10$ Picard iterations per IMR half-step.
+    We see Maxwellian streams, where electrons and positrons electrostatically separate with some characteristic spacing.
+    The streams are pulled towards the event horizon, losing particles preferentially on that side, and total kinetic energy increasing.
+    We see also histograms of the net number density and net charge.
+    The two streams are interacting some places, here the number density and charge density vary rapidly, associated to stronger electric fields and more total kinetic energy variation.
+    A video of this is available also.
+  }
+  \label{fig:PIC}
+\end{figure}
 
 \printbibliography
 

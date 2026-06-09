@@ -78,7 +78,7 @@ struct Bspline<0>
 //   because those locations are predictable and there are few of them.
 
 template <typename Particle, typename Keep>
-void add_densitized_charge
+void add_densitized_rho
 ( const Grid& grid,
   const Particle* particles,
   size_t n_particles,
