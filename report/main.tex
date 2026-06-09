@@ -94,6 +94,40 @@ With this projection operator, the Maxwell equations can be written in the langu
 \end{equation}
 where $K \equiv -\nabla_\mu n^\mu$ is the trace of the extrinsic curvature of $\Sigma_t$. As an example, we set $j^\mu = 0$ and use the above equations to derive an analytic solution in a scenario with a relatively simple spacetime metric.
 
+\subsection{Electromagnetic waves in curved spacetime}
+
+We will show two aspects of electromagnetic waves in curved spacetime:
+\begin{itemize}
+  \item The redshift ratio is the lapse function ratio between points of emission and observation.
+  \item The amplitude of \textit{divergenceless} plane waves is fixed, other than for lensing effects.
+\end{itemize}
+
+\noindent
+Let $\psi$ be any component of an electromagnetic wave.
+Write $\psi(x)=\overline\psi(x)e^{i\phi(x)}$, where $\phi(x)$ is its phase, depending on 4-position $x$, and $\overline\psi(x)\geq0$ is its slowly varying amplitude (high frequency/WKB approximation).
+Restrict $\psi$ so that it satisfies the massless wave equation $\nabla^\mu\nabla_\mu\psi=0$.
+Expanding, we find
+\begin{align}
+  0=\left(\nabla^\mu\nabla_\mu\overline\psi-\overline\psi\nabla^\mu\phi\nabla_\mu\phi+2i\nabla^\mu\overline\psi\nabla_\mu\phi+i\overline\psi\nabla^\mu\nabla_\mu\phi\right)e^{i\phi}
+\end{align}
+Due to the aformentioned WKB-approximation then,
+\begin{align}
+  0&=\nabla^\mu\theta\nabla_\mu\theta\text{ and separately}\\
+  0&=2\nabla^\mu\overline\psi\nabla_\mu\phi+\overline\psi\nabla^\mu\nabla_\mu\phi=\nabla^\mu(\overline\psi^2\nabla_\mu\theta).
+\end{align}
+The former is the Klein-Gordon equation, says the field is massless.
+If furthermore the wave is divergenceless, if $\nabla^\mu\nabla_\mu\phi=0$, then $\nabla^\mu\phi\nabla_\mu\overline\psi=0$.
+That is, the amplitude is fixed moving with the wave, and $\overline\psi$ only changes due to lensing.
+
+\noindent
+Take again this plane wave $\psi$.
+We may sensibly define the local frequency to be $\omega$ such that $\partial_\tau\psi=i\omega\psi$.
+which means $\omega=-\partial_\tau\theta$ under the WKB-approximation.
+Now the Eulerian observer in the ADM split by definition moves as $\partial_\tau x^\mu=n^\mu$, with $n_\mu=(-\alpha,\mathbf0)$.
+Plugging this in gives $d\tau=\alpha dt$.
+So $\omega=-\alpha^{-1}\partial_t\theta$.
+Consider now the same wave measured at two different times $t$, its redshift will be the ratio of $\alpha$s.
+
 \subsection{An analytic solution}
 
 This subsection considers a simple curved metric for which an analytic wave solution of the Maxwell equations can be found. The spacetime metric that is considered is the static metric of the Newtonian gauge
@@ -138,6 +172,39 @@ As an example, we consider $\Phi = -a \exp{(-x^2/2)}$. $\Phi$ cannot become smal
     \label{fig:gravitational_redshift}
 \end{figure}
 
+\subsection{Schwarzschild redshift experiment}
+
+We set up a redshift test as a stepping stone towards Vlasov-Maxwell PIC.
+
+\subsubsection{Thin flux tube}
+
+We simulate a $1{+}1$ subdomain of a $3{+}1$ Schwarzschild spacetime.
+Of particular interest are subdomains where the spatial component of geodesics are the same for both EM waves ($\epsilon=0$) and charged particles ($\epsilon=1$).
+This restricts us to radial lines.
+If we simply assume there is no variation along $\theta$ and $\phi$, we have a radial foliation with `spherical' symmetry.
+So we must adjust the metric's volume elements \textit{for electromagnetic calculations} from $\sqrt{\gamma}$ to $\sqrt{\gamma_{rr}}$, reducing $\gamma_{\theta\theta}$ and $\gamma_{\phi\phi}$ to $1$.
+Similar reductions must be made to the orthogonal elements in Maxwell's equations.
+This gives us a `thin flux tube' subdomain, e.g. around $\hat{\mathbf x}$, with divergenceless plane waves, behaving like a $1{+}1$ Euclidian spacetime with gravity.
+
+\subsubsection{Setup \& results}
+
+Our free electromagnetic solver, spacetime grid, and Yee lattice are as described in the Entity SR/GR-PIC code.\cite{entity1}\cite{entity2}
+We initialize a relatively high frequency wavepacket close to the event horizon moving outwards, and set absorbing boundary conditions.
+We set a low CFL condition and high spatial resolution, as to resolve this wavepacket properly with high precision measurements.
+(The CFL condition is set by comparing to the maximum coordinate speed-of-light in the domain.)
+We measure the wavepacket profile as it passes various fixed locations in space, with different $\alpha$.
+We superimpose these profiles and measure their amplitude and frequency, by fitting a plane wave to it.
+Results are shown in Figure \ref{fig:redshift}.
+We find the peak amplitude is exactly maintained, and the redshift is almost exactly the $\alpha$ ratio between the initial condition and observer.
+The difference is likely explained due to the WKB-approximation being approximate (the frequency must remain finite),
+and the wavepacket not posessing a fully definite wavelength.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.6\linewidth]{figures/GR_redshift_probe_omega.png}
+  \caption{Superimposed profiles of the same wavepacket measured by different observers at different times, comparing measured and predicted redshift. Notice also the fixed amplitude. Set up along a thin flux tube in a Schwarzschild spacetime.}
+  \label{fig:redshift}
+\end{figure}
 
 \section{Two-stream instability in curved spacetime}
 
@@ -304,7 +371,7 @@ For massive particles, the energy $E$ and angular momentum $\Phi$ are determined
 
 \begin{figure}[h]
     \centering
-    % \includegraphics[width=0.55\linewidth]{figures/spherical_orbit_3d.png}
+    \includegraphics[width=0.55\linewidth]{figures/spherical_orbit_3d.png}
     \caption{Spherical orbit at $r/M=1.2$ in extremal Kerr spacetime ($a=M=1$, $Q/M^2=0.5$). Gold: analytical solution via Mino-time. Magenta (dashed): IMR numerical integration.}
     \label{fig:spherical_orbit_3d}
 \end{figure}
@@ -313,12 +380,12 @@ For massive particles, the energy $E$ and angular momentum $\Phi$ are determined
     \centering
     \begin{subfigure}{0.85\linewidth}
         \centering
-        % \includegraphics[width=\linewidth]{figures/WaldV2_RKA3_3d.png}
+        \includegraphics[width=\linewidth]{figures/WaldV2_RKA3_3d.png}
     \end{subfigure}
     \vspace{0.5em}
     \begin{subfigure}{0.8\linewidth}
         \centering
-        % \includegraphics[width=\linewidth]{figures/Bacchini_IMR.png}
+        \includegraphics[width=\linewidth]{figures/Bacchini_IMR.png}
     \end{subfigure}
     \caption{Orbit RKA3 in the Wald field around a Kerr black hole ($a=0.9M$, $B_z=2$, $q/m=1$). The RK4 gyration radius collapses due to numerical energy dissipation while the IMR scheme preserves the orbit.}
     \label{fig:wald_3d}

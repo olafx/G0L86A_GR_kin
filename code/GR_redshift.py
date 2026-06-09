@@ -143,11 +143,11 @@ for i, r_probe in enumerate(probe_radii):
     fr'$(\omega/\omega_0)_\mathrm{{fit}}={measured:.3f}$, '
     fr'$(\omega/\omega_0)_\mathrm{{GR}}={predicted:.3f}$'
   )
-  plt.plot(tau[keep], probe_E[keep,i]/peak_E[i], label=label, alpha=alpha)
+  plt.plot(tau[keep], probe_E[keep,i], label=label, alpha=alpha)
 plt.xlim(-8, 8)
 plt.ylim(-1.7, 1.1)
 plt.xlabel(r'proper time from peak $\Delta\tau$')
-plt.ylabel(r'normalized $E^\theta$')
+plt.ylabel(r'$E^\theta$')
 plt.legend(loc='lower left')
 plt.tight_layout()
 plt.savefig(dir_out/'GR_redshift_probe_omega.png', dpi=400)
