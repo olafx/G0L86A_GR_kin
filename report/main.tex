@@ -45,7 +45,20 @@
 
 \section*{Introduction}
 
-Investigating the behavior of particles in a background of curved spacetime requires modeling their trajectories. For some known curved spacetime metrics, like the Schwarzschild metric and the Kerr metric, analytical orbits are known. However, most particle trajectories cannot be known analytically and have to be solved numerically. A scenario where this is needed is the modeling of plasmas near a black hole using kinetic codes like particle-in-cell (PIC). A common numerical framework for solving particle orbits in general relativity (GR) involves splitting the metric into spatial slices parameterized by time. This formalism is called the Arnowitt-Deser-Misner (ADM) formalism. Using this formalism, we implement an integration scheme that explicitly conserves the energy of the particle \cite{Bacchini_2018}\cite{Bacchini_2019} while solving its orbit. To run PIC simulations in GR, it is also necessary to solve the Maxwell equations in curved spacetime. We don't implement the full Vlasov-Maxwell system, but instead limit ourselves to the Vlasov-Poisson system in which the charge density is approximated as static. We then apply the implemented method to the two-stream instability in the presence of a Schwarzschild black hole.
+Investigating the behavior of particles in a background of curved spacetime requires modeling their trajectories.
+For some spacetimes, like the Kerr- and Schwarzschild black holes, some \textbf{analytical orbits} are known.
+But for general spacetimes, particle trajectories must be solved numerically.
+A scenario where this is needed is the modeling of plasmas near a black hole using kinetic codes like particle-in-cell (PIC).
+A common numerical framework for solving particle orbits in general relativity (GR) involves splitting the metric into spatial slices parameterized by time.
+This formalism is called the Arnowitt-Deser-Misner (ADM) formalism, or the 3+1 split.
+Using this formalism, we implement a \textbf{symplectic particle integration} scheme, as in \cite{Bacchini_2018}\cite{Bacchini_2019},
+one that can \textbf{adapt} to any metric and any electromagnetic field configuration.
+(For orbits in particular one would expect these to produce quite good results, since conservation of the shadow Hamiltonian in a quasi-periodic localized system tends to also conserve the Hamiltonian well. There is also the energy-conserving Hamiltonian scheme, we did not implement that one.)
+We also implement a \textbf{Maxwell solver} and \textbf{Vlasov-Poisson PIC} code in curved spacetimes, in particular specialized to a thin radial flux tube around a Schwarzschild black hole.
+(Good results were found with Vlasov-Poisson, so we did not opt for Vlasov-Maxwell, but everything is structurally in place to do this next.)
+We test these solvers with an \textbf{optics problem} and an \textbf{untable two-stream problem} respectively.
+The solvers are implemented in C++ with a Python interface, and are OpenMP-parallel.
+
 
 \section{Geodesics in the ADM formalism}
 
@@ -62,7 +75,7 @@ We use the (-,+,+,+) metric convention, and set $c=1$ for the speed of light. Th
 \label{eq:geodesic}
     \frac{\text{d}^2x^\rho}{\text{d}\tau^2} + \Gamma^\rho_{\mu\nu} \frac{\text{d}x^\mu}{\text{d}\tau} \frac{\text{d}x^\nu}{\text{d}\tau} = \frac{q}{m}g_{\mu\nu}F^{\rho\mu}\frac{\text{d}x^\nu}{\text{d}\tau}.
 \end{equation}
-Here $\tau$ is the proper time along the geodesic, $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols, and $F^{\mu\nu}$ is the electromagnetic field tensor. The contravariant four-velocity of the particle is defined as $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$. From the definition of $u_\mu$ and the geodesic equations, we derived the following three equations:
+Here $\tau$ is the proper time along the geodesic, $\Gamma^\rho_{\mu\nu}$ are the Christoffel symbols, and $F^{\mu\nu}$ is the electromagnetic field tensor. The contravariant four-velocity of the particle is defined as $u^\mu \equiv \frac{\text{d}x^\mu}{\text{d}\tau}$. From the definition of $u_\mu$ and the geodesic equations, we \textbf{derived} the following three equations:
 \begin{equation}
 \label{eq:geodesic_adm1}
     \frac{\text{d}x^i}{\text{d}t} = \gamma^{ij}\frac{u_j}{u^0} - \beta^i
@@ -140,11 +153,11 @@ Due to the aforementioned WKB approximation, then,
   0=2\nabla^\mu\overline\psi\nabla_\mu\phi+\overline\psi\nabla^\mu\nabla_\mu\phi=\nabla^\mu(\overline\psi^2\nabla_\mu\theta).
 \end{cases}
 \end{align}
-Both are equations from optics: an Eikonal equation, and the amplitude transport equation.
+Both are equations from optics: an eikonal equation, and the amplitude transport equation, respectively.
 If furthermore the wave is divergenceless ($\nabla^\mu\nabla_\mu\phi=0$) then $\nabla^\mu\phi\nabla_\mu\overline\psi=0$.
 That is, the amplitude is fixed moving with the wave, and $\overline\psi$ only changes due to lensing.
 It follows also that $\nabla^\mu\phi\nabla_\mu\nabla_\nu\phi=0$, which has the form of the geodesic equation.
-Due to the Eikonal equation then, $\nabla^\mu\phi$ follows in particular the \textit{null} geodesics, together with $dx^\mu/d\lambda$.
+Due to the eikonal equation then, $\nabla^\mu\phi$ follows in particular the \textit{null} geodesics, together with $dx^\mu/d\lambda$.
 
 \noindent
 Take again this plane wave $\psi$.
@@ -203,10 +216,10 @@ We set up a numerical redshift test as a stepping stone towards Vlasov-Maxwell P
 We simulate a $1{+}1$ subdomain of a $3{+}1$ Schwarzschild spacetime.
 Of particular interest are subdomains where the spatial component of geodesics is the same for both EM waves ($\epsilon=0$) and charged particles ($\epsilon=1$).
 This restricts us to radial lines.
-If we simply assume there is no variation along $\theta$ and $\phi$, we have a radial foliation with `spherical' symmetry.
+If we simply assume there is no variation along $\theta$ and $\phi$, we have a radial foliation with `spherical' symmetry, which is not what we want.
 So we must adjust the metric's volume elements \textit{for electromagnetic calculations} from $\sqrt{\gamma}$ to $\sqrt{\gamma_{rr}}$, reducing $\gamma_{\theta\theta}$ and $\gamma_{\phi\phi}$ to $1$.
 Similar reductions must be made of the orthogonal elements in Maxwell's equations.
-This gives us a `thin flux tube' subdomain, e.g. around $\hat{\mathbf x}$, carrying divergenceless plane waves, behaving like a $1{+}1$ Euclidean spacetime with gravity.
+This gives us a `\textbf{thin flux tube}' subdomain, e.g. around $\hat{\mathbf x}$, carrying divergenceless plane waves, behaving like a $1{+}1$ Euclidean spacetime with gravity.
 
 \subsubsection{Setup \& results}
 
@@ -238,7 +251,7 @@ We can analyze the particle trajectories of neutral and charged particles in cur
     \frac{\text{d}u_i}{\text{d}t} = -\alpha u^0\partial_i\alpha + u_j\partial_i\beta^j - \frac{u_ju_k}{2u^0}\partial_i\gamma^{jk}.
     \label{eq:geodesicEinsteinNotation}
 \end{equation}
-Given the starting position and velocity of the particle, we can construct an initial-value problem from this system of equations - which can then be discretized and numerically integrated in time. In our case, we use simple iterative solvers to step the system forward in coordinate time. The two schemes used are the Runge-Kutta 4 (RK4) and the symplectic Implicit Midpoint Rule (IMR) methods. The RK4 scheme is inherently explicit and can easily be implemented to get the new state of the particle from its initial one. Canonically, the IMR is an implicit formulation that would need to be solved using a Newton method with the construction of a Jacobian at each step. This can be bypassed by employing fixed-point iterations that attempt to approximate the IMR solution to some convergence threshold $\epsilon_\mathrm{tol}$. This is demonstrated in Algorithm \ref{alg:IMR_fixed_point}.
+Given the starting position and velocity of the particle, we can construct an initial-value problem from this system of equations - which can then be discretized and numerically integrated in time. In our case, we use simple iterative solvers to step the system forward in coordinate time. The two schemes used are the Runge-Kutta 4 (RK4) and the symplectic Implicit Midpoint Rule (IMR) methods. The RK4 scheme is inherently explicit and can easily be implemented to get the new state of the particle from its initial one. Canonically, the IMR is an implicit formulation that would need to be solved using a Newton method with the construction of a Jacobian at each step. This can be bypassed by employing fixed-point iterations (Picard iterations) that attempt to approximate the IMR solution to some convergence threshold $\epsilon_\mathrm{tol}$. This is demonstrated in Algorithm \ref{alg:IMR_fixed_point}.
 % - given by Algorithm\,\,\ref{alg:IMR_fixed_point}.
 Rewriting the system as $\dot{\bm{y}} = f(\bm{y})$, the description of the IMR scheme in coordinate time is given by
 \begin{equation}
@@ -271,7 +284,8 @@ While this solution path pertains to neutral particles, it can be readily extend
 In terms of numerical implementation, the electromagnetic terms are added to the RHS function in $\dot{\bm{y}} = f(\bm{y})$.
 
 \subsection{Kerr Spacetime}
-The described particle pusher can be used to reproduce trajectories around compact objects such as a Kerr black hole - for which analytical solutions are available through reparametrization. We work in Boyer-Lindquist coordinates with $G=c=1$, using the standard notation $\Sigma = r^2 + a^2\cos^2\theta$, $\Delta = r^2 - 2Mr + a^2$, where $M$ and $a$ are the mass and black hole spin. We consider only orbits outside the outer event horizon $r_+$. Defining $u = \cos\theta$ as the latitudinal coordinate and $\mu$ as the four-velocity parametrization ($1$ for massive and $0$ for massless), the geodesic equations parameterized by proper time $\tau$ are
+
+The described particle pusher can be used to reproduce trajectories around compact objects such as a Kerr black hole - for which \textbf{analytical solutions} are available through reparametrization. We work in Boyer-Lindquist coordinates with $G=c=1$, using the standard notation $\Sigma = r^2 + a^2\cos^2\theta$, $\Delta = r^2 - 2Mr + a^2$, where $M$ and $a$ are the mass and black hole spin. We consider only orbits outside the outer event horizon $r_+$. Defining $u = \cos\theta$ as the latitudinal coordinate and $\mu$ as the four-velocity parametrization ($1$ for massive and $0$ for massless), the geodesic equations parameterized by proper time $\tau$ are
 
 \begin{equation}
   \label{eq:geodesic_equations}
@@ -288,7 +302,9 @@ where,
     V(u) = a^2(\mu^2 - E^2)u^4 - [Q + \Phi^2 + a^2(\mu^2 - E^2)]u^2 + Q
 \end{equation}
 
-\textbf{Carter's Constant.} Here, the newly introduced Carter's constant - $Q$ - is the third constant of motion beyond $E$ (energy) and $\Phi$ (angular momentum). Without delving too deep into the physical nature of $Q$, we state that it is directly related to the speed of the particle in the $\theta$ direction as it crosses the equatorial plane \cite{teoPhotonSpherical}.\\
+\textbf{Carter's Constant.} Here, the newly introduced Carter's constant - $Q$ - is the third constant of motion beyond $E$ (energy) and $\Phi$ (angular momentum).
+It is the Killing charge associated to the Carter Killing tensor.
+Without delving too deep into the physical nature of $Q$, we state that it is directly related to the speed of the particle in the $\theta$ direction as it crosses the equatorial plane \cite{teoPhotonSpherical}.\\
 Spherical orbits constitute those special cases where the radial coordinate remains constant throughout the motion of the particle. This means that the radial velocity and acceleration should both be zero, giving us the conditions:
 
 \begin{equation}
@@ -301,9 +317,9 @@ The particle is free to move in the $\theta$ and $\phi$ planes, provided that th
     V(u) \geq 0, \qquad |u| < 1
     \label{eq:u_condition}
 \end{equation}
-Hence, we have to look for ranges of the latitudinal variable, $u$, such that the solutions satisfy the above conditions. At the boundaries of this range, the particle will have a turning point in the $\theta$ direction and will reverse its motion. Therefore, the motion in the $\theta$ direction is oscillatory between these two turning points. The particle continues to bounce between the ends of this range while orbiting the black hole. \textbf{Hence, the particle oscillates latitudinally with an amplitude of $|u|=u_{max}$ - given by analysis of the roots of $V(u)$.}
+Hence, we have to look for ranges of the latitudinal variable, $u$, such that the solutions satisfy the above conditions. At the boundaries of this range, the particle will have a turning point in the $\theta$ direction and will reverse its motion. Therefore, the motion in the $\theta$ direction is oscillatory between these two turning points. The particle continues to bounce between the ends of this range while orbiting the black hole. Hence, the particle \textbf{oscillates latitudinally} with an amplitude of $|u|=u_{\mathrm{max}}$ - given by analysis of the roots of $V(u)$.
 
-\textbf{Mino Time.} The coupled geodesic equations (\eqref{eq:geodesic_equations}) can be separated by introducing a new parameter - Mino time - via $\Sigma\,d/d\tau = d/d\lambda$. This allows us to derive analytic solutions describing the particle solutions \cite{teoTimelikeSpherical}. These analytical solutions have been compared against our particle pusher for the case of a massive particle in extremal Kerr spacetime ($a=M=1$). The spherical orbit is located at $r/M=1.2$ with Carter constant $Q/M^2=0.5$. These parameters yield $E=0.7169$ and $\Phi/M=1.4357$. Both the analytical trajectory and the numerical curve are shown in Figure~\ref{fig:spherical_orbit_3d}, integrated with coordinate-time step $\Delta t = 0.05\,M$. We see that the IMR scheme is able to reproduce the latitudinal oscillations quite effectively, with the maximum RMS error for $\theta$ being $3.81\times 10^{-6}$ radians.
+\textbf{Mino Time.} The coupled geodesic equations \eqref{eq:geodesic_equations} can be separated by introducing a new parameter - Mino time - via $\Sigma\,d/d\tau = d/d\lambda$. This allows us to derive analytic solutions describing the particle solutions \cite{teoTimelikeSpherical}. These analytical solutions have been compared against our particle pusher for the case of a massive particle in extremal Kerr spacetime ($a=M=1$). The spherical orbit is located at $r/M=1.2$ with Carter constant $Q/M^2=0.5$. These parameters yield $E=0.7169$ and $\Phi/M=1.4357$. Both the analytical trajectory and the numerical curve are shown in Figure~\ref{fig:spherical_orbit_3d}, integrated with coordinate-time step $\Delta t = 0.05\,M$. We see that the iterative IMR scheme is able to reproduce the latitudinal oscillations quite effectively, with the maximum RMS error for $\theta$ being $3.81\times 10^{-6}$ radians.
 
 \begin{figure}[h]
     \centering
@@ -367,20 +383,20 @@ But there are some quirks for metrics with a nonzero shift $\beta^i$. E.g., $E^i
 So this requires interpolation, linear in the fixed $\Delta x$ grid of the Schwarzschild spacetime, which seems somewhat arbitrary.
 The Schwarzschild metric has $\beta^i=0$, but its $t$-coordinate diverges during horizon entry.
 The Kerr-Schild metric fixes this.
-We computed the Kerr-Schild and Cartesian Kerr-Schild ADM splits, including derivatives. (We actually rely on finite differences however, so that it may in principle couple to the Einstein equation.)
+We computed the Kerr-Schild and Cartesian Kerr-Schild ADM splits, including derivatives. (We actually rely on finite differences however, to be more easily adjustable to any metric.)
 The electric field $D^r$ we compute directly by depositing particles onto the cells and integrating $\rho$.
 This means we cannot easily compute the total electric potential energy for analysis. But we do have total kinetic energy in the Eulerian frame, and electromagnetic field energy.\\
 \\
-We opted for canonical $b_0$-spline densities for the pseudoparticles. We also implemented $b_1$-spline densities, which seem to produce less noise, but then again we have this question of what linear interpolation even means. So we settled for 1D-1V Vlasov-Poisson PIC, specialized for this radial Schwarzschild metric with the 1D reduction from before, and used $b_0$ density pseudoparticles.\\
+We opted for canonical $b_0$-spline densities for the pseudoparticles. We also implemented $b_1$-spline densities, which seem to produce less noise, but then again we have these questions about the meaning of linear interpolation. So we settled for 1D-1V Vlasov-Poisson PIC, specialized for this radial Schwarzschild metric with the 1D reduction from before, and used $b_0$ density pseudoparticles.\\
 \\
-The model was tested with a Euclidean electron-positron two-stream instability setup, with immobile ions.
+The model was first tested with a \textbf{Euclidean electron-proton two-stream instability} setup, with immobile ions.
 This produced the expected BGK electron holes.
 We experimented here with boundary conditions, trying to keep the particles in the domain and the charge neutral.
-But re-inserting particles is a bit tricky. (Especially in a Schwarzschild spacetime it makes little sense; it drives energy into the system.)
-In the end, we had better results simply immobilizing particles on the edge.\\
+But re-inserting particles is a bit tricky. (Especially in a Schwarzschild spacetime it makes little sense, it drives energy into the system.)
+In the end, we had better results simply immobilizing particles on the edge, as is also done.\\
 \\
-Our setup is based on the video shown during the lecture.
-We deduced it is most likely an electron-positron two-stream instability in a Kerr-Schild metric, with boundary conditions absorbing particles.
+Our main setup is based on the video shown during the lecture.
+We deduced it is most likely an \textbf{electron-positron two-stream instability in a Kerr-Schild metric}, with boundary conditions absorbing particles.
 The particles initially have a uniform spatial distribution in $r$, but accordingly vary in mass through the \textit{reduced} metric volume element.
 First, the local velocities are sampled, according to a Maxwellian centered around the respective beams, and an additional perturbation mode is applied.
 Then these velocities are transformed into the covariant $u_i$.
@@ -399,12 +415,12 @@ Figure \ref{fig:PIC} shows a snapshot of a run.
   \end{subfigure}
   \caption{
     Phase portrait and Eulerian kinetic energy snapshot of a two-stream setup with $M=0.005$ and beam density $n=0.01$.
-    2048 cells with 32 p.p.c., CFL number $0.2$, $10$ Picard iterations per IMR half-step.
-    We see Maxwellian streams, where electrons and positrons electrostatically separate with some characteristic spacing.
-    The streams are pulled towards the event horizon, losing particles preferentially on that side, and total kinetic energy increases.
+    2048 cells with 32 p.p.c., CFL number $0.2$, $10$ Picard iterations per leapfrog IMR step.
+    We see Maxwellian streams, where electrons and positrons \textbf{electrostatically separate with some characteristic spacing}.
+    The streams are \textbf{pulled towards the event horizon}, losing particles preferentially on that side, and total kinetic energy increases.
     We also show histograms of the net number density and net charge.
-    The two streams are interacting in some places. In these places, the number density and charge density vary rapidly, associated with stronger electric fields and larger kinetic energy variations.
-    A video of this is available also.
+    The two \textbf{streams are interacting} in some places. In these places, the \textbf{number density and charge density vary rapidly}, associated with \textbf{stronger electric fields and larger kinetic energy variations}.
+    A \textbf{video} of this is available also.
   }
   \label{fig:PIC}
 \end{figure}
