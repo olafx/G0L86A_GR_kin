@@ -46,7 +46,7 @@
 \section*{Introduction}
 
 Investigating the behavior of particles in a background of curved spacetime requires modeling their trajectories.
-For some spacetimes, like the Kerr- and Schwarzschild black holes, some \textbf{analytical orbits} are known.
+For some spacetimes, like the Kerr and Schwarzschild black holes, some \textbf{analytical orbits} are known.
 But for general spacetimes, particle trajectories must be solved numerically.
 A scenario where this is needed is the modeling of plasmas near a black hole using kinetic codes like particle-in-cell (PIC).
 A common numerical framework for solving particle orbits in general relativity (GR) involves splitting the metric into spatial slices parameterized by time.
@@ -56,7 +56,7 @@ one that can \textbf{adapt} to any metric and any electromagnetic field configur
 (For orbits in particular one would expect these to produce quite good results, since conservation of the shadow Hamiltonian in a quasi-periodic localized system tends to also conserve the Hamiltonian well. There is also the energy-conserving Hamiltonian scheme, we did not implement that one.)
 We also implement a \textbf{Maxwell solver} and \textbf{Vlasov-Poisson PIC} code in curved spacetimes, in particular specialized to a thin radial flux tube around a Schwarzschild black hole.
 (Good results were found with Vlasov-Poisson, so we did not opt for Vlasov-Maxwell, but everything is structurally in place to do this next.)
-We test these solvers with an \textbf{optics problem} and an \textbf{untable two-stream problem} respectively.
+We test these solvers with an \textbf{optics problem} and an \textbf{unstable two-stream problem} respectively.
 The solvers are implemented in C++ with a Python interface, and are OpenMP-parallel.
 
 
