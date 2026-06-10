@@ -136,7 +136,7 @@ subprocess.run([
   str(dir_out/'two_stream_Poisson.mp4'),
 ], check=True)
 
-plt.figure(figsize=(6, 3))
+plt.figure(figsize=(4, 3))
 plt.plot(diag_time, diag_energy_kinetic, c='black')
 plt.xlim(0, t_end)
 plt.xlabel(r'$t$'); plt.ylabel(r'$K$')
@@ -144,7 +144,7 @@ plt.yscale('log')
 plt.tight_layout()
 plt.savefig(dir_out/'two_stream_Poisson_K.png', dpi=frame_dpi)
 
-plt.figure(figsize=(6, 3))
+plt.figure(figsize=(4, 3))
 plt.plot(diag_time, diag_energy_EM, c='black')
 plt.xlim(0, t_end)
 plt.xlabel(r'$t$'); plt.ylabel(r'$U_E$')

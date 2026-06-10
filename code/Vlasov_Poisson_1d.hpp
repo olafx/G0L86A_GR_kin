@@ -73,7 +73,7 @@ void deposit_charge_and_solve_Gauss
 #pragma omp parallel for schedule(static)
   for (size_t i = 0; i < grid.n_cells; i++)
     densitized_rho[i] = 0;
-  pic_1d::add_densitized_charge(
+  pic_1d::add_densitized_rho(
     grid, particles, n_particles, densitized_rho, keep);
   solve_Gauss(grid, fields, densitized_rho, D_r_flux_left);
 }

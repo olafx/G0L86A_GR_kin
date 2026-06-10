@@ -24,16 +24,18 @@
 
 \begin{document}
 
-\title{\vspace{-30pt}\fontfamily{lmr} \Huge  Analysis of Particle Kinetics in Curved Space-time}
+% \title{\vspace{-30pt}\fontfamily{lmr} \Huge  Analysis of Particle Kinetics in Curved Space-time}
+\title{Analysis of Particle Kinetics in Curved Space-time}
 
-\author{\Large Olaf Willocx, Lars Meulenijzer, Areen Raj}
+% \author{\Large Olaf Willocx, Lars Meulenijzer, Areen Raj}
+\author{Lars Meulenijzer, Areen Raj, Olaf Willocx}
 \date{2026}
 
 \maketitle
 
 \begin{center} 
 \vspace{-15pt}
-\Large \textit{Selected Topics in Mathematics II\textnormal{ (G0L86A), KU Leuven}}
+\Large \textit{Selected Topics in Mathematics II\textnormal{ (G0L86A), KU Leuven, 2026}}
 \end{center}
 
 
@@ -76,7 +78,7 @@ Here $\tau$ is the proper time along the geodesic, $\Gamma^\rho_{\mu\nu}$ are th
 where $\epsilon = 0$ for massless particles and $\epsilon = 1$ for massive particles. The electric and magnetic fields are related to the electromagnetic field tensor by $D^i = \alpha F^{0i}$ and $B^i = \frac{1}{2}\sqrt{\gamma}^{-1}\varepsilon^{ijk}F_{jk}$.
 
 
-\section{Kerr spacetime in Boyer-Lindquist coordinates}
+\subsection{Kerr spacetime in Boyer-Lindquist coordinates}
 
 The Kerr metric describes a rotating black hole in general relativity. Let $a=J/M$ be the Kerr parameter for angular momentum $J$ and mass $M$. In Boyer-Lindquist coordinates, the metric can be written as
 \begin{equation}
@@ -114,10 +116,10 @@ We calculate analytical expressions for the 3+1 split of this metric, as well as
 
 \subsection{Electromagnetic waves in curved spacetime}
 
-We will show two aspects of electromagnetic waves in curved spacetime:
+We will show two aspects of electromagnetic waves in curved spacetimes with a $\partial_t$ Killing vector, since they are useful to test a Maxwell solver:
 \begin{itemize}
-  \item The redshift is the lapse function ratio between points of emission and observation.
   \item The amplitude of \textit{divergenceless} plane waves is fixed, other than due to lensing effects.
+  \item The redshift is the lapse function ratio between points of emission and observation.
 \end{itemize}
 
 \noindent
@@ -130,23 +132,27 @@ Expanding, we find
 \end{align}
 Due to the aformentioned WKB-approximation then,
 \begin{align}
-  0&=\nabla^\mu\theta\nabla_\mu\theta\text{ and separately}\\
+  0&=\nabla^\mu\phi\nabla_\mu\phi\text{ and separately}\\
   0&=2\nabla^\mu\overline\psi\nabla_\mu\phi+\overline\psi\nabla^\mu\nabla_\mu\phi=\nabla^\mu(\overline\psi^2\nabla_\mu\theta).
 \end{align}
 Both are equations from optics: an eikonal equation, and the amplitude transport equation.
 If furthermore the wave is divergenceless, if $\nabla^\mu\nabla_\mu\phi=0$, then $\nabla^\mu\phi\nabla_\mu\overline\psi=0$.
 That is, the amplitude is fixed moving with the wave, and $\overline\psi$ only changes due to lensing.
+It follows also that $\nabla^\mu\phi\nabla_\mu\nabla_\nu\phi=0$, which has the form of the geodesic equation.
+Due to the eikonal equation then, $\nabla^\mu\phi$ follows in particular the \textit{null} geodesics, together with $dx^\mu/d\lambda$.
 
 \noindent
 Take again this plane wave $\psi$.
 We may sensibly define the local frequency to be $\omega$ such that $\partial_\tau\psi=i\omega\psi$.
-which means $\omega=-\partial_\tau\theta$ under the WKB approximation.
+which means $\omega=\partial_\tau\phi$ under the WKB approximation.
 Now the Eulerian observer in the ADM split by definition moves as $\partial_\tau x^\mu=n^\mu$, with $n_\mu=(-\alpha,\mathbf0)$.
 Plugging this in gives $d\tau=\alpha dt$.
-So $\omega=-\alpha^{-1}\partial_t\theta$.
-Consider now the same wave measured at two different times $t$, its redshift will be the ratio of $\alpha$'s.
+So $\omega=\alpha^{-1}\partial_t\phi$.
+With the Killing vector $\xi=\partial_t$, $\xi_\mu dx^\mu/d\lambda$ is fixed along geodesic.
+But we showed these WKB modes follow null geodesics, so $\xi_\mu\nabla^\mu\phi=\partial_t\phi$ is fixed along geodesics.
+So in $\omega$, only $\alpha$ is responsible for the redshift.
 
-\section{Analytical solution to the Maxwell equations}
+\subsection{An analytical solution}
 
 We consider the Maxwell equations in curved spacetime \cite{Alcubierre2009} without sources ($j^\mu = 0$) and with the spacetime background
 \begin{equation}
@@ -179,7 +185,7 @@ As an example, we consider $\Phi = -a \exp{(-x^2/2)}$. $\Phi$ cannot become smal
 
 \begin{figure}[ht!]
     \centering
-    \includegraphics[width=\hsize]{figures/gravitational_redshift.png}
+    \includegraphics[width=.8\hsize]{figures/gravitational_redshift.png}
     \caption{The gravitational potential $\Phi = -a \exp{(-x^2/2)}$ with $a = 0.45$ and the corresponding electric field strength at some fixed moment in time. The frequency of the wave is $\omega = 10$ (the units of which are fixed by the units of $x$ and the speed of light).}
     \label{fig:gravitational_redshift}
 \end{figure}
@@ -213,75 +219,10 @@ and the wavepacket not posessing a fully definite wavelength.
 
 \begin{figure}
   \centering
-  \includegraphics[width=.6\linewidth]{figures/GR_redshift_probe_omega.png}
+  \includegraphics[width=.5\linewidth]{figures/GR_redshift_probe_omega.png}
   \caption{Superimposed profiles of the same wavepacket measured by different observers at different times, comparing measured and predicted redshift. Notice also the fixed amplitude. Set up along a thin flux tube in a Schwarzschild spacetime. Here $r_\text S=2$.}
   \label{fig:redshift}
 \end{figure}
-
-\section{Two-stream instability in curved spacetime}
-
-We consider a cold two-stream instability in a diagonal metric, where the streams are moving in the $x_1$-direction with velocities $v_0$ and $-v_0$. At each point, local coordinates $\tilde{t} = \sqrt{-g_{00}} t$ and $\tilde{x}_1 = \sqrt{g_{11}} x_1$ can be chosen so that, in the frame of these local coordinates, spacetime is locally flat. At every point in spacetime, the physics in local coordinates should be the same. In local coordinates, the two-stream instability reduces to the two-stream instability from special relativity. From the perspective of an observer at infinity, the speed of the flow of time at the point $x_\mu$ is altered by a factor $\sqrt{-g_{00}(x_\mu)}$. This effect is gravitational time dilation, and it alters the speed at which instabilities in the two-stream instability grow. We consider the case of a Schwarzschild black hole, for which $\sqrt{-g_{00}} = \sqrt{1 - 2GM/r}$. The closer to the black hole we look, the slower the two-stream instability grows. We assume that the length scale at which the two-stream instability occurs is much smaller than the length scale on which the spacetime metric changes.\\
-\\
-In the local coordinates, the instability occurs at wave numbers $\tilde{k} = k / \sqrt{g_{11}}$ for which $\tilde{k}^2\tilde{v}_0^2\tilde\gamma_0^3 < \tilde\omega_{p,0}^2$. Here $\tilde{v}_0 = v_0 \sqrt{g_{11}/g_{00}}$ is the speed of the streams in local coordinates, $\tilde\gamma_0 \equiv \gamma(\tilde{v}_0)$ is the corresponding Lorentz factor, and $\tilde\omega_{p,0} = \omega_{p,0}\sqrt{g_{00}}$ is the plasma frequency in local coordinates. From this, we can find an expression for the critical wave number $k_\text{crit}$ in global coordinates: $k^2_\text{crit} v_0^2 \tilde{\gamma}_0^3 = \omega_{p,0}^2$. This equation shows that the curved spacetime only alters the critical wave number through the Lorentz factor. The expression for the critical wave number is altered by a factor $\tilde{\gamma}_0^3 / \gamma_0^3 = \sqrt{1 - v_0^2} / \sqrt{1 - \frac{g_{11}}{-g_{00}} v_0^2}$ compared to the case in flat spacetime. In Figure \ref{fig:k_crit_modification}, the modifying factor $\tilde{\gamma}_0^3 / \gamma_0^3$ is plotted for several values of $v_0$. The presence of the black hole increases $k_\text{crit}$, allowing the instability to occur at smaller length scales than it would in flat spacetime. Both going closer to the black hole and having a larger speed $v_0$ cause a decrease in the factor $\tilde{\gamma}_0^3 / \gamma_0^3$. Figure \ref{fig:k_crit_modification} shows that, for every speed $v_0$, there is a radial distance $r$ at which the modification factor reaches zero. Below that distance, the speed $v_0$ becomes nonphysical, because $\tilde{v}_0$ exceeds the speed of light. This is demonstrated in Figure \ref{fig:accessible_region}, which shows the region of phase space that is accessible by massive particles moving on radial trajectories.\\
-
-\begin{figure}[ht!]
-\centering
-\begin{minipage}{.48\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{figures/k_crit_modification.png}
-  \caption{The factor $\tilde{\gamma}_0^3 / \gamma_0^3$ near a Schwarzschild black hole as a function of the radial coordinate, for several values of the speed $v_0$.\\\,\\\,}
-  \label{fig:k_crit_modification}
-\end{minipage}%
-\quad
-\begin{minipage}{.48\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{figures/accessible_region.png}
-  \caption{The accessible region of the radial part of phase space near a Schwarzschild black hole, shown as a blue region. The grey curves are geodesics of massive particles moving radially away from and towards the black hole.}
-  \label{fig:accessible_region}
-\end{minipage}
-\end{figure}
-
-\noindent
-As the two-stream instability evolves, the gravity of the black hole will cause the speed and density of both streams to change. In general, it will no longer be true that the two streams have the same speed (in absolute values). At each position $x_\mu$, it will still be possible to change to a frame of reference where the streams have speeds $v_0$ and $-v_0$, but in general the densities of the streams will still be different. As a result, the two-stream instability will no longer adhere to the formula $\tilde{k}^2_\text{crit} \tilde{v}_0^2 \tilde{\gamma}_0^3 = \tilde{\omega}_{p,0}^2$.
-
-
-% olaf: Some brainstorming:
-
-% \section*{Conventions}
-% (metric signature)
-% (electromagnetic conventions)
-% \section*{Geodesics}
-% (affine: k_\nu\nabla^\nu k^\mu=0)
-% \subsection*{Fermion-electromagnetic deviations}
-% (affine: k_\nu\nabla^\nu k^\mu=a_\perp^mu)
-% \section*{Particle dynamics in curved spacetimes}
-% \subsection*{Kerr spacetimes}
-% \subsubsection*{Lightlike orbits}
-% \subsubsection*{Timelike orbits}
-% \subsubsection*{Timelike magnetically perturbed orbits}
-% (In a homogeneous magnetic field?)
-% (At the edge of some dipole field from a nearby neutron star?)
-% \section*{Geodesic numerics}
-% (Relevance of the parameterization?)
-% (Will non-affine parameterizations be necessary? Then the theory must be more general.)
-% (Coordinate singularity concerns?)
-% (Is symplectomorphic integration desirable?)
-% (Or exact energy conserving implicit?)
-% (Or time-adaptive and not care?)
-% \subsection*{Kerr spacetime}
-% \subsubsection*{Lightlike orbits}
-% (comparison with analytical)
-% (render black hole accretion disk or so?)
-% \subsubsection*{Timelike orbits}
-% (comparison with analytical)
-% \subsubsection*{Timelike magnetically perturbed orbits}
-% \section*{Electrostatic ${1+1}$ particle-in-cell}
-% (numerical details)
-% (implementation details)
-% \subsection*{$2$-stream instability in Kerr spacetime}
-% (Should see electron holes.)
-% (What else do we expect, how will it differ?)
-% (I suppose this is like an AGN/quasar jet model.)
 
 \section{Particle Trajectories in Curved Spacetime}
 We can analyze the particle trajectories of neutral and charged particles in curved-spacetime using both analytical and numerical approaches. This section will present the numerical implementation of a particle pusher that can solve for these trajectories. While doing so, we will also present validations of these numerical trajectories against both analytical results and established literature - for the case of a Kerr Black Hole and the Wald Solution. The first points for our analysis are the definitions of the four-velocity and the geodesic equations introduced earlier,
@@ -296,7 +237,8 @@ We can analyze the particle trajectories of neutral and charged particles in cur
     \label{eq:geodesicEinsteinNotation}
 \end{equation}
 
-Given the starting position and velocity of the particle, we can construct an initial-value problem from this system of equations - which can then be discretized and numerically integrated in time. In our case, we use simple iterative solvers to step the system forward in coordinate time. The two schemes used are the Runge-Kutta 4 (RK4) and the Implicit Midpoint Rule (IMR) methods. The RK4 scheme is inherently explicit and can easily be implemented to get the new state of the particle from its initial one. Canonically, the IMR is an implicit formulation that would need to be solved using a Newton method with the construction of a Jacobian at each step. This can be bypassed by employing fixed-point iterations that attempt to approximate the IMR solution to some convergence threshold $\epsilon_\mathrm{tol}$ - given by Algorithm\,\,\ref{alg:IMR_fixed_point}.
+Given the starting position and velocity of the particle, we can construct an initial-value problem from this system of equations - which can then be discretized and numerically integrated in time. In our case, we use simple iterative solvers to step the system forward in coordinate time. The two schemes used are the Runge-Kutta 4 (RK4) and the sympletic Implicit Midpoint Rule (IMR) methods. The RK4 scheme is inherently explicit and can easily be implemented to get the new state of the particle from its initial one. Canonically, the IMR is an implicit formulation that would need to be solved using a Newton method with the construction of a Jacobian at each step. This can be bypassed by employing fixed-point iterations that attempt to approximate the IMR solution to some convergence threshold $\epsilon_\mathrm{tol}$.
+% - given by Algorithm\,\,\ref{alg:IMR_fixed_point}.
 
 Rewriting the system as $\dot{\bm{y}} = f(\bm{y})$, the description of the IMR scheme in coordinate time is given by,
 
@@ -304,7 +246,8 @@ Rewriting the system as $\dot{\bm{y}} = f(\bm{y})$, the description of the IMR s
     \bm{y}^{n+1} = \bm{y}^n + \Delta t\, f\!\left(\frac{\bm{y}^n + \bm{y}^{n+1}}{2}\right),
 \end{equation}
 
-Here, $\bm{y}^n$ is the state of the particle at the current timestep and $\Delta t$ represents the time step size in use.\medskip
+Here $\bm{y}^n$ can be the full state $([x^i]^n,[u_i]^n)$, or more typically we solve by leapfrogging, first $[u_i]^{n-1/2}$ then $[x^i]^{n}$.\medskip
+% Here, $\bm{y}^n$ is the state of the particle at the current timestep and $\Delta t$ represents the time step size in use.\medskip
 
 \begin{algorithm}[h]
 \caption{IMR fixed-point iteration}
@@ -333,17 +276,17 @@ where $D^i$ and $B^i$ are the electromagnetic field variables and $e_{ijk} = \va
     \alpha D^i = \gamma^{ij}\left(F_{j0} - e_{jkl}\beta^k B^l\right), \qquad B^i = \frac{1}{2}e^{ijk}F_{jk}.
 \end{equation}
 
-In terms of numerical implementation, the electromagnetic terms are added to the RHS function in - $\dot{\bm{y}} = f(\bm{y})$ - while constructing the time stepper. 
+We fully derived these 5 terms also.
+In terms of numerical implementation, the electromagnetic terms are added to the RHS function in - $\dot{\bm{y}} = f(\bm{y})$. 
 
 \subsection{Kerr Spacetime}
 Such a particle pusher can be used to reproduce trajectories around compact objects such as a Kerr black hole - for which analytical solutions are available through reparametrization. We work in Boyer-Lindquist coordinates with $G=c=1$, using the standard notation $\Sigma = r^2 + a^2\cos^2\theta$, $\Delta = r^2 - 2Mr + a^2$, where $M$ and $a$ are the mass and black hole spin. We consider only orbits outside the outer event horizon $r_+$. Defining $u = \cos\theta$ as the latitudinal coordinate and $\mu$ as the four-velocity parametrization ($1$ for massive and $0$ for massless), the geodesic equations parameterized by proper time $\tau$ are
 
-\begin{subequations} \label{eq:geodesic_equations}
-\begin{align}
-   \Sigma\frac{dr}{d\tau} &= \pm\sqrt{R(r)} \\
-   \Sigma\frac{du}{d\tau} &= \pm\sqrt{V(u)}
-\end{align}
-\end{subequations}
+\begin{equation}
+  \label{eq:geodesic_equations}
+   \Sigma\frac{dr}{d\tau} = \pm\sqrt{R(r)},\quad\quad
+   \Sigma\frac{du}{d\tau} = \pm\sqrt{V(u)}
+\end{equation}
 
 where,
 
@@ -375,7 +318,7 @@ Hence, we have to look for ranges of the latitudinal variable, $u$, such that th
 
 \textbf{Mino Time.} The coupled geodesic equations (\eqref{eq:geodesic_equations}) can be separated by introducing a new parameter - Mino time - via $\Sigma\,d/d\tau = d/d\lambda$. This allows us to derive analytic solutions describing the particle solutions \cite{teoTimelikeSpherical}. These analytical solutions have been compared against our particle pusher for the case of a massive particle in extremal Kerr spacetime ($a=M=1$). The spherical orbit is located at $r/M=1.2$ with Carter constant $Q/M^2=0.5$. These parameters yield $E=0.7169$ and $\Phi/M=1.4357$. Both the analytical trajectory and the numerical curve are shown in Figure~\ref{fig:spherical_orbit_3d}, integrated with coordinate-time step $\Delta t = 0.05\,M$. We see that the IMR scheme is able to reproduce the latitudinal oscillations quite effectively with the maximum RMS error for $\theta$ being $3.81\times 10^{-6}$ radians.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includegraphics[width=0.55\linewidth]{figures/spherical_orbit_3d.png}
     \caption{Spherical orbit at $r/M=1.2$ in extremal Kerr spacetime ($a=M=1$, $Q/M^2=0.5$). Gold: analytical solution via Mino-time. Magenta (dashed): IMR numerical integration.}
@@ -401,7 +344,33 @@ Hence, we have to look for ranges of the latitudinal variable, $u$, such that th
 
 As a validation for the charged-particle pusher, we reproduce the RKA3 orbit of the Wald Solution described in \cite{Bacchini_2019}: for a massive particle with $q/m=1$ in near-extremal Kerr spacetime ($a=0.9\,M$). The top panel of Figure~\ref{fig:wald_3d} shows the 3D trajectories integrated with RK4 and IMR over $t=1000\,M$ with coordinate-time step $\Delta t = 1.0\,M$. The RK4 orbit undergoes unphysical energy dissipation, causing the gyration to damp and eventually stop. While the IMR scheme preserves the gyration throughout - due to its symplectic nature. The results show qualitative agreement with Bacchini et. al, 2019 (bottom panel).
 
-\section{Vlasov-Poisson PIC 2-stream instability in a thin Schwarzschild flux tube}
+\section{Two-stream instability in curved spacetime}
+
+We consider a cold two-stream instability in a diagonal metric, where the streams are moving in the $x_1$-direction with velocities $v_0$ and $-v_0$. At each point, local coordinates $\tilde{t} = \sqrt{-g_{00}} t$ and $\tilde{x}_1 = \sqrt{g_{11}} x_1$ can be chosen so that, in the frame of these local coordinates, spacetime is locally flat. At every point in spacetime, the physics in local coordinates should be the same. In local coordinates, the two-stream instability reduces to the two-stream instability from special relativity. From the perspective of an observer at infinity, the speed of the flow of time at the point $x_\mu$ is altered by a factor $\sqrt{-g_{00}(x_\mu)}$. This effect is gravitational time dilation, and it alters the speed at which instabilities in the two-stream instability grow. We consider the case of a Schwarzschild black hole, for which $\sqrt{-g_{00}} = \sqrt{1 - 2GM/r}$. The closer to the black hole we look, the slower the two-stream instability grows. We assume that the length scale at which the two-stream instability occurs is much smaller than the length scale on which the spacetime metric changes.\\
+\\
+In the local coordinates, the instability occurs at wave numbers $\tilde{k} = k / \sqrt{g_{11}}$ for which $\tilde{k}^2\tilde{v}_0^2\tilde\gamma_0^3 < \tilde\omega_{p,0}^2$. Here $\tilde{v}_0 = v_0 \sqrt{g_{11}/g_{00}}$ is the speed of the streams in local coordinates, $\tilde\gamma_0 \equiv \gamma(\tilde{v}_0)$ is the corresponding Lorentz factor, and $\tilde\omega_{p,0} = \omega_{p,0}\sqrt{g_{00}}$ is the plasma frequency in local coordinates. From this, we can find an expression for the critical wave number $k_\text{crit}$ in global coordinates: $k^2_\text{crit} v_0^2 \tilde{\gamma}_0^3 = \omega_{p,0}^2$. This equation shows that the curved spacetime only alters the critical wave number through the Lorentz factor. The expression for the critical wave number is altered by a factor $\tilde{\gamma}_0^3 / \gamma_0^3 = \sqrt{1 - v_0^2} / \sqrt{1 - \frac{g_{11}}{-g_{00}} v_0^2}$ compared to the case in flat spacetime. In Figure \ref{fig:k_crit_modification}, the modifying factor $\tilde{\gamma}_0^3 / \gamma_0^3$ is plotted for several values of $v_0$. The presence of the black hole increases $k_\text{crit}$, allowing the instability to occur at smaller length scales than it would in flat spacetime. Both going closer to the black hole and having a larger speed $v_0$ cause a decrease in the factor $\tilde{\gamma}_0^3 / \gamma_0^3$. Figure \ref{fig:k_crit_modification} shows that, for every speed $v_0$, there is a radial distance $r$ at which the modification factor reaches zero. Below that distance, the speed $v_0$ becomes nonphysical, because $\tilde{v}_0$ exceeds the speed of light. This is demonstrated in Figure \ref{fig:accessible_region}, which shows the region of phase space that is accessible by massive particles moving on radial trajectories.\\
+
+\begin{figure}[ht!]
+\centering
+\begin{minipage}{.40\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/k_crit_modification.png}
+  \caption{The factor $\tilde{\gamma}_0^3 / \gamma_0^3$ near a Schwarzschild black hole as a function of the radial coordinate, for several values of the speed $v_0$.\\\,\\\,}
+  \label{fig:k_crit_modification}
+\end{minipage}%
+\quad
+\begin{minipage}{.40\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/accessible_region.png}
+  \caption{The accessible region of the radial part of phase space near a Schwarzschild black hole, shown as a blue region. The grey curves are geodesics of massive particles moving radially away from and towards the black hole.}
+  \label{fig:accessible_region}
+\end{minipage}
+\end{figure}
+
+\noindent
+As the two-stream instability evolves, the gravity of the black hole will cause the speed and density of both streams to change. In general, it will no longer be true that the two streams have the same speed (in absolute values). At each position $x_\mu$, it will still be possible to change to a frame of reference where the streams have speeds $v_0$ and $-v_0$, but in general the densities of the streams will still be different. As a result, the two-stream instability will no longer adhere to the formula $\tilde{k}^2_\text{crit} \tilde{v}_0^2 \tilde{\gamma}_0^3 = \tilde{\omega}_{p,0}^2$.
+
+\subsection{Vlasov-Poisson PIC, in a thin radial flux tube embedded in a Schwarzschild spacetime}
 
 Our PIC setup is again based on \cite{entity1} and \cite{entity2}.
 We have obtained satisfactory results from a 1D-1V Vlasov-Poisson PIC model, so did not opt for a 1D-3V Vlasov-Maxwell model.
@@ -434,18 +403,18 @@ Figure \ref{fig:PIC} shows a snapshot of a run.
 
 \begin{figure}[H]
   \centering
-  \begin{subfigure}{0.8\linewidth}
+  \begin{subfigure}[c]{0.64\linewidth}
     \centering
     \includegraphics[width=\linewidth]{figures/000084.png}
   \end{subfigure}
-  \vspace{0.5em}
-  \begin{subfigure}{0.6\linewidth}
+  \hfill
+  \begin{subfigure}[c]{0.35\linewidth}
     \centering
     \includegraphics[width=\linewidth]{figures/two_stream_Poisson_K.png}
   \end{subfigure}
   \caption{
     Phase portrait and Eulerian kinetic energy snapshot of a two-stream setup with $M=0.005$ and beam density $n=0.01$.
-    2048 cells with 32 p\.p\.c\., CFL number $0.2$, $10$ Picard iterations per IMR half-step.
+    2048 cells with 32 p.p.c., CFL number $0.2$, $10$ Picard iterations per IMR half-step.
     We see Maxwellian streams, where electrons and positrons electrostatically separate with some characteristic spacing.
     The streams are pulled towards the event horizon, losing particles preferentially on that side, and total kinetic energy increasing.
     We see also histograms of the net number density and net charge.
@@ -455,6 +424,7 @@ Figure \ref{fig:PIC} shows a snapshot of a run.
   \label{fig:PIC}
 \end{figure}
 
+\newpage
 \printbibliography
 
 \end{document}

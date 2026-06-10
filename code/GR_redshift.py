@@ -146,7 +146,7 @@ for i, r_probe in enumerate(probe_radii):
   plt.plot(tau[keep], probe_E[keep,i], label=label, alpha=alpha)
 plt.xlim(-8, 8)
 plt.ylim(-1.7, 1.1)
-plt.xlabel(r'proper time from peak $\Delta\tau$')
+plt.xlabel(r'$\Delta\tau$')
 plt.ylabel(r'$E^\theta$')
 plt.legend(loc='lower left')
 plt.tight_layout()
